@@ -373,55 +373,59 @@ drives the FDC/DMA through the governo's register window (`E0`/`E1` slot) and th
 8237 DMAs sectors into system RAM — exactly what the IPL handler `0x0eae` exercises.
 Confirms the governi work in DMA. **[PHOTO]/[INF]**
 
-#### Host-side register interface (from the loader `0x0eae…`)  ⭐
+#### Host-side register map — authoritative  ⭐
 
-The governo is addressed at the found FDU slot (its high byte is saved at
-`<<1>>0x0302`); the **low byte selects a register** decoded by the gate arrays.
-Registers the ROM driver uses **[ROM]**:
+The governo is addressed at the found FDU slot (high byte saved at `<<1>>0x0302`);
+the **low byte selects a register**. The full map is documented in the Olivetti
+*"M30/M40/M31 Governi Mini-Floppy/Floppy — Descrizione di funzionamento"* (doc.
+`3963590`), which describes this exact board (it lists `GO280/A`, the CF11050/CF11051
+gate arrays, and the AM9517 DMAC). It matches the ROM RE. **[MAN]+[ROM]**
 
-| Reg (low byte) | Direction | Function |
-|----------------|-----------|----------|
-| `0x1d` | read | **µPD765 Main Status Register** — driver polls RQM/DIO (rotate-test bits 7/6) to hand-shake command/result bytes |
-| `0x9f`, `0x9d` | write | µPD765 command / parameter path (command bytes) |
-| `0xe7` | write | **governo control latch** (shadowed at `<<1>>0x0354`: reset/select/motor) |
-| `0xff`, `0xf7`, `0xed` | read | governo status / interrupt-complete (bits 0/1) |
-| `0x50`, `0x5e` | write | mode / strobe |
+| Reg (low byte) | Chip / function |
+|----------------|-----------------|
+| `0x1D` | **FDC (µPD765/NEC765) Main Status** (read; poll RQM) |
+| `0x1F` | **FDC data register** (command / result bytes) |
+| `0x40`–`0x5E` | **AM9517 DMAC** internal registers: `40/42`=ch0 addr/count, `44/46`=ch1, `48/4A`=**ch2** addr/count (the FDC data channel), `4C/4E`=ch3, `50`=command(w)/status(r), `52`=request, `54`=single-mask, `56`=mode, `58`=clear byte-ptr, `5A`=master-clear/temp, `5E`=channel mask |
+| `0x9x` | **8253 timer** (counters + control) — motor spin-up 500 ms, motor-off 2 s, **read/write time-out 800 ms** (4 disk revolutions) |
+| `0xE7` | **control register `CONTR`** (write): `EN10`=IRQ enable, `RESFD`=reset FDC, `MOTO1/MOTO2`=drive-motor enable, `SCRVO`=direction (1=write/0=read), `DIAG`/`SCAN`/`ERRO1` |
+| `0xED`, `0xEF` | diagnostic ports (read); `0xEF` also = interrupt-vector write (`VETTN`) |
+| `0xF6` | **DMA address high byte** (`ADRLN`, bits ADD16–23) — see below |
+| `0xF7` | **interrupt status** (read): `INTMO`(8253), `INTOO`(FDC), `PERRO`(parity), **`FUMEO`(DMA "out-of-memory" time-out)** |
+| `0xFF` | **identifier / nome logico** (read): `E0`=MFDU, `E1`=FDU, selected by the **NOM10 jumper** — *this is where the `E0`/`E1` type ID comes from* |
 
-The boot read is a **µPD765 READ DATA** command built from a 10-byte template
-(`0x17dc` / `0x17e6`): `06`(READ) `HDUS` `C=0` `H=0` `R=1` `N` `EOT` `GPL` `DTL` —
-i.e. **cylinder 0, head 0, sector 1** (the boot sector). Two templates cover two disk
-formats (EOT `0x10`/`0x1a`); the loader tries one, then the other (auto-detect).
+The boot read is a **µPD765 READ DATA** command (templates `0x17dc`/`0x17e6`:
+`06`(READ) `HDUS` `C=0 H=0 R=1` `N` `EOT` `GPL` `DTL` — **cylinder 0, head 0, sector 1**;
+two disk formats, EOT `0x10`/`0x1a`).
 
-**Command phase = PIO; data phase = DMA.** The 9 command bytes are sent to the
-governo **byte-by-byte with `outib`**, polling RQM (reg `0x1d`) between them — there is
-**no input-block op**, so the sector **data returns by DMA** (governo 8237 → system
-RAM). The transfer reads a **whole track**: DMA byte count `0x0800` (16-sector) or
-`0x0d00` (26-sector), matching the template EOT. **[ROM]**
+#### DMA model (manual §3.3)  ⭐
 
-**DMA is arbitrated by the UC gate-array controller (`0xFF80..0xFF8F`)** — *not*
-governo-local. During each transfer the driver strobes **`0xFF84` (open the
-backplane-DMA gate)** and **`0xFF8C` (control/complete)**. That controller is set up
-once at boot (`0x2a6`), where the code **writes all 16 registers and hand-shakes on
-the NVI** it raises — a init/exercise, **not an address load** (the written value is a
-don't-care leftover). **[ROM]**
+The **governo's own AM9517 DMAC** moves the sector data — the UC `0xFF80..0xFF8F`
+block is only the **system-bus arbitration** the governo requests (via `BAXXN`/`REQOO`;
+`0xFF84`/`0xFF8C` are the UC-side gate). The DMAC runs an "anomalous" **two-channel**
+scheme: **channel 1** sets up the address for the next cycle (no data), **channel 2**
+does the FDC↔memory transfer — and because the FDC bus is 8-bit, **2 channel-2 cycles
+per 16-bit word**. On write `SCRVO=1`; on read `SCRVO=0` (channel-1 cycle skipped).
 
-**Where the track lands — logical segment 60.** The boot handler (`0x85e`) reads the
-track to **`<<60>>0x0000`** (segment 60 — the same descriptor used earlier as the RAM
-scratch window, so the DMA target is set by whatever descriptor 60 maps). It then:
+**Physical DMA address = 24 bits (§3.3.4):** the low **16 bits come from the DMAC
+channel-2 address register** (`0x48`), the **high 8 bits (ADD16–23) from register
+`0xF6`** (board logic, auto-incremented across 64 KB blocks). So the destination **is**
+software-programmed. A **2 µs no-`READY` time-out** raises `FUMEO` ("fuori memoria").
 
-1. validates a **magic**: the first 4 bytes must be **`"SYS0"`** (`0x53595330`);
-2. takes the **entry point** from the block header — the **longword at
-   `<<60>>0x0004`** — into `rr4`;
-3. reprograms the MMU descriptors + copies the PSA, then **`jp @rr4`** to that entry.
+**Where the track lands (`0x85e`):** the driver programs the DMAC ch2 address + `0xF6`
+so the transfer targets **logical segment 60** (physically = whatever MMU descriptor 60
+maps). It then validates the boot image and jumps:
 
-So the destination *is* software-visible after all (via the jump), and the boot image
-is self-describing: **`"SYS0"` + 4-byte entry-point address + code**. **[ROM]**
+1. magic: the first 4 bytes at `<<60>>0x0000` must be **`"SYS0"`** (`0x53595330`);
+2. **entry point** = the longword at `<<60>>0x0004`;
+3. reprogram MMU/PSA, then **`jp @rr4`** to that entry.
 
-> To model: `upd765` (behind the low-byte remap: `0x1d`=status, `0x9x`=cmd,
-> `0xe7`=control) + `i8237`, DMAing a whole track into the RAM that **MMU descriptor
-> 60** maps; the ROM checks `"SYS0"` and jumps to the header entry point. The
-> remaining fuzz is only the `0xe7`/`0xff`/`0xFF80-8F` register bit meanings (the
-> MB15652 glue) — the *address* is now known. **[ROM]**
+So the boot image is self-describing: **`"SYS0"` + 4-byte entry address + code**, and
+the destination is fully known. **[MAN]+[ROM]**
+
+> To model: `upd765` (`0x1D`=status, `0x1F`=data) + `i8253` (`0x9x`) + **`am9517` DMAC
+> (`0x40-5E`)** with an extra high-address latch (`0xF6`), a control reg (`0xE7`), an
+> interrupt-status reg (`0xF7`), and the `0xFF` type ID — all stock MAME devices plus a
+> thin gate-array wrapper. The manual `3963590` is the reference. **[MAN]**
 
 ---
 
@@ -472,7 +476,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 | 2 | **`0xFF80..0xFF8F` = UC DMA/interrupt controller** and **boot dest = seg 60** (both identified); still need the per-register bit meanings of the MB15652 glue (`0xe7`/`0xff`/`0xFF80-8F`) | M2 (floppy boot) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
-| 5 | FDU register map (µPD765 + 8237 + gate arrays known; the *governo↔host* register layout in the `E0`/`E1` slot window is not) + the **HDU** governo interface | M2–M4 (IPL, install) |
+| 5 | ~~FDU register map~~ — **fully documented** now (manual `3963590`, §6.3); only the **HDU** governo interface remains | M4 (install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
 | 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
 
@@ -489,7 +493,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 - [ ] MB15652-equivalent glue: **NMI/READY logic (`0xFF41`)** + the **`0xFF80` block** + slot decode — the enumeration backbone.
 - [ ] Diagnostic console latch (`0xFFE0`, `0xFF64..6F`).
 - [ ] 6845-family CRTC + framebuffer at seg-61/phys-`0xFF0000` (80×25).
-- [ ] FDU governo (GO280): `upd765` + `i8237` DMA + `i8253` + gate-array glue → floppy image (M2/M3).
+- [ ] FDU governo (GO280): `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`, +`0xF6` addr-high) + `i8253`(`0x9x`) + control(`0xE7`)/status(`0xF7`)/ID(`0xFF`) → floppy image (M2/M3). Register map: manual `3963590`.
 - [ ] HDU governo (GO363, ST506): NEC µPD7261 HDC + 8253 + SRAM buffer → hard-disk image (M4).
 
 *This document tracks the disassembly; update it as `re/` annotations advance.*
