@@ -87,14 +87,16 @@ Chipsets read off physical boards in the spares set:
 | **GO363** | **HDU — ST506 interface** | **NEC µPD7261** HDC + 8253 + `TC5565` 8K SRAM buffer + 20 MHz osc + `MC3466` data sep | µPD7261 (M4) |
 | **GO252** | **video / keyboard (KDC)** | **MC6845** CRTC (`MC68B45P`) + **MB15651** gate array + 2× `TMM2016` video SRAM + GI char-gen | mc6845 (video) |
 | **GO200X** | **STC — streaming tape** (`E6`; IPL handler `0x1e2c`) | **Zilog Z8002** CPU + **AM9517 DMA** + 2× 6116 SRAM + firmware EPROM pair (rel "R6.1"); `COD.339192` | local Z8002 subsystem |
-| line governo | serial comm | **Z80 DART** (`Z8470`) + 8253 + 4.9152 MHz baud clock | z80dart |
+| **GO151** | **serial line governo** (2× async; `D?`); `COD.339096` | **Z80 DART** (`Z8470`) + 8253 + 4.9152 MHz baud clock; non-intelligent (host-driven) | z80dart |
 | RAM boards | memory | DRAM arrays + a gate array | (not chip-ID'd) |
 
 Notes: **GO252 physically confirms the MC6845 video model** (§5). **GO363 gives the
 HDU path** (µPD7261) for M4. **GO200X** (the STC governo, IPL device `E6`) runs its
 **own Z8002** with local ROM/RAM/DMA — an intelligent board modelled as a sub-CPU,
-not just registers. Governo silkscreens follow *"OLIVETTI MADE IN ITALY S3000 GOxxx
-P001 A COD.33xxxx"*. **[PHOTO]**
+not just registers. **GO151** is an M30/M40-generation line board (in the M40 parts
+catalog *"GO252-GO151"*, code `3963260 Y`; absent from the newer M34/M44 *nome
+logico* table, where it is superseded by `GO236`-type governi). Governo silkscreens
+follow *"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
 
 ---
 
