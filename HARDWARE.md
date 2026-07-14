@@ -390,13 +390,27 @@ Registers the ROM driver uses **[ROM]**:
 The boot read is a **µPD765 READ DATA** command built from a 10-byte template
 (`0x17dc` / `0x17e6`): `06`(READ) `HDUS` `C=0` `H=0` `R=1` `N` `EOT` `GPL` `DTL` —
 i.e. **cylinder 0, head 0, sector 1** (the boot sector). Two templates cover two disk
-formats (EOT `0x10`/`0x1a`, GPL `0x10`/`0x07`); the loader tries one, then the other
-(auto-detect). The 8237 DMAs the sector into system RAM. **[ROM]**
+formats (EOT `0x10`/`0x1a`); the loader tries one, then the other (auto-detect).
 
-> To model: `upd765` behind a small register-remap (low-byte → status/data/control)
-> + `i8237` for the memory transfer. The gate-array specifics (exact bit meanings of
-> `0xe7`/`0xff`) still need confirming, but the command/status hand-shake is standard
-> µPD765. **[ROM]/[INF]**
+**Command phase = PIO; data phase = DMA.** The 9 command bytes are sent to the
+governo **byte-by-byte with `outib`**, polling RQM (reg `0x1d`) between them — there is
+**no input-block op**, so the sector **data returns by DMA** (governo 8237 → system
+RAM). The transfer reads a **whole track**: DMA byte count `0x0800` (16-sector) or
+`0x0d00` (26-sector), matching the template EOT. **[ROM]**
+
+**DMA destination = the UC MB15652 gate-array window (`0xFF80..0xFF8F`)** — *not*
+governo-local. During each transfer the driver strobes **`0xFF84` (open the
+backplane-DMA gate)** around the byte moves and **`0xFF8C` (control/complete)** after.
+The destination **address registers are `0xFF80..0xFF83`**; they are set up by the
+`0xFF80..0xFF8F` gate-array init (the NVI-paced sequence at `0x2a6`), and only zeroed
+in the paths traced so far. **[ROM]**
+
+> To model: `upd765` behind a low-byte register remap (`0x1d`=status, `0x9x`=cmd,
+> `0xe7`=control) + a **UC-side DMA channel in the gate array** (`0xFF80-83`=address,
+> `0xFF84`=gate, `0xFF8C`=control) that lands the track in system RAM. The **exact
+> destination base** depends on the gate-array init and isn't yet a fixed known value
+> — that (and the `0xe7`/`0xff` bit meanings) is the remaining unknown, likely needing
+> the MB15652 schematic. Command/status hand-shake is standard µPD765. **[ROM]/[?]**
 
 ---
 
