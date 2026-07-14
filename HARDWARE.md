@@ -427,6 +427,14 @@ the destination is fully known. **[MAN]+[ROM]**
 > interrupt-status reg (`0xF7`), and the `0xFF` type ID — all stock MAME devices plus a
 > thin gate-array wrapper. The manual `3963590` is the reference. **[MAN]**
 
+**Completion signaling — FDU boot = polled.** The boot read runs with **VI masked**
+(`di vi` at `0x0ec8`; FCW restored at `0x0f12`) and detects transfer completion by
+**polling the governo interrupt-status register** — reg `0xFF` bit 0 (fallback reg
+`0xED` bit 0), routine `0x0f2e` — plus µPD765 RQM (reg `0x1D`). A full VI handler
+(`0x1304`–`0x137a iret`, records status to `<<1>>0x034a`/`0x034e`, sets ready bit
+`0x0354.0`) exists for interrupt-driven runtime use, but the ROM boot path does not
+use it. So the model needs a readable **INT-pending bit at `0xFF`/`0xED` bit 0**. **[ROM]**
+
 ### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
 
 The direct-HDU boot handler **`0x1e58`** (IPL type `E4`) is traced. It is called with
@@ -450,6 +458,15 @@ This matches the **disk-G** diagnostic test names (`PROGRAM 'NEC'` = µPD7261,
 `DMA & RAM & ADDRESS COUNTER` = the `0x80`/`0x82` counter, `8253 TIMER & DMA`), so
 the governo is the **GO363** (NEC µPD7261 HDC + 8253 + SRAM buffer). This handler is
 the path to **M4** (detect/boot the hard disk). **[ROM]** / register bit-detail **[?]**
+
+**Completion signaling — HDU boot = interrupt-driven.** Unlike the FDU, the HDU path
+leaves **VI enabled**. The command executor (`0x2266`, sibling `0x1cbc`) sets a busy
+flag `tsetb <<1>>0x0316`, issues the command, then **spin-waits on that flag** until
+the governo's **vectored-interrupt ISR** (`0x22ca` / `0x1cf8`, each `clrb 0x0316;
+iret`) clears it on completion — bounded by an **8253-tick timeout** (`<<1>>0x030f`,
+decremented by the timer ISR `0x0e56`…`0x0e5e iret`). So the model must have the HDU
+governo **assert a backplane vectored interrupt** on command completion (via the
+`0xFF80–8F` arbiter), and the 8253 tick must run. **[ROM]**
 
 > To model: a `upd7261`-class HDC behind a gate-array wrapper exposing the register
 > map above — a 32-bit word-granular DMA address counter (`0x80`/`0x82`), a start
