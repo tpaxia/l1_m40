@@ -242,7 +242,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
-| `0xFF80`–`0xFF8F` | **16-register device** (NVI source) | not a catalogue chip → probably part of the **MB15652 gate array** | [ROM]/[INF] |
+| `0xFF80`–`0xFF8F` | **UC DMA / interrupt controller** (NVI source), in the MB15652 gate array | inits at `0x2a6` (writes all 16 regs + NVI handshake); the FDU transfer strobes `0xFF84`=gate / `0xFF8C`=control | [ROM]/[INF] |
 | `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
 
 Chips to instantiate for the UC board (all confirmed on the UC042 photo, §0):
@@ -398,19 +398,22 @@ governo **byte-by-byte with `outib`**, polling RQM (reg `0x1d`) between them —
 RAM). The transfer reads a **whole track**: DMA byte count `0x0800` (16-sector) or
 `0x0d00` (26-sector), matching the template EOT. **[ROM]**
 
-**DMA destination = the UC MB15652 gate-array window (`0xFF80..0xFF8F`)** — *not*
+**DMA is arbitrated by the UC gate-array controller (`0xFF80..0xFF8F`)** — *not*
 governo-local. During each transfer the driver strobes **`0xFF84` (open the
-backplane-DMA gate)** around the byte moves and **`0xFF8C` (control/complete)** after.
-The destination **address registers are `0xFF80..0xFF83`**; they are set up by the
-`0xFF80..0xFF8F` gate-array init (the NVI-paced sequence at `0x2a6`), and only zeroed
-in the paths traced so far. **[ROM]**
+backplane-DMA gate)** and **`0xFF8C` (control/complete)**. That controller is set up
+once at boot (`0x2a6`), where the code **writes all 16 registers and hand-shakes on
+the NVI** it raises — a init/exercise, **not an address load** (the written value is a
+don't-care leftover). **[ROM]**
 
-> To model: `upd765` behind a low-byte register remap (`0x1d`=status, `0x9x`=cmd,
-> `0xe7`=control) + a **UC-side DMA channel in the gate array** (`0xFF80-83`=address,
-> `0xFF84`=gate, `0xFF8C`=control) that lands the track in system RAM. The **exact
-> destination base** depends on the gate-array init and isn't yet a fixed known value
-> — that (and the `0xe7`/`0xff` bit meanings) is the remaining unknown, likely needing
-> the MB15652 schematic. Command/status hand-shake is standard µPD765. **[ROM]/[?]**
+> **Where does the track land?** The ROM **never programs a destination address** for
+> the boot DMA — not in the `0x2a6` init (garbage data) and not in the FDU transfer
+> (only the `0xFF84`/`0xFF8C` gate strobes). So the destination appears **hardware-
+> fixed** by the MB15652 gate array + governo 8237 wiring (a fixed system-RAM window),
+> rather than software-selectable. The **exact fixed base** — and the `0xe7`/`0xff`/
+> controller-register bit meanings — need the **MB15652 schematic**; that's the last
+> concrete M2 unknown. To model: `upd765` (behind the low-byte remap: `0x1d`=status,
+> `0x9x`=cmd, `0xe7`=control) + `i8237`, DMAing a full track to a fixed RAM base.
+> Command/status hand-shake is standard µPD765. **[ROM]/[?]**
 
 ---
 
@@ -440,7 +443,8 @@ Same `READY`→NMI mechanism as the slot scan; the emulated memory/bus must mode
 6. **Z8010 descriptor** R/W test; invalidate all; load the live map; enable
    translation. **[ROM]**
 7. **Video slot scan** — init/test each video board. **[ROM]**
-8. `0xFF80` device NVI-paced sequence. **[ROM]/[?]**
+8. Init the **UC DMA/interrupt controller** (`0xFF80..0xFF8F`) via the NVI-paced
+   sequence — the backplane-DMA arbiter the FDU/HDU transfers use. **[ROM]**
 9. Show step 2 → **RAM sizing**; map RAM into segments (`0x0b0e`); BBU warm-start
    check; **memory pattern test** (`0x03ba`). **[ROM]**
 10. Build the **config table** (`0x0590`); **IPL device search + load** (`0x065c`):
@@ -457,7 +461,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 | # | Question | Needed for |
 |---|----------|------------|
 | 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
-| 2 | Register semantics of the **`0xFF80..0xFF8F` device** — likely inside the **MB15652 gate array**; is the ACIA/console part of it? | M1 (clean boot) |
+| 2 | **`0xFF80..0xFF8F` = UC DMA/interrupt controller** (identified); still need its per-register bit meanings + the **fixed DMA destination base** it maps into system RAM | M2 (floppy boot) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | FDU register map (µPD765 + 8237 + gate arrays known; the *governo↔host* register layout in the `E0`/`E1` slot window is not) + the **HDU** governo interface | M2–M4 (IPL, install) |
