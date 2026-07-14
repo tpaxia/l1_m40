@@ -324,7 +324,28 @@ stage **[ROM]**:
 
 So for the MAME model, the FDU/HDU governi are reached here. The **floppy loader
 `0x0eae`** is the next routine to trace toward **M2** — it will show exactly how the
-FDU governo's command/DMA interface works (open question #5).
+FDU governo's command/DMA interface works.
+
+### 6.3 FDU floppy governo — board **GO280** (from a board photo)  ⭐
+
+Board **GO280** (silkscreen *"S3000 GO280 P001 A COD.339200 S-03"*, label
+*"337366 H G0280 B"*), the FDU/MFDU controller (nome logico `E1`/`E0`). Chipset:
+
+| Device | Part (marked) | Role | Tag |
+|--------|---------------|------|-----|
+| **FDC** | `FDC765AC` (SMC) | **µPD765-compatible floppy disk controller** | [PHOTO] |
+| **DMA** | `D8237AC-5` (NEC) | **8237 DMA controller** — moves sectors to/from system RAM | [PHOTO] |
+| **PIT** | `P8253-5` (AMD) | 8253 timer | [PHOTO] |
+| Gate arrays | `GA04-CF11051`, `CF11050P-GA03` (TI) | custom **data separator / bus glue** | [PHOTO] |
+| Misc | `AM25LS2521` (comparator), `MC3448AP` (bus xcvr), `74145` (drive decode), `LM317`/`LM340` | | [PHOTO] |
+| Config | 4-position DIP switch | drive / mode select | [PHOTO] |
+
+**MAME impact — this de-risks M2/M3 a lot.** The floppy path is buildable from
+**stock MAME devices**: `upd765` (FDC) + `i8237` (DMA) + `i8253`, with the TI gate
+arrays doing data separation (mostly internal to MAME's `upd765`). The Z8001 host
+drives the FDC/DMA through the governo's register window (`E0`/`E1` slot) and the
+8237 DMAs sectors into system RAM — exactly what the IPL handler `0x0eae` exercises.
+Confirms the governi work in DMA. **[PHOTO]/[INF]**
 
 ---
 
@@ -374,7 +395,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 | 2 | Register semantics of the **`0xFF80..0xFF8F` device** — likely inside the **MB15652 gate array**; is the ACIA/console part of it? | M1 (clean boot) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
-| 5 | **FDU / HDU governo** register/DMA interface | M2–M4 (IPL, install) |
+| 5 | FDU register map (µPD765 + 8237 + gate arrays known; the *governo↔host* register layout in the `E0`/`E1` slot window is not) + the **HDU** governo interface | M2–M4 (IPL, install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
 | 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
 
@@ -391,7 +412,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 - [ ] MB15652-equivalent glue: **NMI/READY logic (`0xFF41`)** + the **`0xFF80` block** + slot decode — the enumeration backbone.
 - [ ] Diagnostic console latch (`0xFFE0`, `0xFF64..6F`).
 - [ ] 6845-family CRTC + framebuffer at seg-61/phys-`0xFF0000` (80×25).
-- [ ] FDU governo → floppy image (M2/M3).
+- [ ] FDU governo (GO280): `upd765` + `i8237` DMA + `i8253` + gate-array glue → floppy image (M2/M3).
 - [ ] HDU governo → hard-disk image (M4).
 
 *This document tracks the disassembly; update it as `re/` annotations advance.*
