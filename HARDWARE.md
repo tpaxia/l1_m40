@@ -427,6 +427,35 @@ the destination is fully known. **[MAN]+[ROM]**
 > interrupt-status reg (`0xF7`), and the `0xFF` type ID — all stock MAME devices plus a
 > thin gate-array wrapper. The manual `3963590` is the reference. **[MAN]**
 
+### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
+
+The direct-HDU boot handler **`0x1e58`** (IPL type `E4`) is traced. It is called with
+`rr2` → an 11-byte device parameter block (drive geometry + start LBA + destination),
+which it copies to `<<1>>0x0354`, identifies the drive (`0x21d4` → reads drive
+parameters to `<<1>>0x0318`, selects a geometry: 621 cyl/58 or 425 cyl/32),
+converts the start block **LBA → C/H/S** (`divl`/`div`), then seeks and reads the boot
+block into the destination via DMA. As with the FDU, the governo is addressed at the
+slot window (`<<1>>0x0302` high byte); the low byte selects a register:
+
+| Reg | Dir | Meaning |
+|-----|-----|---------|
+| `0x80` | W word | **DMA address counter**, low word (word-granular = `addr>>1`) |
+| `0x82` | W word | DMA address counter, high word |
+| `0x83` | W | **DMA / command start strobe** (written with the command word to launch the transfer) |
+| `0x90` | R | **status** (polled; bit 0 = error / not-ready) |
+| `0xb0` | W word / R | **µPD7261 command + control latch** — high byte = opcode (`0x09` SEEK, `0x0a` READ, `0x02`/`03`/`08`/`0b` specify/recal/identify), low byte `0x10`/`0x18` control; bits 11 & 4 pulsed as strobes; read back for status |
+| `0xe0`,`0xe1` | W | drive + cylinder/head select (two bytes) |
+
+This matches the **disk-G** diagnostic test names (`PROGRAM 'NEC'` = µPD7261,
+`DMA & RAM & ADDRESS COUNTER` = the `0x80`/`0x82` counter, `8253 TIMER & DMA`), so
+the governo is the **GO363** (NEC µPD7261 HDC + 8253 + SRAM buffer). This handler is
+the path to **M4** (detect/boot the hard disk). **[ROM]** / register bit-detail **[?]**
+
+> To model: a `upd7261`-class HDC behind a gate-array wrapper exposing the register
+> map above — a 32-bit word-granular DMA address counter (`0x80`/`0x82`), a start
+> strobe (`0x83`), a polled status (`0x90`), a command/control latch (`0xb0`), and a
+> drive/CHS select (`0xe0`/`0xe1`). Geometry and the exact strobe bits are still open.
+
 ---
 
 ## 7. RAM sizing (how memory is discovered)
