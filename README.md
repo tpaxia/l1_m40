@@ -31,6 +31,8 @@ and `REL 6.0` (16 KB), both banner-dated *17 DEC 82*.
   confirmed chipset (from board photos), the three address spaces, MMU segment and
   physical memory maps, per-board register maps, the interrupt/boot model, an
   identified-board inventory, and a MAME device checklist.
+- **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
+  contents, the two-stage boot flow, and the ROM→bootloader config-table handoff.
 - **[L1WSE.md](L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
   "L1 Work-Station Emulator" (see §6).
 
