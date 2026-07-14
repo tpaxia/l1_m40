@@ -25,6 +25,15 @@ and `REL 6.0` (16 KB), both banner-dated *17 DEC 82*.
 > The manual does not tie either REL to 151/152; the Dec-1982 date only *suggests*
 > these dumps belong to the 152 era. Treated here as unconfirmed.
 
+### Documents
+
+- **[HARDWARE.md](HARDWARE.md)** — the hardware reference / **MAME build spec**:
+  confirmed chipset (from board photos), the three address spaces, MMU segment and
+  physical memory maps, per-board register maps, the interrupt/boot model, an
+  identified-board inventory, and a MAME device checklist.
+- **[L1WSE.md](L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
+  "L1 Work-Station Emulator" (see §6).
+
 ## 2. Approach — the ROM defines the minimum to reach IPL
 
 The resident autodiagnostic is a concrete, executable lower bound on the
@@ -133,7 +142,7 @@ HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
 
 ## 6. Related work
 
-**L1WSE — Olivetti M24 "L1 Work-Station Emulator"** (see `L1WSE.md`). A separate
+**L1WSE — Olivetti M24 "L1 Work-Station Emulator"** (see **[L1WSE.md](L1WSE.md)**). A separate
 reverse-engineering effort on the DOS-side software that turns an Olivetti M24
 PC into an L1 graphics workstation / terminal. Different CPU (8086, real mode) and
 a different artifact, but the same L1 ecosystem — useful for the host-link
