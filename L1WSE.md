@@ -453,20 +453,98 @@ special key codes the stock M24 keyboard BIOS cannot produce.
 
 | Field | Layout |
 |-------|--------|
-| Header | 14 bytes; first byte = plane id (`02` for `…1`, `01` for `…2`) |
-| Records | **53 fixed 13-byte per-key records** |
-| Record | lead byte (key base char) + **six shift-state slots** |
-| Slot | `(scancode, character)` pair; `FF FF` = no output / pass-through |
-| States | ≈ *normal / shift / ctrl / alt / graph / alt-shift* |
+| Header | **14 bytes**: `[0]` = plane id (`02` for `…1`, `01` for `…2`); `[1..0C]` = `FF` padding; `[0D]` = `00` |
+| Records | **53 fixed 13-byte per-key records**, in ascending PC scancode order |
+| Record | **six 2-byte plane slots** + **1 flag byte** |
+| Slot | `(character, scancode)` — the BIOS keystroke to inject (`AL`=char, `AH`=scancode); `FF FF` = plane undefined |
+| Flag byte | per-key attribute; **`0x80` = Caps-Lock-sensitive** (set on alphabetic keys), else `00` |
 
-### 7.2 Evidence of extension beyond stock M24
+The `(character, scancode)` order is confirmed by the `Esc` record `1B 01`
+(char `0x1B`, scancode `0x01`) and by `Ctrl+2` = `00 03` (NUL, scancode `0x03`).
 
-| Evidence | Detail |
+### 7.2 The six planes
+
+| # | Plane | Notes |
+|---|-------|-------|
+| P1 | **Base** | unshifted character |
+| P2 | **Shift** | e.g. UK `Shift+3` = `9Ch` (`£`) |
+| P3 | **Ctrl** | control codes for letters (`Ctrl+A`=`01h` … `Ctrl+Z`=`1Ah`); `Ctrl+2`=NUL, `Ctrl+6`=`1Eh`, `Ctrl+-`=`1Fh` |
+| P4 | **Alt** | `Alt`+digit → IBM extended scancodes `78h–83h`; `Alt`+letter → `(00, key-scancode)` |
+| P5 | *(reserved)* | unused in the shipped tables (`FF FF` everywhere) |
+| P6 | **AltGr** | national/graphic layer — equals P4 where no national char exists; in `KEYGR1` (German) `AltGr+2`=`@`, `AltGr+ü`=`[`, etc. |
+
+### 7.3 Full keymap — `KEYUK1.TIB`, plane 1
+
+All 53 key records. Notation: `` `c` `` printable char, `NNh` byte code,
+`scNN` output scancode (char `00`), `⎇scNN` Alt extended scancode, `—` undefined.
+Rows `28`/`41` are the modifier-key slots (`LCtrl` sc `1D`, `LShift` sc `2A`) and
+emit nothing.
+
+| # | Scan | Base | Shift | Ctrl | Alt | AltGr | Caps |
+|---|------|------|-------|------|-----|-------|------|
+| 0 | 01 | ESC | `1Bh` | `1Bh` | — | — |  |
+| 1 | 02 | `1` | `!` | — | ⎇sc78 | ⎇sc78 |  |
+| 2 | 03 | `2` | `"` | sc03 | ⎇sc79 | ⎇sc79 |  |
+| 3 | 04 | `3` | `9Ch` (£) | — | ⎇sc7A | ⎇sc7A |  |
+| 4 | 05 | `4` | `$` | — | ⎇sc7B | ⎇sc7B |  |
+| 5 | 06 | `5` | `%` | — | ⎇sc7C | ⎇sc7C |  |
+| 6 | 07 | `6` | `^` | `1Eh` | ⎇sc7D | ⎇sc7D |  |
+| 7 | 08 | `7` | `&` | — | ⎇sc7E | ⎇sc7E |  |
+| 8 | 09 | `8` | `*` | — | ⎇sc7F | ⎇sc7F |  |
+| 9 | 0A | `9` | `(` | — | ⎇sc80 | ⎇sc80 |  |
+| 10 | 0B | `0` | `)` | — | ⎇sc81 | ⎇sc81 |  |
+| 11 | 0C | `-` | `_` | `1Fh` | ⎇sc82 | ⎇sc82 |  |
+| 12 | 0D | `=` | `+` | — | ⎇sc83 | ⎇sc83 |  |
+| 13 | 0E | BS | `08h` | `7Fh` | — | — |  |
+| 14 | 0F | TAB | sc0F | — | — | — |  |
+| 15 | 10 | `q` | `Q` | `11h` | sc10 | sc10 | ✓ |
+| 16 | 11 | `w` | `W` | `17h` | sc11 | sc11 | ✓ |
+| 17 | 12 | `e` | `E` | `05h` | sc12 | sc12 | ✓ |
+| 18 | 13 | `r` | `R` | `12h` | sc13 | sc13 | ✓ |
+| 19 | 14 | `t` | `T` | `14h` | sc14 | sc14 | ✓ |
+| 20 | 15 | `y` | `Y` | `19h` | sc15 | sc15 | ✓ |
+| 21 | 16 | `u` | `U` | `15h` | sc16 | sc16 | ✓ |
+| 22 | 17 | `i` | `I` | `09h` | sc17 | sc17 | ✓ |
+| 23 | 18 | `o` | `O` | `0Fh` | sc18 | sc18 | ✓ |
+| 24 | 19 | `p` | `P` | `10h` | sc19 | sc19 | ✓ |
+| 25 | 1A | `[` | `{` | `1Bh` | — | — |  |
+| 26 | 1B | `]` | `}` | `1Dh` | — | — |  |
+| 27 | 1C | CR | `0Dh` | `0Ah` | — | — |  |
+| 28 | — | — | — | — | — | — |  |
+| 29 | 1E | `a` | `A` | `01h` | sc1E | sc1E | ✓ |
+| 30 | 1F | `s` | `S` | `13h` | sc1F | sc1F | ✓ |
+| 31 | 20 | `d` | `D` | `04h` | sc20 | sc20 | ✓ |
+| 32 | 21 | `f` | `F` | `06h` | sc21 | sc21 | ✓ |
+| 33 | 22 | `g` | `G` | `07h` | sc22 | sc22 | ✓ |
+| 34 | 23 | `h` | `H` | `08h` | sc23 | sc23 | ✓ |
+| 35 | 24 | `j` | `J` | `0Ah` | sc24 | sc24 | ✓ |
+| 36 | 25 | `k` | `K` | `0Bh` | sc25 | sc25 | ✓ |
+| 37 | 26 | `l` | `L` | `0Ch` | sc26 | sc26 | ✓ |
+| 38 | 27 | `;` | `:` | — | — | — |  |
+| 39 | 28 | `'` | `@` | — | — | — |  |
+| 40 | 29 | `#` | `~` | — | — | — |  |
+| 41 | — | — | — | — | — | — |  |
+| 42 | 2B | `\` | `\|` | `1Ch` | — | — |  |
+| 43 | 2C | `z` | `Z` | `1Ah` | sc2C | sc2C | ✓ |
+| 44 | 2D | `x` | `X` | `18h` | sc2D | sc2D | ✓ |
+| 45 | 2E | `c` | `C` | `03h` | sc2E | sc2E | ✓ |
+| 46 | 2F | `v` | `V` | `16h` | sc2F | sc2F | ✓ |
+| 47 | 30 | `b` | `B` | `02h` | sc30 | sc30 | ✓ |
+| 48 | 31 | `n` | `N` | `0Eh` | sc31 | sc31 | ✓ |
+| 49 | 32 | `m` | `M` | `0Dh` | sc32 | sc32 | ✓ |
+| 50 | 33 | `,` | `<` | — | — | — |  |
+| 51 | 34 | `.` | `>` | — | — | — |  |
+| 52 | 35 | `/` | `?` | — | — | — |  |
+
+### 7.4 National variants
+
+| Property | Detail |
 |----------|--------|
-| Extra output codes | Alt/graph planes emit `7Fh, 80h–83h` = OSKAR character-generator glyphs not typeable on stock M24 |
-| Two planes per language | `…1` vs `…2`; `KEYUK1` vs `KEYUK2` remaps symbol keys (`=`↔`^`, `[`↔`@`, `]`↔`[`, `'`↔`:`, `#`↔`]`) |
-| Keypad remap | `T_KEYB` map string `S-J7G8H9I4K5L6M1O2P3Q0R.` binds keypad scancodes (`G..R` = 0x47–0x52) to host digits |
-| National set | Danish, Finnish/Swedish (FS), French, German, Italian, Norwegian, Portuguese, Spanish (SP/SPA), Swedish (SVR/SVT), UK, USA — each in two planes |
+| Two planes per language | `…1` vs `…2` (header byte `02`/`01`); `KEYUK1` vs `KEYUK2` remaps symbol keys (`=`↔`^`, `[`↔`@`, `]`↔`[`, `'`↔`:`, `#`↔`]`) |
+| Layout changes | `KEYGR1` is QWERTZ (Y/Z swapped, scancode `15`=`z`) with an AltGr layer (`@ [ ] { } \` on P6) and national letters (`ü`=`81h`, `ß`=`E1h`, `§`=`15h`) |
+| Record count | UK/USA/ITA = 53 records (703 B); German = 57 (755 B); French/Portuguese carry extra trailing bytes (dead-key data) |
+| Keypad remap | `T_KEYB` map string `S-J7G8H9I4K5L6M1O2P3Q0R.` binds keypad scancodes (`G..R` = `47h–52h`) to host digits |
+| National set | Danish, Finnish/Swedish (FS), French, German, Italian, Norwegian, Portuguese, Spanish (SP/SPA), Swedish (SVR/SVT), UK, USA |
 
 ## 8. Async line driver (`ASYNC2.EXE`)
 
