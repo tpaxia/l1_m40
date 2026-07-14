@@ -97,10 +97,15 @@ segment (`physical = (base<<8) + offset`). Segment allocation set up by the ROM:
 | Segment | Maps to (physical) | Purpose | Tag |
 |---------|--------------------|---------|-----|
 | **0** | `0x000000` | ROM (this artifact) | [ROM] |
+| **1** | top of RAM (~1 KB) | **stack / system** segment (SP → `<<1>>0x01c0`) | [ROM] |
+| **2 … N** | RAM banks | **bulk RAM**, one 64 KB descriptor each (last sized to the remainder) | [ROM] |
 | **60** | *remapped on the fly* | RAM-sizing **scratch probe window** | [ROM] |
 | **61** | `0xFF0000` | video framebuffer (64 KB window) | [ROM] |
 | **62** | `0xF00000` | video (second window) | [ROM] |
 | **63** | `0x000000` | set up but role unclear | [ROM]/[?] |
+
+After RAM sizing, the ROM maps the contiguous physical RAM into segments **1** (a
+small stack/system window near the RAM top) and **2…N** (64 KB each). **[ROM]**
 
 Physical memory map (as the ROM assumes it):
 
@@ -115,27 +120,36 @@ Physical memory map (as the ROM assumes it):
 > RAM base is wherever the first bank asserts `READY`. Exact base/size is
 > configuration-dependent. **[INF]**
 
+**Battery Backup Unit (BBU).** RAM can be **battery-backed**. At boot, if `0xFF41`
+bit 0 indicates the BBU held RAM and the marker **`"$BBU ON "`** is found at
+`<<1>>0x03f8`, the ROM restores a saved MMU descriptor from `<<1>>0x0210` and resumes
+at a saved entry point (**warm boot**) instead of cold-starting. The model needs a
+battery-backed RAM region plus that "BBU valid" status bit. **[ROM]**
+
 ### 3.2 Standard I/O — the backplane device-select model  ⭐
 
-**Key model (derived from the slot scan, §6).** Each board owns a **256-byte I/O
-window** selected by the **I/O high byte** = `(slot << 4) | 0x0F`. So the 16 slots
-answer at high bytes:
+**Key model (derived from the slot scans, §6):**
 
-```
-slot   0    1    2    3   ...  14   15
-high  0F   1F   2F   3F   ...  EF   FF   (UC = slot 15)
-```
+- **Slot select = I/O address bits 15–12** (the high nibble). 16 slots.
+- **Register = the low byte** (bits 7–0).
+- **Bits 11–8 are don't-care** (the ROM addresses the same board registers with
+  both nibbles: the video/prelim scan reads the ID at `0x?FFF`, the config scan
+  reads it at `0x?0FF`, and both hit the same slot+register). **[ROM]**
+- The board's **type-ID (nome logico) register is at low byte `0xFF`**. **[ROM]**
 
-Within a board's window the **low byte selects the register**, and the **type-ID
-(nome logico) register is at offset `0xFF`** (the ROM reads `0x?FFF` to identify the
-board). **[ROM/INF]** — this decode is reconstructed from the scan; confirm against
-schematics.
+So each board is a **256-byte register window** at its slot's high nibble. The
+**UC is slot 15**, so its chips live at high byte `0xF_` (canonically `0xFF__`).
 
-- Board register I/O is done **register-indirect** (`@r1`, with the high byte = the
-  slot's `0x?F`), which is why only UC's fixed `0xFF__` ports and the `0xF0__` latch
-  appear as *immediate* ports in the ROM. **[ROM]**
-- The **UC board is slot 15** → its on-board chips live at high byte **`0xFF`**. Its
-  nome logico (`FF`) therefore coincides with its window address. **[ROM]**
+> This resolves the earlier `0xF0E0/0xF0E2` puzzle: with bits 11–8 ignored, they are
+> the **same registers as `0xFFE0/0xFFE2`** (the console latch). The reset writes
+> `0` to `0xF0E0/E2` simply to clear the console indicator. **[ROM]**
+
+Board register I/O is done **register-indirect** (`@r1`), which is why only UC's
+`0xFF__`/`0xF0__` addresses appear as *immediate* ports in the ROM — every other
+board is reached with a computed high nibble. **[ROM]**
+
+> Modelling note: MAME I/O decode should take **bits 15–12 → slot**, **bits 7–0 →
+> register**, ignoring bits 11–8. Still worth a schematic check. **[ROM/INF]**
 
 ### 3.3 Special I/O — the Z8010 MMU
 
@@ -172,7 +186,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
 | `0xFF80`–`0xFF8F` | **unidentified 16-register device** | NVI source; driven by an interrupt-paced sequence | [ROM]/[?] |
-| `0xF0E0`,`0xF0E2` | system/bus latch | the only non-`FF` immediate I/O; cleared first at reset | [ROM]/[?] |
+| `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
 
 Chips to instantiate for the UC board: **Z8001**, **Z8010**, **i8253 PIT**, the
 diagnostic-console latch/indicator, the NMI/READY logic, and the unidentified
@@ -226,17 +240,32 @@ reg for a live-signal (bit 3) toggle → enable (`0x6a`). Result word `0x0000` (
 
 The ROM enumerates the bus like this **[ROM]**:
 
-1. Step the I/O high byte over the 16 slots (`0x0F, 0x1F, …, 0xFF`).
-2. Read the **type-ID** at `(slot high byte):0xFF` (i.e. port `0x?FFF`).
+1. Step the slot high nibble over the 16 slots.
+2. Read the **type-ID** at register `0xFF` of the slot.
 3. **An empty slot has no `READY`** → the read faults → **NMI** → the NMI handler
    `jp @rr12`, and `rr12` was pre-loaded with the *next-slot* address. Absent boards
    are skipped for free.
 4. Dispatch on the ID: `0xFE` → video init/test; `0xD?` → line board; `0xF0` → (a
    video/uninit variant); etc.
 
-For the MAME model this means: **decode I/O high byte → slot; an access to a slot
-with no board must generate the CPU's NMI (via the READY/timeout logic)**, not just
-read back `0xFF`. The NMI/READY path is therefore load-bearing for enumeration.
+For the MAME model this means: **decode the I/O high nibble → slot; an access to a
+slot with no board must generate the CPU's NMI (via the READY/timeout logic)**, not
+just read back `0xFF`. The NMI/READY path is load-bearing for enumeration.
+
+### 6.1 Config table ("SYSTEM ENVIRONMENT") — `ricerca governo di caricamento`
+
+After RAM is set up, the ROM runs a second full 16-slot scan (`0x0590`) that
+records the machine's configuration into system RAM **[ROM]**:
+
+- For each slot it reads the type-ID and stores **`type (XX)` at `<<1>>0x0230 +
+  slot*4`** and a **diagnostic-response `(YYYY)` at `+2`** (for video, fetched via
+  a helper; `0x0000` ok / `0xFFFF` fail). An **absent slot → `0xFFFF/0xFFFF`**.
+- This 16×4-byte table is the data behind the *"NLS 30000 SYSTEM ENVIRONMENT"*
+  screen. The RAM start/end are also published to `<<1>>0x0220..0x022a`.
+
+This is the enumeration half of the manual's *ricerca governo di caricamento*; the
+IPL-device **selection + boot load** (choosing HDU/FDU/… by priority and reading the
+first stage) is the next part to trace. **[?]**
 
 ---
 
@@ -282,12 +311,11 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 |---|----------|------------|
 | 1 | Exact **M30/M40 CPU clock** | timing accuracy |
 | 2 | Identity + register semantics of the **`0xFF80..0xFF8F` device** (NVI source) | M1 (clean boot) |
-| 3 | Meaning of **`0xF0E0/0xF0E2`** latch | M1 |
-| 4 | Precise **`0xFF41`** bit map (READY/NMI control) | M1 (RAM/slot probing) |
-| 5 | **RAM base/size** and bank granularity on real boards | memory model |
-| 6 | **FDU / HDU governo** register/DMA interface | M2–M4 (IPL, install) |
-| 7 | Character **cell width** (font ROM) | exact video raster |
-| 8 | Confirm the **slot I/O decode** (`(slot<<4)|0x0F`, ID at `0xFF`) against schematics | bus model |
+| 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
+| 4 | **RAM base/size** and bank granularity on real boards | memory model |
+| 5 | **FDU / HDU governo** register/DMA interface | M2–M4 (IPL, install) |
+| 6 | Character **cell width** (font ROM) | exact video raster |
+| 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
 
 ---
 

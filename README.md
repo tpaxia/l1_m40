@@ -63,19 +63,20 @@ Ordered roughly by the sequence in which the ROM exercises them.
 - **RAM**, contiguous, **≥ 16 KB** minimum; sized by probing `READY`/NMI.
 
 ### 3.4 I/O — slot-windowed device selects
-- **Decode model** (reconstructed from the slot scan; to confirm against
-  schematics): the I/O **high byte selects a slot**, `= (slot<<4)|0x0F`, so the 16
-  slots answer at high bytes `0x0F, 0x1F, …, 0xFF`. The **low byte is the register**,
-  and each board's **type-ID (*nome logico*) sits at window offset `0xFF`** (the ROM
-  reads `0x?FFF` to identify a slot). Peripheral registers are addressed
-  register-indirect with the slot's high byte.
-- The **UC (central unit) is slot 15**, so its on-board chips live at high byte
-  **`0xFF`** — which is why its window address and its nome-logico (`FF`) coincide:
+- **Decode model** (reconstructed from the slot scans; to confirm against
+  schematics): **slot = I/O address bits 15–12**, **register = the low byte**, and
+  **bits 11–8 are don't-care** (two scans read the same board register at both
+  `0x?FFF` and `0x?0FF`). Each board's **type-ID (*nome logico*) is register `0xFF`**.
+  Peripheral registers are addressed register-indirect with the slot's high nibble.
+- The **UC (central unit) is slot 15**, so its on-board chips live at high nibble
+  `0xF_` (canonically `0xFF__`):
   - **8253 PIT** at `0xFFC1/C3/C5/C7` (system tick + a rate/interrupt test).
   - **Diagnostic console**: code latch `0xFFE0` + a 4-bit indicator at `0xFF64..0xFF6F`.
   - **NMI / READY logic** at `0xFF41`.
   - Config/jumper reads (`0xFFA0`), control latches (`0xFF20`, `0xFF01`).
   - `0xFF80..0xFF8F` — 16-register device, not yet identified (NVI source).
+  - `0xF0E0/0xF0E2` = the console latch (`0xFFE0/E2`) via the don't-care bits;
+    the reset writes them to clear the console indicator.
   - `0xF0E0/0xF0E2` — a UC latch (the only non-`FF` immediate I/O), to be identified.
 
 ### 3.5 Video — **6845-family CRTC**, character display
@@ -102,11 +103,12 @@ Ordered roughly by the sequence in which the ROM exercises them.
   offset `0xFF` (port `0x?FFF`); an **empty slot faults (no `READY`) → NMI**, and
   the NMI handler resumes the scan at the next slot. IDs are the *nome logico*
   codes (`FF`=central unit, `FE`=video, …; full table in the service manual).
-- Two scans are traced: a preliminary pass that dispatches on board type (video /
-  line), and a video pass that inits + self-tests each video board and assigns it
-  a `0x2000`-byte framebuffer window. The full per-slot config table described in
-  the service manual is built later (IPL-controller search) and is not yet located
-  in the resident code.
+- Several scans are traced: a preliminary pass (dispatch on board type), a video
+  pass (init + self-test each video board), and the **config-table build**
+  (`0x0590`) — a full 16-slot scan that records each slot's `type (XX)` +
+  diagnostic-response `(YYYY)` into system RAM at `<<1>>0x0230+slot*4` (the
+  *"SYSTEM ENVIRONMENT"* table; absent slot → `0xFFFF`). The IPL-device
+  **selection + boot load** is the next part to trace.
 
 ## 4. Milestones (MAME bring-up)
 
