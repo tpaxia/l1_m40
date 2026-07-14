@@ -1,0 +1,4 @@
+# Track only the top-level documentation.
+/*
+!/*.md
+!/.gitignore
