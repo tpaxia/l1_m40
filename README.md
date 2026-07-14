@@ -81,11 +81,16 @@ Ordered roughly by the sequence in which the ROM exercises them.
   install milestone (M4). Access path **not yet traced**.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
-- Boards are identified by an ID byte read at port `0x?FFF`; the ROM steps the
-  device-select high byte and matches each board's logical name (`FF`=central
-  unit, `FE`=video, …; other codes from the service manual's *nome logico* table).
-  This scan builds the config table and sets up the video framebuffer window(s).
-  How the scan handles non-video governi is not yet fully traced.
+- Confirmed mechanism: the ROM steps the device-select high byte over all 16
+  slots (`0x00,0x10,…,0xF0`) and reads each board's ID byte at I/O port
+  `(slot<<8)|0x0FFF`; an **empty slot faults (no `READY`) → NMI**, and the NMI
+  handler resumes the scan at the next slot. IDs are the *nome logico* codes
+  (`FF`=central unit, `FE`=video, …; full table in the service manual).
+- Two scans are traced: a preliminary pass that dispatches on board type (video /
+  line), and a video pass that inits + self-tests each video board and assigns it
+  a `0x2000`-byte framebuffer window. The full per-slot config table described in
+  the service manual is built later (IPL-controller search) and is not yet located
+  in the resident code.
 
 ## 4. Milestones (MAME bring-up)
 
