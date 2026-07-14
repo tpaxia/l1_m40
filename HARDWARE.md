@@ -76,6 +76,25 @@ Full type-ID list: see the M34/M44 *nome logico* table (companion notes). The M4
 the segmented-CPU variant; RAM boards, video, and mass-storage governi plug into the
 backplane.
 
+### 1.1 Identified boards (from photos)  ⭐
+
+Chipsets read off physical boards in the spares set:
+
+| Board | Function | Key chips | MAME-relevant |
+|-------|----------|-----------|---------------|
+| **UC042** | central unit | Z8001 + Z8010 + 8253 + 6850 ACIA + 2×27128 + **MB15652** gate array; 32 MHz osc | §0 |
+| **GO280** | **FDU / MFDU floppy** | **µPD765** (`FDC765AC`) + **8237/9517 DMA** + 8253 + 2× TI gate arrays (`GA04-CF11051`, `CF11050P-GA03`) | `upd765`+`i8237`+`i8253` (M2/M3) |
+| **GO363** | **HDU — ST506 interface** | **NEC µPD7261** HDC + 8253 + `TC5565` 8K SRAM buffer + 20 MHz osc + `MC3466` data sep | µPD7261 (M4) |
+| **GO252** | **video / keyboard (KDC)** | **MC6845** CRTC (`MC68B45P`) + **MB15651** gate array + 2× `TMM2016` video SRAM + GI char-gen | mc6845 (video) |
+| line governo | serial comm | **Z80 DART** (`Z8470`) + 8253 + 4.9152 MHz baud clock | z80dart |
+| intelligent governo | smart controller | **Zilog Z8002** CPU + **AM9517 DMA** + 2× 6116 SRAM + firmware EPROM pair (rel "R6.1") | local Z8002 subsystem |
+| RAM boards | memory | DRAM arrays + a gate array | (not chip-ID'd) |
+
+Notes: **GO252 physically confirms the MC6845 video model** (§5). **GO363 gives the
+HDU path** (µPD7261) for M4. The intelligent governo runs its **own Z8002** with local
+ROM/RAM — modelled as a sub-CPU, not just registers. Governo silkscreens follow
+*"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
+
 ---
 
 ## 2. CPU / MMU subsystem (on the UC board)
@@ -232,6 +251,10 @@ READY-NMI / decode / the `0xFF80` block), and the diagnostic-console latch. **[P
 ## 5. Video / keyboard board (nome logico `FE`)
 
 ### 5.1 CRTC (6845-family)
+
+> Physically confirmed: the video board **GO252** carries an **`MC68B45P` (MC6845)**
+> CRTC plus an `MB15651` gate array and `TMM2016` video SRAM. **[PHOTO]**
+
 
 Accessed register-indirect at the board's window (`0x?F..`):
 
@@ -413,6 +436,6 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 - [ ] Diagnostic console latch (`0xFFE0`, `0xFF64..6F`).
 - [ ] 6845-family CRTC + framebuffer at seg-61/phys-`0xFF0000` (80×25).
 - [ ] FDU governo (GO280): `upd765` + `i8237` DMA + `i8253` + gate-array glue → floppy image (M2/M3).
-- [ ] HDU governo → hard-disk image (M4).
+- [ ] HDU governo (GO363, ST506): NEC µPD7261 HDC + 8253 + SRAM buffer → hard-disk image (M4).
 
 *This document tracks the disassembly; update it as `re/` annotations advance.*
