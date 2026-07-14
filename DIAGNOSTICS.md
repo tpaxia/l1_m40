@@ -50,6 +50,34 @@ subsystem-specific test payload. **[DISK]**
   then loads the rest of the disk (the Monitor + tests) itself. So the ROM IPL reads
   **exactly one track**; the bootloader does the bulk load. **[ROM]+[DISK]**
 
+### 2.1 The three stages (traced)
+
+```
+Stage 1  ROM IPL          read track 0 (26 sec) -> seg 60, check "SYS0",
+                          jp <<25>>0x000c        (config table handed off in seg 1)
+
+Stage 2  SYS0 bootloader  ~260 bytes of code+tables, runs at <<25>>:
+  0x0c   read <<1>>0x0308 marker -> calr 0x22 (load Monitor) -> jp <<25>>0x0234
+  0x22   ldb rh4,<<1>>0x0302        ; the boot slot (from the ROM)
+         ldb rl7,<<1>>0x0230(slot)  ; read config-table TYPE  <- reuses ROM's scan
+         dispatch: device-type table @0xdc -> loader-pointer table @0xe6
+  0xaa   LBA -> CHS conversion (mul/div by 26 sec/track, 2 heads); read the
+         Monitor as a run of logical sectors into <<25>>
+
+Stage 3  Diagnostic Monitor   SYSTEM ENVIRONMENT screen, HIT ENTER, test menu
+```
+
+The bootloader's **device-type table** (`0xdc`, 10 entries) lets it load the Monitor
+off whatever device the ROM booted from: `E4`(HDU) `E0`(MFDU) `66` `E6`(STC) `E7`
+`E1`(FDU) `60`(HDU-14 adapter) `61`(HDU-SMD) `62`(MTU) `65`(ST506) — each with a
+loader routine (`0xe6`). It reads sequential logical blocks, converting each **LBA to
+cylinder/head/sector** for the FDC. So the second stage can be an arbitrary number of
+sectors; the *first* stage (ROM) is always one track. **[ROM]+[DISK]**
+
+*(Not yet unpacked: the exact Monitor load size — the load descriptor at bootloader
+`0x114` is `<<25>>0x0200`, len `0x0e00`, … — only needed if we want the precise
+second-stage sector count.)*
+
 ---
 
 ## 3. The ROM → bootloader handoff (no bus rescan)
