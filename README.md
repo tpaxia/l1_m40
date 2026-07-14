@@ -42,9 +42,11 @@ incrementally, driven by what each later stage actually accesses.
 
 Ordered roughly by the sequence in which the ROM exercises them.
 
-### 3.1 CPU — Zilog **Z8001** (segmented, 8 MHz)
+### 3.1 CPU — Zilog **Z8001** (segmented)
 - Segmented mode, system/normal split; reset vector at seg 0 (`FCW=0xC000`,
   `PC=<<0>>0x0106`).
+- Clock rate for the M30/M40 is **not yet established**. (The later M34/M44
+  advertise an *8 MHz* CPU as an upgrade, which implies the M30/M40 ran slower.)
 - Program Status Area at `<<0>>0x0000`; NMI and NVI vectors used (RAM sizing,
   timer). No CPU instruction self-test was found in the reset path.
 
@@ -60,14 +62,21 @@ Ordered roughly by the sequence in which the ROM exercises them.
   compared at power-on ("Test ROM").
 - **RAM**, contiguous, **≥ 16 KB** minimum; sized by probing `READY`/NMI.
 
-### 3.4 I/O — central-unit on-board devices, I/O high-byte **`0xFF`**
-- **8253 PIT** at `0xFFC1/C3/C5/C7` (system tick + a rate/interrupt test).
-- **Diagnostic console**: code latch `0xFFE0` + a 4-bit indicator at `0xFF64..0xFF6F`.
-- **NMI / READY logic** at `0xFF41`.
-- Config/jumper reads (`0xFFA0`), control latches (`0xFF20`, `0xFF01`).
-- `0xFF80..0xFF8F` — 16-register device, not yet identified (likely the
-  console/keyboard serial). `0xF0E0/0xF0E2` — the only non-`FF` I/O (system latch,
-  to be identified).
+### 3.4 I/O — slot-windowed device selects
+- **Decode model** (reconstructed from the slot scan; to confirm against
+  schematics): the I/O **high byte selects a slot**, `= (slot<<4)|0x0F`, so the 16
+  slots answer at high bytes `0x0F, 0x1F, …, 0xFF`. The **low byte is the register**,
+  and each board's **type-ID (*nome logico*) sits at window offset `0xFF`** (the ROM
+  reads `0x?FFF` to identify a slot). Peripheral registers are addressed
+  register-indirect with the slot's high byte.
+- The **UC (central unit) is slot 15**, so its on-board chips live at high byte
+  **`0xFF`** — which is why its window address and its nome-logico (`FF`) coincide:
+  - **8253 PIT** at `0xFFC1/C3/C5/C7` (system tick + a rate/interrupt test).
+  - **Diagnostic console**: code latch `0xFFE0` + a 4-bit indicator at `0xFF64..0xFF6F`.
+  - **NMI / READY logic** at `0xFF41`.
+  - Config/jumper reads (`0xFFA0`), control latches (`0xFF20`, `0xFF01`).
+  - `0xFF80..0xFF8F` — 16-register device, not yet identified (NVI source).
+  - `0xF0E0/0xF0E2` — a UC latch (the only non-`FF` immediate I/O), to be identified.
 
 ### 3.5 Video — **6845-family CRTC**, character display
 - Register-select `0x41` (address) / `0x43` (data); type/status at `0x81`.
@@ -88,11 +97,11 @@ Ordered roughly by the sequence in which the ROM exercises them.
   install milestone (M4). Access path **not yet traced**.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
-- Confirmed mechanism: the ROM steps the device-select high byte over all 16
-  slots (`0x00,0x10,…,0xF0`) and reads each board's ID byte at I/O port
-  `(slot<<8)|0x0FFF`; an **empty slot faults (no `READY`) → NMI**, and the NMI
-  handler resumes the scan at the next slot. IDs are the *nome logico* codes
-  (`FF`=central unit, `FE`=video, …; full table in the service manual).
+- Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
+  `0x0F, 0x1F, …, 0xFF`; see §3.4) and reads each board's **type-ID** at window
+  offset `0xFF` (port `0x?FFF`); an **empty slot faults (no `READY`) → NMI**, and
+  the NMI handler resumes the scan at the next slot. IDs are the *nome logico*
+  codes (`FF`=central unit, `FE`=video, …; full table in the service manual).
 - Two scans are traced: a preliminary pass that dispatches on board type (video /
   line), and a video pass that inits + self-tests each video board and assigns it
   a `0x2000`-byte framebuffer window. The full per-slot config table described in
