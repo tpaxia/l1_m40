@@ -216,7 +216,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
 | `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions — possibly the **6850 ACIA** (EF68B50) registers | [ROM]/[INF] |
 | `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
-| `0xFF41` | **NMI / READY control + status** | read+cleared in NMI handler; bit 6 = probe outcome; bit 0 = BBU-valid. Likely in the **MB15652 gate array** | [ROM/INF] |
+| `0xFF41` | **NMI / READY control + status** | read+cleared in NMI handler; **bit 0 = BBU-valid**, **bit 1 = ISL boot-order switch**, bit 6 = probe outcome. Likely in the **MB15652 gate array** | [ROM/INF] |
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
@@ -298,9 +298,33 @@ records the machine's configuration into system RAM **[ROM]**:
 - This 16×4-byte table is the data behind the *"NLS 30000 SYSTEM ENVIRONMENT"*
   screen. The RAM start/end are also published to `<<1>>0x0220..0x022a`.
 
-This is the enumeration half of the manual's *ricerca governo di caricamento*; the
-IPL-device **selection + boot load** (choosing HDU/FDU/… by priority and reading the
-first stage) is the next part to trace. **[?]**
+### 6.2 IPL device search & load (`0x065c`) — how the machine boots  ⭐
+
+With the config table built, the ROM selects a boot device and loads the first
+stage **[ROM]**:
+
+1. **Boot order is set by the ISL switch = `0xFF41` bit 1**: set → HDU-first list
+   (`0x06e6`), clear → FDU-first list (`0x06e8`). The priority list is a sequence of
+   *nome logico* bytes: **`E4`(HDU) `EF`(GIPO/IEEE-488 → DCU) `E1`(FDU) `E0`(MFDU)
+   `E6`(STC)** (`0x00` terminates). This matches the manual's IPL order.
+2. For each device type in the list, **scan the config table** (`<<1>>0x0230`) for a
+   slot of that type.
+3. When found, look up its **handler** in the table at `0x06ee` (`{param, handler}`
+   per device) and **call it** to load the boot program:
+
+   | Device | Handler | Notes |
+   |--------|---------|-------|
+   | FDU / MFDU (`E1`/`E0`) | **`0x0eae`** | floppy loader — the path to **M2/M3** |
+   | GIPO / HDU (`EF`) | `0x1a5e` | IEEE-488 / DCU / HDU loader |
+   | STC (`E6`) | `0x1e2c` | streaming-tape loader |
+   | HDU direct (`E4`) | `0xffff` | no direct handler (booted via GIPO) |
+
+4. **Retry** the whole search until a boot succeeds (`<<1>>0x0308 == 0x5555`),
+   showing a "waiting for IPL" indication otherwise.
+
+So for the MAME model, the FDU/HDU governi are reached here. The **floppy loader
+`0x0eae`** is the next routine to trace toward **M2** — it will show exactly how the
+FDU governo's command/DMA interface works (open question #5).
 
 ---
 
@@ -331,9 +355,11 @@ Same `READY`→NMI mechanism as the slot scan; the emulated memory/bus must mode
    translation. **[ROM]**
 7. **Video slot scan** — init/test each video board. **[ROM]**
 8. `0xFF80` device NVI-paced sequence. **[ROM]/[?]**
-9. Show step 2 → **RAM sizing**; then memory-board test (`0x0b0e`, not yet traced).
-   **[ROM]** / **[?]**
-10. IPL controller search + program load (not yet traced). **[?]**
+9. Show step 2 → **RAM sizing**; map RAM into segments (`0x0b0e`); BBU warm-start
+   check; **memory pattern test** (`0x03ba`). **[ROM]**
+10. Build the **config table** (`0x0590`); **IPL device search + load** (`0x065c`):
+    pick order by ISL switch, find a controller, call its handler; the **floppy
+    loader `0x0eae`** is the remaining piece toward M2. **[ROM]** / handler internals **[?]**
 
 Any failing step in 4–7/9 **hangs** (e.g. `jr self`) or shows a numeric code on the
 diagnostic console; there is no graceful degradation. **[ROM]**

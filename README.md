@@ -87,15 +87,14 @@ Ordered roughly by the sequence in which the ROM exercises them.
 - Framebuffer at **seg 61 / phys `0xFF0000`**, 2 bytes per character cell.
 
 ### 3.6 FDU — floppy governo (IPL source)
-- The ROM's boot path loads from the FDU governo; it is the first IPL target after
-  the HDUs (per the priority order documented in the service manual). Its access
-  path is **not yet traced**
-  in the disassembly — the service manual describes the governi as working in DMA,
-  which is the working assumption.
+- The IPL device search (`0x065c`) is traced: order set by the **ISL switch**
+  (`0xFF41` bit 1), priority list `E4`(HDU) `EF`(GIPO) `E1`(FDU) `E0`(MFDU) `E6`(STC),
+  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`** — tracing
+  its governo command/DMA interface is the next step toward M2/M3.
 
 ### 3.7 HDU — hard-disk governo (IPL source + installation target)
-- Highest IPL priority (per the priority order); detection is required for the
-  install milestone (M4). Access path **not yet traced**.
+- In the IPL search as types `E4` (direct) / `EF` (via GIPO/IEEE-488); highest
+  priority when ISL selects HDU-first. Handler `0x1a5e`. Detection needed for M4.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
 - Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
