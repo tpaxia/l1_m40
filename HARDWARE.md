@@ -12,11 +12,46 @@ Every non-obvious fact carries a tag:
 
 - **[ROM]** — established directly from the boot-ROM disassembly.
 - **[MAN]** — stated in an Olivetti service manual.
+- **[PHOTO]** — read off a physical **UC042** central-unit board.
 - **[INF]** — inferred/derived (reasoning given); plausible but not proven.
 - **[?]** — unknown / needs a schematic or further RE.
 
 > Where a value is tagged **[INF]** or **[?]**, the MAME model should keep it
 > configurable and revisit it once schematics or more of the ROM are analysed.
+
+---
+
+## 0. UC042 board — confirmed chipset (from a board photo)  ⭐
+
+The M30/M40 central unit is board **UC042** (silkscreen *"OLIVETTI MADE IN ITALY
+S3000 UC042 P001 A COD.339136"*). The later M34/M44 UC048 is the 8 MHz successor.
+Major devices read off the board:
+
+| Device | Part (as marked) | Role | Tag |
+|--------|------------------|------|-----|
+| **CPU** | `Z8001B1 SEGCPU` (SGS) | Zilog Z8001 segmented CPU | [PHOTO] |
+| **MMU** | `Z8010B1 MMU` (SGS) | Zilog Z8010 MMU | [PHOTO] |
+| **PIT** | `P8253-5` (AMD, ©1982) | Intel 8253 timer (`0xFFC1/C3/C5/C7`) | [PHOTO] |
+| **ACIA** | `EF68B50P` (SGS/Thomson) | Motorola 6850 serial ACIA — serial console / aux line | [PHOTO] |
+| **Boot ROM** | `RM27128A` (AMD) + `M27128A` (SGS), a pair | two 27128 (16 KB) EPROMs = **even/odd byte lanes** of the 16-bit bus | [PHOTO] |
+| **Gate array** | `MB15652 … GA 02` (Fujitsu) | **custom Olivetti gate array** — most likely the bus / address-decode / READY-NMI / slot-select logic | [PHOTO]/[INF] |
+| **Clock** | `CXO-042C 32.000 MHz` (KSS) | master oscillator; CPU & video clocks divided from it | [PHOTO] |
+| Glue | 74LSxx (244/373/161/138/08/02/00/32/04/132/10/26…), `P8436` bus drivers | address/data buffering, decode | [PHOTO] |
+| (delay?) | small `5/10` module near the ACIA | possibly a **delay line** for the Z8010's delayed address strobe | [PHOTO]/[?] |
+
+**Takeaways for the model:**
+- CPU = Z8001, MMU = Z8010, PIT = 8253 — all three **confirmed exactly** as the ROM
+  predicted.
+- There is a **6850 ACIA** on the UC — a strong candidate for the *serial diagnostic
+  console* (the manual's "console diagnostica") and/or the console char device the
+  ROM drives near `0xFF64`. Worth reconciling with the ROM's console ports.
+- A **custom Fujitsu gate array (MB15652)** implements glue that isn't a catalogue
+  chip — very likely the **READY/NMI generation and slot decode** the ROM leans on
+  (empty-slot → NMI, the `0xFF80..0xFF8F` register block, etc.). Its exact behaviour
+  needs a schematic.
+- **Master clock is 32.000 MHz**; the Z8001 clock is a divided value (`/8` → 4 MHz or
+  `/4` → 8 MHz; M30/M40 is the pre-8 MHz generation, so ~4 MHz is likely). A video dot
+  clock of 16 MHz (`/2`) is plausible. Still needs the divider from a schematic.
 
 ---
 
@@ -48,7 +83,7 @@ backplane.
 | Item | Value | Tag |
 |------|-------|-----|
 | CPU | Zilog **Z8001** (segmented, 48-pin) | [ROM] |
-| Clock | **unknown for M30/M40**. The later M34/M44 advertise an *8 MHz* CPU as an upgrade, which implies M30/M40 ran slower (Z8001 parts existed at 4/5.5/6 MHz). | [?] |
+| Clock | Master oscillator **32.000 MHz** [PHOTO]; the CPU clock is a divided value (`/8`→4 MHz likely, `/4`→8 MHz). M30/M40 is the pre-8 MHz generation. Divisor unconfirmed. | [PHOTO]/[?] |
 | MMU | Zilog **Z8010** (single unit → 64 segments, 0–63) | [ROM] |
 | Reset FCW | `0xC000` (SEG=1, system mode) | [ROM] |
 | Reset PC | `<<0>>0x0106` (seg 0, offset 0x106) | [ROM] |
@@ -174,23 +209,23 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 
 | Port | Device / function | Notes | Tag |
 |------|-------------------|-------|-----|
-| `0xFFC1` | 8253 **counter 0** | mode 2 (rate gen); prescales counter 1 | [ROM] |
-| `0xFFC3` | 8253 **counter 1** | mode 0; system-tick / timer test target | [ROM] |
-| `0xFFC5` | 8253 **counter 2** | mode 3 (square wave) | [ROM] |
-| `0xFFC7` | 8253 **control** | control words `0x34`,`0x70`,`0xB6`; `0x40` latch | [ROM] |
+| `0xFFC1` | **8253** (P8253-5) counter 0 | mode 2 (rate gen); prescales counter 1 | [ROM]+[PHOTO] |
+| `0xFFC3` | 8253 counter 1 | mode 0; system-tick / timer test target | [ROM] |
+| `0xFFC5` | 8253 counter 2 | mode 3 (square wave) | [ROM] |
+| `0xFFC7` | 8253 control | control words `0x34`,`0x70`,`0xB6`; `0x40` latch | [ROM] |
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
-| `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions | [ROM] |
+| `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions — possibly the **6850 ACIA** (EF68B50) registers | [ROM]/[INF] |
 | `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
-| `0xFF41` | **NMI / READY control + status** | read+cleared in NMI handler; bit 6 = probe outcome | [ROM/INF] |
+| `0xFF41` | **NMI / READY control + status** | read+cleared in NMI handler; bit 6 = probe outcome; bit 0 = BBU-valid. Likely in the **MB15652 gate array** | [ROM/INF] |
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
-| `0xFF80`–`0xFF8F` | **unidentified 16-register device** | NVI source; driven by an interrupt-paced sequence | [ROM]/[?] |
+| `0xFF80`–`0xFF8F` | **16-register device** (NVI source) | not a catalogue chip → probably part of the **MB15652 gate array** | [ROM]/[INF] |
 | `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
 
-Chips to instantiate for the UC board: **Z8001**, **Z8010**, **i8253 PIT**, the
-diagnostic-console latch/indicator, the NMI/READY logic, and the unidentified
-`0xFF80` device. **[INF]**
+Chips to instantiate for the UC board (all confirmed on the UC042 photo, §0):
+**Z8001**, **Z8010**, **i8253 PIT**, **6850 ACIA**, the **MB15652 gate array** (bus /
+READY-NMI / decode / the `0xFF80` block), and the diagnostic-console latch. **[PHOTO]**
 
 ---
 
@@ -309,8 +344,8 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 
 | # | Question | Needed for |
 |---|----------|------------|
-| 1 | Exact **M30/M40 CPU clock** | timing accuracy |
-| 2 | Identity + register semantics of the **`0xFF80..0xFF8F` device** (NVI source) | M1 (clean boot) |
+| 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
+| 2 | Register semantics of the **`0xFF80..0xFF8F` device** — likely inside the **MB15652 gate array**; is the ACIA/console part of it? | M1 (clean boot) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | **FDU / HDU governo** register/DMA interface | M2–M4 (IPL, install) |
@@ -321,15 +356,15 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 
 ## 10. MAME model checklist (minimum to reach M1→M4)
 
-- [ ] Z8001 CPU core (segmented) at the correct clock.
+- [ ] Z8001 CPU core (segmented) — clock = 32 MHz ÷ divisor (TBD).
 - [ ] Z8010 MMU: Special-I/O command decode, 64 descriptors, translate/transparent.
-- [ ] Memory: ROM at seg-0/phys-0; contiguous RAM; **unpopulated access → NMI**.
-- [ ] I/O decode: high byte → slot window (`0x?F`), UC at `0xFF`; **empty slot → NMI**.
+- [ ] Memory: ROM at seg-0/phys-0 (2×27128, even/odd); contiguous RAM; **unpopulated access → NMI**.
+- [ ] I/O decode: bits 15-12 → slot, low byte → register (bits 11-8 don't-care); **empty slot → NMI**.
 - [ ] i8253 PIT with counter0→counter1 cascade.
-- [ ] Diagnostic console latch + indicator (`0xFFE0`, `0xFF64..6F`).
-- [ ] NMI/READY logic (`0xFF41`) — the enumeration backbone.
+- [ ] 6850 ACIA (serial console / aux line).
+- [ ] MB15652-equivalent glue: **NMI/READY logic (`0xFF41`)** + the **`0xFF80` block** + slot decode — the enumeration backbone.
+- [ ] Diagnostic console latch (`0xFFE0`, `0xFF64..6F`).
 - [ ] 6845-family CRTC + framebuffer at seg-61/phys-`0xFF0000` (80×25).
-- [ ] `0xFF80` device (once identified) — NVI source.
 - [ ] FDU governo → floppy image (M2/M3).
 - [ ] HDU governo → hard-disk image (M4).
 

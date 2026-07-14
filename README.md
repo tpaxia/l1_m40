@@ -45,8 +45,8 @@ Ordered roughly by the sequence in which the ROM exercises them.
 ### 3.1 CPU — Zilog **Z8001** (segmented)
 - Segmented mode, system/normal split; reset vector at seg 0 (`FCW=0xC000`,
   `PC=<<0>>0x0106`).
-- Clock rate for the M30/M40 is **not yet established**. (The later M34/M44
-  advertise an *8 MHz* CPU as an upgrade, which implies the M30/M40 ran slower.)
+- A UC042 board photo shows a **32.000 MHz master oscillator**; the CPU clock is a
+  divided value (divisor TBD — `/8`→4 MHz likely for this pre-8 MHz generation).
 - Program Status Area at `<<0>>0x0000`; NMI and NVI vectors used (RAM sizing,
   timer). No CPU instruction self-test was found in the reset path.
 
