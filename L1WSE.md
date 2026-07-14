@@ -386,15 +386,30 @@ the ignore/no-op stub.
 | `0x59` | `Y` | `0x9CD` | direct address (row,col) |
 | `0x5F` | `_` | `0x9C7` | address variant |
 
-**Erase / edit**
+**Clear, fill & write**
 
 | `ESC` code | Char | Handler | Action |
 |------------|------|---------|--------|
-| `0x5B` | `[` | `0x803` | clear screen, home, reset attributes/flags |
-| `0x65 0x6B 0x6E 0x6F 0x7A 0x7B 0x86 0x9F` | `e k n o z { …` | `0x7FF` | erase (fill-with-space via `0xC7D`/`0x83D`) |
-| `0x70 0x71 0x73` | `p q s` | `0x7FC` | erase (double region) |
-| `0x64` | `d` | `0x7C8` | write / insert run of translated characters |
-| `0x57` | `W` | `0x890` | fill / repeat character (count, char, attribute) |
+| `0x5B` | `[` | `0x803` | **clear screen** — reset attribute, home cursor, erase-to-end-of-screen (`0x83D`), reset scroll region & tab stops |
+| `0x64` | `d` | `0x7C8` | write / insert a run of translated characters |
+| `0x57` | `W` | `0x890` | fill / repeat a character (count, char, attribute) |
+
+**Operand-skip no-ops** (`0x7ED–0x7FF` — a fall-through ladder of `call 0xC7D`,
+each consuming one stream byte via the input-pointer advance, then `ret`):
+
+| `ESC` code | Char | Handler | Operands consumed |
+|------------|------|---------|-------------------|
+| `0x65 0x6B 0x6E 0x6F 0x7A 0x7B 0x86 0x9F` | `e k n o z { …` | `0x7FF` | 1 (then no-op) |
+| `0x70 0x71 0x73` | `p q s` | `0x7FC` | 2 (then no-op) |
+
+> **Erase semantics (resolved).** There is **no** stand-alone erase-to-line or
+> erase-to-screen opcode. The only erase is the fill routine `0x83D`, invoked
+> **only** by `ESC [` after homing: it erases from the cursor to end of screen.
+> Its extent is computed as `cols_to_EOL + rows_below × row_width`
+> (`0xD41`: `(width[0x4F7]+1) − col`; `0xD4C`: `bottom[0x13] − row`; combined by
+> `0xD11`), then filled with space + current attribute `[0x4F9]`. The `e/k/n/o` and
+> `p/q/s` codes only *look* like erase opcodes — they are no-op stubs that swallow
+> 1 and 2 operand bytes respectively (an earlier draft mislabelled them "erase").
 
 **Attributes & modes**
 
@@ -436,7 +451,9 @@ The opcode handlers reach the screen through a small set of primitives:
 | `0x1DE` | read char at `DI` — CGA horizontal-retrace synced (snow-free) |
 | `0x1F1` / `0x20B` | write char / char+attr word at `DI`, retrace-synced |
 | `0x225` / `0x24F` | copy char+attr / `movsw` block, retrace-synced |
-| `0x83D` | erase region — fill with space + current attribute `[0x4F9]` |
+| `0x83D` | erase cursor→end-of-screen — fill with space + current attribute `[0x4F9]` |
+| `0xD41` / `0xD4C` / `0xD11` | erase-extent math: cols-to-EOL / rows-below / combined cell count |
+| `0xCBB` / `0xC7D` | fetch next stream byte / advance input pointer (with buffer refill) |
 | `0x1BE` | **bell** — PIT channel 2 (`OUT 43h/42h`) + speaker gate (`OUT 61h`) |
 
 Video memory is addressed directly at `B800:` (`0xD53`), in parallel with the
