@@ -16,8 +16,14 @@ through a fixed sequence of milestones:
 4. **detect the hard disk** (as required for installation).
 
 The M40 is the segmented-CPU member of the Olivetti **L1** line; the M30 is its
-sibling and shares this ROM family. Two ROM builds are in scope, `REL 4.1` and
-`REL 6.0` (both ROM-152 generation).
+sibling and shares this ROM family. Two ROM builds are in scope, `REL 4.1` (8 KB)
+and `REL 6.0` (16 KB), both banner-dated *17 DEC 82*.
+
+> The service manual splits the resident firmware into **ROM 151** (on
+> central-unit boards produced up to Nov 1982) and **ROM 152** (from Nov 1982) — a
+> board/hardware generation, *distinct* from the `REL x.x` loader-release number.
+> The manual does not tie either REL to 151/152; the Dec-1982 date only *suggests*
+> these dumps belong to the 152 era. Treated here as unconfirmed.
 
 ## 2. Approach — the ROM defines the minimum to reach IPL
 
@@ -72,7 +78,8 @@ Ordered roughly by the sequence in which the ROM exercises them.
 
 ### 3.6 FDU — floppy governo (IPL source)
 - The ROM's boot path loads from the FDU governo; it is the first IPL target after
-  the HDUs (per the ROM-152 priority order). Its access path is **not yet traced**
+  the HDUs (per the priority order documented in the service manual). Its access
+  path is **not yet traced**
   in the disassembly — the service manual describes the governi as working in DMA,
   which is the working assumption.
 
@@ -101,8 +108,8 @@ Ordered roughly by the sequence in which the ROM exercises them.
 | **M3** | Boot from floppy | FDU governo modeled well enough to load the OS/monitor image |
 | **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it |
 
-IPL device priority (ROM 152, absent the ISL switch): HDU 5010 → HDU 6813 →
-DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
+IPL device priority (from the service manual, absent the ISL switch): HDU 5010 →
+HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
 
 ## 5. Method
 

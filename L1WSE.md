@@ -2,27 +2,42 @@
 
 Reverse-engineering notes on `L1WSE.EXE` and its companion drivers.
 
-> Status: living document. Sections below are derived by static disassembly
-> (`ndisasm`, 16-bit real mode) and data inspection of the binaries. Segment
-> offsets are given as the program sees them (load module base = file offset
-> `0x200`, so `file = seg + 0x200`).
+> **Status:** living document. Findings are derived by static disassembly
+> (`ndisasm`, 16-bit real mode) and data inspection of the binaries. Unless noted,
+> addresses are **segment offsets** as the program sees them (load-module base =
+> file offset `0x200`, so `file = seg + 0x200`).
+
+## Contents
+
+- [Part I — The emulator (`L1WSE.EXE`)](#part-i--the-emulator-l1wseexe)
+  - [1. Overview](#1-overview)
+  - [2. Executable format](#2-executable-format)
+  - [3. Driver architecture & interrupt map](#3-driver-architecture--interrupt-map)
+  - [4. Host connection & block protocol](#4-host-connection--block-protocol)
+  - [5. Host-byte → OSKAR-screen interpreter](#5-host-byte--oskar-screen-interpreter)
+- [Part II — The driver suite](#part-ii--the-driver-suite)
+  - [6. OSKAR display driver (`OSKEM.EXE`)](#6-oskar-display-driver-oskemexe)
+  - [7. Keyboard extension (`T_KEYB.COM` + `KEY*.TIB`)](#7-keyboard-extension-t_keybcom--keytib)
+  - [8. Async line driver (`ASYNC2.EXE`)](#8-async-line-driver-async2exe)
+- [Appendix A — file inventory](#appendix-a--file-inventory)
+- [Appendix B — key data offsets in `L1WSE.EXE`](#appendix-b--key-data-offsets-in-l1wseexe)
 
 ---
+
+# Part I — The emulator (`L1WSE.EXE`)
 
 ## 1. Overview
 
 `L1WSE.EXE` turns an **Olivetti M24** PC into a graphics **workstation / terminal**
 that talks to a host machine through a cluster-style communications controller.
-It is a small (10,557-byte) **16-bit real-mode MS-DOS `MZ` executable**, written in
-**hand-crafted 8086 assembly** (no high-level-language runtime), using a single
-code+data segment (tiny model) with 20 relocations and entry point `CS:IP = 0000:0434`.
 
-The emulator does **no serial, screen, or keyboard I/O itself**. At startup it
-verifies four resident drivers are present (the "FATAL error … not installed"
-messages) and then drives them via software interrupts. It is the front-end that
-ties those drivers into a terminal session.
+The emulator itself does **no serial, screen, or keyboard I/O**. At startup it
+verifies four resident drivers are present and then drives them through software
+interrupts. It is the front-end that ties those drivers into a terminal session.
 
-### Companion drivers (all resident TSRs, shipped alongside)
+### 1.1 Companion drivers
+
+All are resident TSRs shipped in the same directory.
 
 | File | Vector | Banner string | Role |
 |------|--------|---------------|------|
@@ -30,18 +45,18 @@ ties those drivers into a terminal session.
 | `ASYNC2.EXE` | **INT 14h** (AH=40–4Bh) | `ASYNC COMM.2 driver installed` | RS-232 serial line to host |
 | (parallel)   | **INT 17h** (AH=40–43h) | printer driver                  | print / `SCRPRT` screen-copy |
 | `T_KEYB.COM` | INT 9/16 hook + `.TIB`  | `TIB KEYBOARD HANDLER`          | national / terminal keyboard remap |
-| `HCBDRV`     | **INT 60h** block mode + INT 5 hook | signature `HCBDRV` | Host Communications Block link to controller |
+| `HCBDRV`     | **INT 60h** block mode + INT 5 hook | signature `HCBDRV`  | Host Communications Block link to controller |
 
-### Startup driver probes (L1WSE)
+### 1.2 Startup driver probes
 
-- OSKAR display: `INT 14h AX=4800` presence check (expects `AH=FF01/FF02/FF03`),
-  plus Olivetti M24 video-BIOS extensions `INT 10h AX=48xx/49xx/4Axx`.
-- Printer: `INT 17h AX=4300` presence check.
-- Async comm: `INT 14h AX=4800`.
-- National keyboard: checks a keyboard table is loaded (else
-  `FATAL error : NATIONAL KEYBOARD not specified`).
+| Resource | Probe | Success condition |
+|----------|-------|-------------------|
+| OSKAR display | `INT 14h AX=4800` + M24 video ext `INT 10h AX=48xx/49xx/4Axx` | `AH=FF01/FF02/FF03` |
+| Printer | `INT 17h AX=4300` | driver present |
+| Async comm | `INT 14h AX=4800` | driver present |
+| National keyboard | keyboard-table presence check | table loaded |
 
-Fatal-error strings embedded in the binary:
+If a probe fails, the emulator aborts with a fatal message:
 
 ```
 FATAL  error :OSKAR driver not installed
@@ -51,16 +66,31 @@ FATAL  error :ASYNC COMM   driver not installed
 FATAL  error :NATIONAL KEYBOARD not specified
 ```
 
----
+## 2. Executable format
 
-## 2. Interrupt / interface map
+| Property | Value |
+|----------|-------|
+| Type | 16-bit real-mode MS-DOS `MZ` executable |
+| Size | 10,557 bytes |
+| Memory model | tiny (single code+data segment) |
+| Relocations | 20 |
+| Entry point | `CS:IP = 0000:0434` |
+| Source language | hand-crafted 8086 assembly (no HLL runtime) |
+
+The single segment interleaves code and data; the program reads its own
+configuration bytes at fixed low offsets and carries character-translation tables
+inline.
+
+## 3. Driver architecture & interrupt map
+
+### 3.1 Interrupt map
 
 | Vector | Direction | Purpose |
 |--------|-----------|---------|
-| `INT 60h` | L1WSE → OSKAR / HCBDRV | display driver **and** host block driver, function selector in `AH`, `AL=0` |
-| `INT 14h` | L1WSE → ASYNC2 | extended async line driver (open/close/send/recv/control) |
-| `INT 17h` | L1WSE → printer | extended printer driver (open/close/send/status) |
-| `INT 10h` | L1WSE → M24 video BIOS | Olivetti-specific video mode / attribute calls |
+| `INT 60h` | L1WSE → OSKAR / HCBDRV | display driver **and** host block driver; function in `AH`, `AL=0` |
+| `INT 14h` | L1WSE → ASYNC2 | extended async line driver |
+| `INT 17h` | L1WSE → printer | extended printer driver |
+| `INT 10h` | L1WSE → M24 video BIOS | Olivetti video mode / attribute calls |
 | `INT 05h` | — | print-screen; also used to detect `HCBDRV` by signature |
 | `INT CEh` | L1WSE **exports** | 13-function host-link device API (installed by L1WSE) |
 | `INT 21h` | L1WSE → DOS | console, file, device I/O |
@@ -68,148 +98,119 @@ FATAL  error :NATIONAL KEYBOARD not specified
 Interrupt-use histogram (whole binary): INT 21h ×22, INT 10h ×13, INT 60h ×11,
 INT 14h ×8, INT 17h ×6, INT 5 ×3, INT CEh ×2.
 
-### INT 60h — OSKAR / HCB driver stub library (`0x2276`–`0x2400`)
+### 3.2 INT 60h driver-stub library (`0x2276`–`0x2400`)
 
 A bank of far procedures (`retf N`, HLL far-call convention) marshal stack
-arguments into registers and issue `INT 60h` with a function number in `AH`:
+arguments into registers and issue `INT 60h` with a function number in `AH`.
 
-| `AH` | stub | notes |
-|------|------|-------|
+| `AH` | stub | Purpose |
+|------|------|---------|
 | 01 | `0x2276` | init / open |
-| 02 | `0x2289` | **block send** — scatter/gather from a caller `{count, ptr…}` descriptor array (copies ≤`0xC8` bytes) |
+| 02 | `0x2289` | **block send** — scatter/gather from a `{count, ptr…}` descriptor array (≤`0xC8` bytes) |
 | 03 | `0x2284` | **block receive** |
 | 04 | `0x227F` | block variant |
 | 05 | `0x2343` | positioned op (4 args) |
 | 06–0A | `0x236E`–`0x2392` | simple ops (get/put/status) |
-| 0B | `0x239B` | |
-| 0C | `0x23A4` | (args) |
-| 0D | `0x23C9` | |
+| 0B | `0x239B` | control |
+| 0C | `0x23A4` | control (args) |
+| 0D | `0x23C9` | control |
 
-### INT 14h — ASYNC2 line driver (extended)
+### 3.3 INT 14h ASYNC2 line functions (as used by L1WSE)
 
-| `AH` | meaning | args |
+| `AH` | Meaning | Args |
 |------|---------|------|
 | 40 | open line | `BX`=line, `CX:DX`=params (`[0x00]`,`[0x02]`,`[0x04]`) |
-| 41 | close line | `BX`=line |
+| 41 | **transmit one byte** | `AL`=char |
 | 42 | **receive one byte** | returns `AH=0` byte in `AL` / `AH=1` no-more / else error |
-| 43 | line control | |
-| 44 | status / flush | |
-| 45/46/47/4B | transmit & status | |
+| 43 | line control | `BX`=line |
+| 44 | status / flush | `BX`=line |
+| 45/46/47/4B | extended status | `BX`=line |
+| 48 | presence check | returns `AX=FF02` |
 
-Received bytes are drained into a local ring buffer at `[si+0x432]`, count in
-`[0xC32]`, read cursor in `[0xC34]` (fill routine `0x17DF`).
+Received bytes drain into a ring buffer at `[si+0x432]` (count `[0xC32]`, read
+cursor `[0xC34]`; fill routine `0x17DF`).
 
----
+## 4. Host connection & block protocol
 
-## 3. Host connection & block protocol
-
-**Model: named-host, block request/response through a cluster controller** — not a
+**Model:** named-host, block request/response through a cluster controller — not a
 point-to-point serial pipe.
 
-### Connect handshake (`0x12C7`–`0x134C`)
+### 4.1 Connect handshake (`0x12C7`–`0x134C`)
 
-1. **Prompt / capture host name.** `INT 21h/AH=09` prints
-   `"name of HOST machine  : "` (`0xCFC`); `INT 21h/AH=0A` reads it into `[0xD89]`
-   (max `0xFF`, length in `[0xD8A]`).
-2. **Normalize** the name to a fixed **14-character, space-padded** field; block
-   length `[0xC34]` set to `0x10` (16).
-3. **Send the connect block** (`call 0x199C`) — the padded host name goes to the
-   controller via INT 60h func 7.
-4. **Link-control commands.** `[0xC44]` ← `0x0A`, `0x0B`, and conditionally `0x09`
-   (`call 0x1ADC`), selecting pre-built command blocks at `[0xEA1]/[0xEA9]/[0xEB1]`
-   (map at `0x193D`).
-5. **Terminal config block** (`[0xD89]=0x000B`) packing mode bytes `[0x0D]`/`[0x0E]`.
+| Step | Action |
+|------|--------|
+| 1 | Print `"name of HOST machine  : "` (`INT 21h/AH=09`, string `0xCFC`) |
+| 2 | Read the name into `[0xD89]` (`INT 21h/AH=0A`, max `0xFF`, length `[0xD8A]`) |
+| 3 | Space-pad the name to a fixed **14-character** field; set block length `[0xC34]=0x10` |
+| 4 | Send the **connect block** (padded name) to the controller (`0x199C`, INT 60h func 7) |
+| 5 | Issue link-control commands `[0xC44]` ← `0x0A`, `0x0B`, opt. `0x09` (`0x1ADC`) |
+| 6 | Send **terminal-config block** (`[0xD89]=0x000B`) packing mode bytes `[0x0D]`/`[0x0E]` |
 
-### Block protocol (`0x181C`–`0x1927`, dispatcher `0x1B27`)
+Command codes select pre-built command blocks (map at `0x193D`):
 
-- **Send:** INT 60h **func 2** writes block (`[0xD89]`, length `[0xC34]`).
-- **Receive:** INT 60h **func 3** reads a reply block (buffer `0x28` = **40 bytes**)
-  into `[0xD89]`; descriptor `[0xECF]` gives count + pointer.
-- **Poll/flow control:** driver busy status `0x80` normalized to **`0x91`**
-  (`0x1B32`); on `0x91`, decrement retry counter `[0xC38]` and loop until answered.
-- **Framing:** 4-byte block header copied to `[0xE89]` / `[0xE91]` (two 16-bit fields).
-- **Ack/release:** INT 60h **func 7** then **func A** (`0x1927`/`0x1932`).
-- **Errors** → single letter in `[0x419]`, shown as `LINE ERROR : <O/S/B/I/R…>`.
+| `[0xC44]` | command block |
+|-----------|---------------|
+| `0x0A` | `[0xEA1]` |
+| `0x0B` | `[0xEA9]` |
+| `0x0C` | `[0xEB1]` |
+| other  | `[0xEB9]` |
 
-### DOS-device veneer — L1WSE's own INT CEh driver (`0x1E80`)
+### 4.2 Block protocol (`0x181C`–`0x1927`, dispatcher `0x1B27`)
 
-L1WSE installs an **INT CEh** handler (ends in `iret`): a **13-entry jump table**
-(`call [bx+0x1DBD]`, function in `AL≤0x0C`) that maps the block link onto DOS
-semantics, returning through a common tail that sets **CF from AH** (carry = error):
+| Aspect | Detail |
+|--------|--------|
+| Send | INT 60h **func 2** writes block (`[0xD89]`, length `[0xC34]`) |
+| Receive | INT 60h **func 3** reads a reply block (buffer `0x28`=**40 bytes**) into `[0xD89]`; descriptor `[0xECF]` gives count+ptr |
+| Flow control | driver busy `0x80` normalized to **`0x91`** (`0x1B32`); on `0x91`, decrement retry counter `[0xC38]` and loop |
+| Framing | 4-byte block header copied to `[0xE89]` / `[0xE91]` (two 16-bit fields) |
+| Ack/release | INT 60h **func 7** then **func A** (`0x1927`/`0x1932`) |
+| Errors | single letter in `[0x419]`, shown as `LINE ERROR : <O/S/B/I/R…>` |
 
-- **connect** = command `0x0C`, polled (handles `0x91`), sets connected flag
-  `[0x1DBC]=1`, then `INT 21h AX=3D88` (open host for **read**, mode `0x88`).
-- **disconnect** = command `0x0B`, clears flag, `INT 21h AX=3D89` (open **write**
-  side, mode `0x89`).
-- read / write / seek (func 5) / status in between.
+### 4.3 DOS-device veneer — L1WSE's INT CEh driver (`0x1E80`)
+
+L1WSE installs its own **INT CEh** handler (ends in `iret`): a **13-entry jump
+table** (`call [bx+0x1DBD]`, function in `AL≤0x0C`) mapping the block link onto DOS
+semantics, returning through a tail that sets **CF from AH** (carry = error).
+
+| Function | Action |
+|----------|--------|
+| connect | command `0x0C`, polled (`0x91`); set `[0x1DBC]=1`; `INT 21h AX=3D88` (open host for **read**, mode `0x88`) |
+| disconnect | command `0x0B`; clear `[0x1DBC]`; `INT 21h AX=3D89` (open **write** side, mode `0x89`) |
+| read / write / seek(5) / status | in between |
 
 Once connected, the host session behaves like an **openable named device with a
 read handle and a write handle**.
 
-### Two interchangeable transports (config byte `[0x0C]`)
+### 4.4 Two interchangeable transports (config byte `[0x0C]`)
 
-- **`HCBDRV`** — Host Communications Block, INT 60h block mode. Detected by reading
-  the **INT 5** vector and matching the 6-byte signature `"HCBDRV"` at handler+3
-  (`0x1B9B`, `repe cmpsb`), setting `[0x431]`.
-- **`ASYNC2`** — plain RS-232 (INT 14h), char-at-a-time into the `[0x432]` ring
-  buffer, when no block controller is present.
-
----
-
-## 4. Keyboard extension (`T_KEYB.COM` + `KEY*.TIB`)
-
-L1WSE does **not** load the `.TIB` files; it only checks a national keyboard is
-present. The resident **`T_KEYB.COM`** ("TIB KEYBOARD HANDLER") loads a `.TIB` file
-and **replaces the M24's native keyboard translation**, providing layouts and
-special key codes the stock M24 keyboard BIOS cannot produce.
-
-### `.TIB` table format (e.g. `KEYUK1.TIB`, 703 bytes)
-
-- 14-byte header; first byte = plane id (`02` for `…1`, `01` for `…2`).
-- **53 fixed 13-byte per-key records**. Each record: a lead byte (the key's base
-  character) + **six shift-state slots**, each a `(scancode, character)` pair
-  (`FF FF` = no output / pass through). States ≈
-  *normal / shift / ctrl / alt / graph / alt-shift*.
-
-### Evidence of extension beyond stock M24
-
-- **Extra output codes** in the Alt/graph planes (`7Fh, 80h–83h`) = OSKAR
-  character-generator glyphs (national / graphic) not typeable on stock M24.
-- **Two switchable planes per language** (`…1` vs `…2`); diffing `KEYUK1` vs
-  `KEYUK2` shows symbol keys remapped (`=`↔`^`, `[`↔`@`, `]`↔`[`, `'`↔`:`, `#`↔`]`).
-- **Keypad/function remap in `T_KEYB`** — embedded map string
-  `S-J7G8H9I4K5L6M1O2P3Q0R.` binds keypad scancodes (`G..R` = 0x47–0x52) to host digits.
-- **Large national set** (each in two planes): Danish, Finnish/Swedish (FS),
-  French, German, Italian, Norwegian, Portuguese, Spanish (SP/SPA), Swedish
-  variants (SVR/SVT), UK, USA.
-
----
+| Transport | Path | Notes |
+|-----------|------|-------|
+| **`HCBDRV`** | INT 60h block mode | Host Communications Block. Detected by matching the 6-byte signature `"HCBDRV"` at the INT 5 handler+3 (`0x1B9B`, `repe cmpsb`), setting `[0x431]` |
+| **`ASYNC2`** | INT 14h serial | plain RS-232, char-at-a-time into the `[0x432]` ring buffer |
 
 ## 5. Host-byte → OSKAR-screen interpreter
 
-The core of the emulator is a small **state machine that consumes the received host
-data stream and re-encodes it into OSKAR display-control sequences.** It is RX-driven:
-the main loop only enters it when received-byte count `[0xC32] > 0`.
+The core of the emulator is a state machine that consumes the received host stream
+and re-encodes it into OSKAR display-control sequences. It is RX-driven: the main
+loop enters it only when received-byte count `[0xC32] > 0`.
 
-### Data flow
+### 5.1 Data flow
 
 ```
- controller/host ─► receive buffer [0x432]          (refilled by:
-        │                (count [0xC32], read cursor [0xC34])   INT 60h func 3 block, or
-        ▼                                                       INT 14h AH=42 serial)
+ controller/host ─► receive buffer [0x432]            refilled by:
+        │              (count [0xC32], cursor [0xC34])   INT 60h func 3 (block) or
+        ▼                                                INT 14h AH=42 (serial)
  fetch next byte  (0x1AB5 → 0x1789)
         ▼
  dispatch on control byte  (interpreter @ 0x1360)
         ▼
  build OSKAR ESC sequence in [0xD89] block
         ▼
- emit to OSKAR ─►  block mode ([0xC]≠0): INT 60h func 2   (0x19BE)  ← local OSKAR driver
-                   char  mode ([0xC]=0): INT 14h AH=41    (0x1737)  ← serial OSKAR terminal
+ emit to OSKAR ─►  block mode ([0xC]≠0): INT 60h func 2  (0x19BE)  ← local OSKAR driver
+                   char  mode ([0xC]=0): INT 14h AH=41   (0x1737)  ← serial OSKAR terminal
 ```
 
-### Session modes (`[0xC44]`)
-
-The interpreter runs one of three sub-languages selected by the mode byte `[0xC44]`:
+### 5.2 Session modes (`[0xC44]`)
 
 | `[0xC44]` | entry | sub-language |
 |-----------|-------|--------------|
@@ -217,11 +218,11 @@ The interpreter runs one of three sub-languages selected by the mode byte `[0xC4
 | `0x09` | `0x1630` | secondary record mode |
 | other  | `0x13A4` | **character / cursor-positioning** stream |
 
-### Character / cursor stream (`0x13A4`–`0x14DC`)
+### 5.3 Character / cursor stream (`0x13A4`–`0x14DC`)
 
 Fetch a host byte (`0x1AB5`) and dispatch:
 
-| host byte | handler | action |
+| Host byte | Handler | Action |
 |-----------|---------|--------|
 | `0x14` | `0x14DD` | local op (status/print; sets error `F`=0x46 on failure) |
 | `0x19` | `0x1B3A` | driver op (INT 60h func 7/A path) |
@@ -232,7 +233,7 @@ Fetch a host byte (`0x1AB5`) and dispatch:
 | `0xA9` | `0x13D0` | prefixed variant — fetch one more byte, then re-dispatch |
 | else | `0x14D0` | treated as displayable data |
 
-### OSKAR escape encoding (built at `0x1409`)
+### 5.4 OSKAR escape encoding (built at `0x1409`)
 
 The `0x6A` position command reads a sub-type into `[0xC47]` and emits:
 
@@ -240,25 +241,25 @@ The `0x6A` position command reads a sub-type into `[0xC47]` and emits:
 ESC(0x1B)  0x04  <subtype + 0xF0>  <operand…>
 ```
 
-- **Command opcode** is `0x04`; the sub-type byte is biased by **`+0xF0`**.
-- **Coordinates** are sent as a word biased by **`+0x2020`** (row and column each
-  `+0x20`) — the classic printable/space-offset coordinate encoding (cf. VT52
-  `ESC Y row+0x20 col+0x20`).
-- Sub-type `2` emits a literal `0x5F` (`'_'`) operand; other sub-types emit three
-  raw operand bytes (`CH,CL,DL`).
+| Element | Encoding |
+|---------|----------|
+| Command opcode | `0x04` |
+| Sub-type byte | biased **`+0xF0`** |
+| Coordinates | word biased **`+0x2020`** (row and column each `+0x20`) — printable/space-offset encoding, cf. VT52 `ESC Y row+0x20 col+0x20` |
+| Sub-type `2` | operand is literal `0x5F` (`'_'`) |
+| other sub-types | three raw operand bytes (`CH,CL,DL`) |
 
 The sequence is assembled in the `[0xD89]` block (length byte `[0xD8A]`, payload
-from `[0xD8B]`) and then either shipped as a block to OSKAR (INT 60h, `0x19BE`) or
-written byte-by-byte over the serial line (INT 14h AH=41, `0x1737`).
+from `[0xD8B]`), then shipped as a block to OSKAR (INT 60h, `0x19BE`) or written
+byte-by-byte over the serial line (INT 14h AH=41, `0x1737`).
 
-### Structured field records (mode `0x0A`, `0x14F5`)
+### 5.5 Structured field records (mode `0x0A`, `0x14F5`)
 
-Reads a count/parameter into `[0xC38]`, then a record type into `[0xC45]` and
-dispatches:
+Reads a count/parameter into `[0xC38]`, then a record type into `[0xC45]`:
 
-| type | entry | meaning (inferred) |
+| Type | Entry | Meaning (inferred) |
 |------|-------|--------------------|
-| `0x0C` | `0x1542` | write field (emits `ESC … 0x05`, len 5 block) |
+| `0x0C` | `0x1542` | write field (emits `ESC … 0x05`, len-5 block) |
 | `0x0E` | `0x159E` | field / attribute op |
 | `0x0F` | `0x1581` | field / attribute op |
 | `0x11` | `0x15EB` | field / attribute op |
@@ -268,27 +269,244 @@ dispatches:
 A hex-encode helper (`0x17FC`: nibble → `'0'`–`'9'`/`'A'`–`'F'`) formats status and
 coordinate bytes as ASCII where the protocol carries them as text.
 
-### Where the pixels happen
-
-L1WSE only *produces* the OSKAR ESC stream; the actual glyph rendering, cursor
-motion and attribute handling are executed by **`OSKEM.EXE`** (the OSKAR driver on
-INT 60h), which carries the two 32–126 character generators. The OSKAR opcode set
-(`ESC 04` = position, `ESC 05` = field/write, sub-types biased `+0xF0`, coordinates
-biased `+0x20`) is the boundary between this emulator and that driver.
-
-> Direction note: in block mode the mapping is unambiguously host-stream → OSKAR
+> **Direction note.** In block mode the mapping is unambiguously host-stream → OSKAR
 > screen (distinct INT 60h functions for receive vs. paint). In serial (char) mode
-> the same codec emits over INT 14h AH=41; ASYNC2's own dispatch (jump table at
-> `cs:0x2684`, functions `0x40`–`0x4B`; `AH=41` transmit, `AH=42` receive, `AH=48`
-> → `0xFF02` presence) confirms the function directions.
+> the same codec emits over INT 14h AH=41; ASYNC2's own dispatch confirms `AH=41`
+> transmit / `AH=42` receive.
+
+---
+
+# Part II — The driver suite
+
+## 6. OSKAR display driver (`OSKEM.EXE`)
+
+`OSKEM.EXE` is the resident **OSKAR** display driver. L1WSE only *produces* the
+OSKAR control stream; OSKEM executes it — glyph rendering, cursor motion, erase and
+attribute handling — by calling the Olivetti M24 video BIOS.
+
+### 6.1 Module facts
+
+| Property | Value |
+|----------|-------|
+| Type | 16-bit real-mode `MZ` executable (TSR) |
+| Size | 6,691 bytes |
+| Install entry | `CS:IP = 0178:000E` (transient install code at the tail) |
+| Resident part | start of load module (the two interrupt handlers) |
+| Character generators | two full 32–126 charsets embedded |
+
+Interrupt-use histogram: INT 10h ×17, INT 21h ×4, INT 16h ×2, INT CEh ×2, INT B0h ×1.
+
+### 6.2 Two interrupt surfaces
+
+OSKEM installs **two** handlers:
+
+| Surface | Range | Role |
+|---------|-------|------|
+| **INT 60h — OSKAR API** | `AH = 01–0Dh` | the interface L1WSE drives (write/cursor/scroll/field) |
+| **INT 10h hook — M24 video extensions** | `AH = 40–4Ch` | adds Olivetti/OSKAR video functions; `AH<40h` chains to the ROM BIOS (`jmp far [cs:…]`) |
+
+Both handlers are the same shape as the other drivers: range-check `AH`, chain out
+if outside range, otherwise index a jump table and `iret`.
+
+### 6.3 Display-control pipeline (write path `0xD5D`)
+
+Every byte OSKEM renders passes through the same pipeline:
+
+| Stage | Detail |
+|-------|--------|
+| 1. Fetch | read next stream byte into `AL` (`0x1610`) |
+| 2. Translate | `AL` → **translation table at `0x607`** (identity for `0x00–0x5F`); in **graphics mode** (`[0x11]==2`) bytes `0x60–0x7F` are remapped via table `0x907` to IBM box-drawing glyphs (`0xB3,0xC4,0xDA,0xBF,…`) |
+| 3. Classify | branch on the translated value `AH` |
+
+Classification (`0xD85`):
+
+| Translated value | Meaning | Path |
+|------------------|---------|------|
+| `> 0x1B` | **displayable glyph** | write at cursor + advance (`0xD9E`) |
+| `0x00–0x1A` | **C0 control function** | shared handler `0xE62` |
+| `0x1B` (`ESC`) | escape introducer | fetch next byte, extended-opcode dispatch (`0xE38`) |
+
+Cursor state is `DH`=row / `DL`=column; on glyph write the cursor advances with
+line width `[0x4F7]`, bottom row `[0x15]`, and scroll on overflow (`0xDDB`–`0xDEB`).
+
+### 6.4 Control-function handler (`0xE62`) — shared by C0 and the INT 60h API
+
+The same executor services both a **C0 control byte** in the stream and an **INT 60h
+API call** (`AH` = function). `AH` selects the operation:
+
+| `AH` / C0 | Handler | Operation (traced / inferred) |
+|-----------|---------|-------------------------------|
+| 01–06 | `0xD9E` | write / control |
+| 07 | `0xB0E` | write string / block |
+| 08 (`BS`) | `0xE82` | cursor left / set position (`DH`,`DL`) |
+| 09 (`HT`) | `0xEA0` | tab — advance to next stop over the row |
+| 0A (`LF`) | `0xEBB` | **line feed / index** — bounds row against `[0x15]`/`[0x13]`, scroll |
+| 0B–0C | `0xE55` | store/state (`DL` → `[0x4FC]`) |
+| 0D (`CR`) | `0xECC` | carriage return (col ← `[0x4FC]`, then `0`) |
+| >0Dh | — | out of range → ignore |
+
+### 6.5 Rendering primitives
+
+OSKEM paints two ways — the M24 video BIOS **and** direct writes to text video RAM
+at `B800:` (`0xD53`).
+
+| INT 10h call | Use |
+|--------------|-----|
+| `AH=00` | set video mode |
+| `AH=01` | set cursor type |
+| `AH=02` | set cursor position |
+| `AH=08` | read char + attribute at cursor |
+| `AH=09` | write char + attribute |
+| `AX=4A00` | Olivetti M24 video extension |
+
+### 6.6 The OSKAR escape set — `ESC <byte>`, byte `0x52–0xAB`
+
+After an `ESC` (`0x1B`), OSKEM fetches the next byte and dispatches it — **only
+codes `0x52–0xAB`** (`0xE3B`: `cmp ax,0x52` / `cmp ax,0xAC`); anything else is
+ignored (a bare `0x52`=`'R'` without the leading `ESC` just prints `R`). Dispatch
+is a 90-entry near-pointer table: `index=(code-0x52)*2`, `call [cs:bx+0x5E9]`.
+
+**Resolving the table.** The table is CS-relative and OSKEM's relocation table
+shows the resident code segment is based at **paragraph `0x95`** (relocs [0–10] use
+base `0x0095`), so `cs:0x5E9` = file `0xB50 + 0x5E9 = 0x1139`. With that base the
+90 entries resolve to real handlers; the common target `cs:0x05D3` (34 codes) is
+the ignore/no-op stub.
+
+**Cursor movement & addressing**
+
+| `ESC` code | Char | Handler | Action |
+|------------|------|---------|--------|
+| `0x52` | `R` | `0x77F` | cursor up (clamp/wrap at region top `[0x12]`) |
+| `0x53` | `S` | `0x791` | cursor down (wrap bottom `[0x13]` → top) |
+| `0x54` | `T` | `0x7A3` | cursor right (clamp at width `[0x4F7]`) |
+| `0x55` | `U` | `0x7AE` | cursor left (wrap col 0 → width) |
+| `0x5A` | `Z` | `0x7BF` | home — cursor to region top-left |
+| `0x5C` | `\` | `0x175` | absolute address (row,col params, bounds-checked) |
+| `0x58` | `X` | `0x9D2` | direct address variant |
+| `0x59` | `Y` | `0x9CD` | direct address (row,col) |
+| `0x5F` | `_` | `0x9C7` | address variant |
+
+**Erase / edit**
+
+| `ESC` code | Char | Handler | Action |
+|------------|------|---------|--------|
+| `0x5B` | `[` | `0x803` | clear screen, home, reset attributes/flags |
+| `0x65 0x6B 0x6E 0x6F 0x7A 0x7B 0x86 0x9F` | `e k n o z { …` | `0x7FF` | erase (fill-with-space via `0xC7D`/`0x83D`) |
+| `0x70 0x71 0x73` | `p q s` | `0x7FC` | erase (double region) |
+| `0x64` | `d` | `0x7C8` | write / insert run of translated characters |
+| `0x57` | `W` | `0x890` | fill / repeat character (count, char, attribute) |
+
+**Attributes & modes**
+
+| `ESC` code | Char | Handler | Action |
+|------------|------|---------|--------|
+| `0x6D` | `m` | `0x5D6` | set attribute — param `0` clears, else OR into attribute byte `[0x18]` |
+| `0x5D` | `]` | `0x884` | set mode (`[0x9]=1`, `[0xF]`←param) |
+| `0x5E` | `^` | `0x87E` | reset mode (`[0x9]=0`) |
+| `0x68` | `h` | `0x717` | set mode (conditional on `[0x7]`) |
+| `0x6C` | `l` | `0x967` | mode / status request with sub-function |
+| `0xA1` | — | `0x877` | select character set → `[0x11]` (drives the graphics remap of §6.3) |
+
+**Cursor save/restore, tabs, scroll, colour, download**
+
+| `ESC` code | Char | Handler | Action |
+|------------|------|---------|--------|
+| `0x67` | `g` | `0x732` | save cursor + hide (INT 10h AH=01, cursor off) |
+| `0x66` | `f` | `0x726` | restore cursor |
+| `0x56` | `V` | `0x75B` | clear/set tab stops (40-column table at `[0x19]`) |
+| `0xA8 0xAB` | — | `0x5B9` | back-tab to previous stop |
+| `0x63` | `c` | `0x74C` | set scrolling region (top `[0x14]`, bottom `[0x15]`) |
+| `0xA4` | — | `0x69D` | scroll (param count) |
+| `0xA3` | — | `0x6AB` | set colours (3 params → `[0x501]/[0x503]/[0x505]`) |
+| `` 0x60 0x61 0x62 `` | `` ` a b `` | `0xA1D/0xA16/0xA0F` | download / define sequence (mode `0x60/0x61/0x62`) |
+| `0x69 0x6A 0x75 0x77 0x78 0x7C 0x7E 0x7F …` | `i j u w x …` | `0x4AE` | common exit (save cursor, return via internal stack) |
+
+> All codes outside the active set above point at the ignore stub `cs:0x05D3`.
+> The separate `ESC <letter>` table at seg `0x77D` (`A B C D H J K Y …`) is a
+> *different* set — not consulted by this display path — and is most likely a
+> function-key output table.
+
+### 6.7 Low-level video primitives
+
+The opcode handlers reach the screen through a small set of primitives:
+
+| Routine | Function |
+|---------|----------|
+| `0x1A0` | position cursor from `DH`/`DL`, compute video-RAM offset `DI` |
+| `0x1DE` | read char at `DI` — CGA horizontal-retrace synced (snow-free) |
+| `0x1F1` / `0x20B` | write char / char+attr word at `DI`, retrace-synced |
+| `0x225` / `0x24F` | copy char+attr / `movsw` block, retrace-synced |
+| `0x83D` | erase region — fill with space + current attribute `[0x4F9]` |
+| `0x1BE` | **bell** — PIT channel 2 (`OUT 43h/42h`) + speaker gate (`OUT 61h`) |
+
+Video memory is addressed directly at `B800:` (`0xD53`), in parallel with the
+INT 10h BIOS calls of §6.5.
+
+## 7. Keyboard extension (`T_KEYB.COM` + `KEY*.TIB`)
+
+L1WSE does **not** load the `.TIB` files; it only checks a national keyboard is
+present. The resident **`T_KEYB.COM`** ("TIB KEYBOARD HANDLER") loads a `.TIB` file
+and **replaces the M24's native keyboard translation**, providing layouts and
+special key codes the stock M24 keyboard BIOS cannot produce.
+
+### 7.1 `.TIB` table format (e.g. `KEYUK1.TIB`, 703 bytes)
+
+| Field | Layout |
+|-------|--------|
+| Header | 14 bytes; first byte = plane id (`02` for `…1`, `01` for `…2`) |
+| Records | **53 fixed 13-byte per-key records** |
+| Record | lead byte (key base char) + **six shift-state slots** |
+| Slot | `(scancode, character)` pair; `FF FF` = no output / pass-through |
+| States | ≈ *normal / shift / ctrl / alt / graph / alt-shift* |
+
+### 7.2 Evidence of extension beyond stock M24
+
+| Evidence | Detail |
+|----------|--------|
+| Extra output codes | Alt/graph planes emit `7Fh, 80h–83h` = OSKAR character-generator glyphs not typeable on stock M24 |
+| Two planes per language | `…1` vs `…2`; `KEYUK1` vs `KEYUK2` remaps symbol keys (`=`↔`^`, `[`↔`@`, `]`↔`[`, `'`↔`:`, `#`↔`]`) |
+| Keypad remap | `T_KEYB` map string `S-J7G8H9I4K5L6M1O2P3Q0R.` binds keypad scancodes (`G..R` = 0x47–0x52) to host digits |
+| National set | Danish, Finnish/Swedish (FS), French, German, Italian, Norwegian, Portuguese, Spanish (SP/SPA), Swedish (SVR/SVT), UK, USA — each in two planes |
+
+## 8. Async line driver (`ASYNC2.EXE`)
+
+`ASYNC2.EXE` installs the extended **INT 14h** line driver (`ASYNC COMM.2 driver
+installed`). Its handler range-checks `AH` in `0x40–0x4B`, chains lower functions
+to the original INT 14h (`jmp far [cs:0x22]`), and dispatches `0x40–0x4B` through a
+jump table at `cs:0x2684` (index `(AH-0x40)*2`). Presence check `AH=0x48` returns
+`AX=0xFF02`. Function directions are as listed in §3.3 (`AH=41` transmit, `AH=42`
+receive).
 
 ---
 
 ## Appendix A — file inventory
 
-- `L1WSE.EXE` — the emulator (this document's subject).
-- `OSKEM.EXE` — OSKAR display driver (INT 60h). Ships two full 32–126 charsets.
-- `ASYNC2.EXE` — async line driver (INT 14h).
-- `T_KEYB.COM` — TIB keyboard handler.
-- `KEY*.TIB` — national keyboard tables (2 planes each).
-- `CONF.EXE`, `PRT.EXE`, `CONTSW.COM`, `OSKEM.EXE` — support utilities.
+| File | Role |
+|------|------|
+| `L1WSE.EXE` | the emulator (subject of this document) |
+| `OSKEM.EXE` | OSKAR display driver (INT 60h); two 32–126 charsets |
+| `ASYNC2.EXE` | async line driver (INT 14h) |
+| `T_KEYB.COM` | TIB keyboard handler |
+| `KEY*.TIB` | national keyboard tables (2 planes each) |
+| `CONF.EXE`, `PRT.EXE`, `CONTSW.COM` | support utilities |
+
+## Appendix B — key data offsets in `L1WSE.EXE`
+
+| Offset | Meaning |
+|--------|---------|
+| `[0x0C]` | transport select (0 = serial, ≠0 = HCB block) |
+| `[0x0D]`/`[0x0E]` | terminal mode / plane bytes (sent in config block) |
+| `[0x419]` | last line-error letter (`LINE ERROR :`) |
+| `[0x431]` | HCBDRV-present flag |
+| `[0x432]` | receive ring buffer |
+| `[0xC32]` | received-byte count |
+| `[0xC34]` | receive read cursor / block length |
+| `[0xC38]` | retry counter |
+| `[0xC44]` | current command / session mode |
+| `[0xC45]`/`[0xC47]` | record type / sub-type |
+| `[0xCFC]` | `"name of HOST machine  : "` prompt string |
+| `[0xD89]` | shared block buffer (host name, send/recv payload) |
+| `[0xE89]`/`[0xE91]` | 4-byte block header fields |
+| `[0xEA1]`/`[0xEA9]`/`[0xEB1]` | pre-built command blocks |
+| `[0x1DBC]` | INT CEh connected flag |
+| `[0x1DBD]` | INT CEh function jump table |
