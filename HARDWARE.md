@@ -373,6 +373,31 @@ drives the FDC/DMA through the governo's register window (`E0`/`E1` slot) and th
 8237 DMAs sectors into system RAM — exactly what the IPL handler `0x0eae` exercises.
 Confirms the governi work in DMA. **[PHOTO]/[INF]**
 
+#### Host-side register interface (from the loader `0x0eae…`)  ⭐
+
+The governo is addressed at the found FDU slot (its high byte is saved at
+`<<1>>0x0302`); the **low byte selects a register** decoded by the gate arrays.
+Registers the ROM driver uses **[ROM]**:
+
+| Reg (low byte) | Direction | Function |
+|----------------|-----------|----------|
+| `0x1d` | read | **µPD765 Main Status Register** — driver polls RQM/DIO (rotate-test bits 7/6) to hand-shake command/result bytes |
+| `0x9f`, `0x9d` | write | µPD765 command / parameter path (command bytes) |
+| `0xe7` | write | **governo control latch** (shadowed at `<<1>>0x0354`: reset/select/motor) |
+| `0xff`, `0xf7`, `0xed` | read | governo status / interrupt-complete (bits 0/1) |
+| `0x50`, `0x5e` | write | mode / strobe |
+
+The boot read is a **µPD765 READ DATA** command built from a 10-byte template
+(`0x17dc` / `0x17e6`): `06`(READ) `HDUS` `C=0` `H=0` `R=1` `N` `EOT` `GPL` `DTL` —
+i.e. **cylinder 0, head 0, sector 1** (the boot sector). Two templates cover two disk
+formats (EOT `0x10`/`0x1a`, GPL `0x10`/`0x07`); the loader tries one, then the other
+(auto-detect). The 8237 DMAs the sector into system RAM. **[ROM]**
+
+> To model: `upd765` behind a small register-remap (low-byte → status/data/control)
+> + `i8237` for the memory transfer. The gate-array specifics (exact bit meanings of
+> `0xe7`/`0xff`) still need confirming, but the command/status hand-shake is standard
+> µPD765. **[ROM]/[INF]**
+
 ---
 
 ## 7. RAM sizing (how memory is discovered)
