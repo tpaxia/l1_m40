@@ -87,12 +87,11 @@ because the Monitor pulls each subsystem test in as an overlay afterwards. **[DI
 **The loader lives in the ROM.** The bootloader carries no disk driver; it reaches
 one by a double indirection — `TYPE -> device-type table (0xdc) -> reversed index
 -> pointer table (0xe6) -> a segment-0 offset -> ROM[offset] = routine entry`. (The
-index is reversed because the `cpirb` search counter counts down.) In ROM 4.1 the
-FDU/MFDU (`E0`/`E1`) routine is `<<0>>0x1642`, STC (`E6`/`E7`) is `0x1e2c`, MTU
-(`62`) is `0x01c0`; the HDU types (`E4`/`66`/`60`/`61`/`65`) are unsupported by the
-8 KB 4.1 and would resolve only in the 16 KB 6.0. So the bootloader boots the Monitor
-off whatever device the ROM booted from, by **reusing that device's ROM read
-routine**. **[DISK]+[ROM]**
+index is reversed because the `cpirb` search counter counts down.) In the ROM the
+FDU/MFDU (`E0`/`E1`) routine is `<<0>>0x1642`, direct HDU (`E4`) is `0x1e58`, STC
+(`E6`/`E7`) is `0x2814`, MTU (`62`) is `0x01c0`; types `66`/`60`/`61`/`65` are
+unused. So the bootloader boots the Monitor off whatever device the ROM booted
+from, by **reusing that device's ROM read routine**. **[DISK]+[ROM]**
 
 ---
 

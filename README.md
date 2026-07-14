@@ -16,14 +16,15 @@ through a fixed sequence of milestones:
 4. **detect the hard disk** (as required for installation).
 
 The M40 is the segmented-CPU member of the Olivetti **L1** line; the M30 is its
-sibling and shares this ROM family. Two ROM builds are in scope, `REL 4.1` (8 KB)
-and `REL 6.0` (16 KB), both banner-dated *17 DEC 82*.
+sibling and shares this ROM family. The firmware in scope is **`REL 6.0`** (16 KB
+EPROM pair), banner-dated *17 DEC 82* — the build carrying the full set of IPL
+device handlers, including the direct hard-disk governo.
 
 > The service manual splits the resident firmware into **ROM 151** (on
 > central-unit boards produced up to Nov 1982) and **ROM 152** (from Nov 1982) — a
 > board/hardware generation, *distinct* from the `REL x.x` loader-release number.
-> The manual does not tie either REL to 151/152; the Dec-1982 date only *suggests*
-> these dumps belong to the 152 era. Treated here as unconfirmed.
+> The manual does not tie the REL to 151/152; the Dec-1982 date only *suggests*
+> this dump belongs to the 152 era. Treated here as unconfirmed.
 
 ### Documents
 
@@ -104,8 +105,10 @@ Ordered roughly by the sequence in which the ROM exercises them.
   its governo command/DMA interface is the next step toward M2/M3.
 
 ### 3.7 HDU — hard-disk governo (IPL source + installation target)
-- In the IPL search as types `E4` (direct) / `EF` (via GIPO/IEEE-488); highest
-  priority when ISL selects HDU-first. Handler `0x1a5e`. Detection needed for M4.
+- In the IPL search as types `E4` (direct disk-controller governo, handler
+  `0x1e58`) and `EF` (via GIPO/IEEE-488, handler `0x1a5e`); highest priority when
+  ISL selects HDU-first. The **direct governo `0x1e58`** is the M4 target — detect
+  the HD for installation.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
 - Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
@@ -134,7 +137,7 @@ HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
 
 ## 5. Method
 
-- **Round-trippable disassembly.** Each ROM is disassembled to a form that
+- **Round-trippable disassembly.** The ROM is disassembled to a form that
   reassembles to a **byte-identical** image, so annotations can be added freely
   and always re-verified against the original.
 - **Annotate outward from reset**, block by block, keeping every change

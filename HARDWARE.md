@@ -86,7 +86,7 @@ Chipsets read off physical boards in the spares set:
 | **GO280** | **FDU / MFDU floppy** | **µPD765** (`FDC765AC`) + **8237/9517 DMA** + 8253 + 2× TI gate arrays (`GA04-CF11051`, `CF11050P-GA03`) | `upd765`+`i8237`+`i8253` (M2/M3) |
 | **GO363** | **HDU — ST506 interface** | **NEC µPD7261** HDC + 8253 + `TC5565` 8K SRAM buffer + 20 MHz osc + `MC3466` data sep | µPD7261 (M4) |
 | **GO252** | **video / keyboard (KDC)** | **MC6845** CRTC (`MC68B45P`) + **MB15651** gate array + 2× `TMM2016` video SRAM + GI char-gen | mc6845 (video) |
-| **GO200X** | **STC — streaming tape** (`E6`; IPL handler `0x1e2c`) | **Zilog Z8002** CPU + **AM9517 DMA** + 2× 6116 SRAM + firmware EPROM pair (rel "R6.1"); `COD.339192` | local Z8002 subsystem |
+| **GO200X** | **STC — streaming tape** (`E6`; IPL handler `0x2814`) | **Zilog Z8002** CPU + **AM9517 DMA** + 2× 6116 SRAM + firmware EPROM pair (rel "R6.1"); `COD.339192` | local Z8002 subsystem |
 | **GO151** | **serial line governo** (2× async; `D?`); `COD.339096` | **Z80 DART** (`Z8470`) + 8253 + 4.9152 MHz baud clock; non-intelligent (host-driven) | z80dart |
 | RAM boards | memory | DRAM arrays + a gate array | (not chip-ID'd) |
 
@@ -168,7 +168,7 @@ Physical memory map (as the ROM assumes it):
 
 | Physical | Contents | Tag |
 |----------|----------|-----|
-| `0x000000`… | **ROM** (8 KB REL 4.1 / 16 KB REL 6.0) | [ROM] |
+| `0x000000`… | **ROM** (16 KB, `REL 6.0`) | [ROM] |
 | `0x010000`–`0xEF0000` | **RAM**, in 64 KB banks; contiguous; sized at boot; ≥ 16 KB required | [ROM] |
 | `0xF00000` | video window (seg 62) | [ROM] |
 | `0xFF0000` | **video framebuffer** (seg 61); 80×25 char cells, 2 bytes/cell | [ROM] |
@@ -341,9 +341,9 @@ stage **[ROM]**:
    | Device | Handler | Notes |
    |--------|---------|-------|
    | FDU / MFDU (`E1`/`E0`) | **`0x0eae`** | floppy loader — the path to **M2/M3** |
+   | HDU direct (`E4`) | **`0x1e58`** | direct disk-controller governo — the path to **M4** |
    | GIPO / HDU (`EF`) | `0x1a5e` | IEEE-488 / DCU / HDU loader |
-   | STC (`E6`) | `0x1e2c` | streaming-tape loader |
-   | HDU direct (`E4`) | `0xffff` | no direct handler (booted via GIPO) |
+   | STC (`E6`) | `0x2814` | streaming-tape loader |
 
 4. **Retry** the whole search until a boot succeeds (`<<1>>0x0308 == 0x5555`),
    showing a "waiting for IPL" indication otherwise.
