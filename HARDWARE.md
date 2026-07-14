@@ -405,15 +405,23 @@ once at boot (`0x2a6`), where the code **writes all 16 registers and hand-shakes
 the NVI** it raises — a init/exercise, **not an address load** (the written value is a
 don't-care leftover). **[ROM]**
 
-> **Where does the track land?** The ROM **never programs a destination address** for
-> the boot DMA — not in the `0x2a6` init (garbage data) and not in the FDU transfer
-> (only the `0xFF84`/`0xFF8C` gate strobes). So the destination appears **hardware-
-> fixed** by the MB15652 gate array + governo 8237 wiring (a fixed system-RAM window),
-> rather than software-selectable. The **exact fixed base** — and the `0xe7`/`0xff`/
-> controller-register bit meanings — need the **MB15652 schematic**; that's the last
-> concrete M2 unknown. To model: `upd765` (behind the low-byte remap: `0x1d`=status,
-> `0x9x`=cmd, `0xe7`=control) + `i8237`, DMAing a full track to a fixed RAM base.
-> Command/status hand-shake is standard µPD765. **[ROM]/[?]**
+**Where the track lands — logical segment 60.** The boot handler (`0x85e`) reads the
+track to **`<<60>>0x0000`** (segment 60 — the same descriptor used earlier as the RAM
+scratch window, so the DMA target is set by whatever descriptor 60 maps). It then:
+
+1. validates a **magic**: the first 4 bytes must be **`"SYS0"`** (`0x53595330`);
+2. takes the **entry point** from the block header — the **longword at
+   `<<60>>0x0004`** — into `rr4`;
+3. reprograms the MMU descriptors + copies the PSA, then **`jp @rr4`** to that entry.
+
+So the destination *is* software-visible after all (via the jump), and the boot image
+is self-describing: **`"SYS0"` + 4-byte entry-point address + code**. **[ROM]**
+
+> To model: `upd765` (behind the low-byte remap: `0x1d`=status, `0x9x`=cmd,
+> `0xe7`=control) + `i8237`, DMAing a whole track into the RAM that **MMU descriptor
+> 60** maps; the ROM checks `"SYS0"` and jumps to the header entry point. The
+> remaining fuzz is only the `0xe7`/`0xff`/`0xFF80-8F` register bit meanings (the
+> MB15652 glue) — the *address* is now known. **[ROM]**
 
 ---
 
@@ -461,7 +469,7 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 | # | Question | Needed for |
 |---|----------|------------|
 | 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
-| 2 | **`0xFF80..0xFF8F` = UC DMA/interrupt controller** (identified); still need its per-register bit meanings + the **fixed DMA destination base** it maps into system RAM | M2 (floppy boot) |
+| 2 | **`0xFF80..0xFF8F` = UC DMA/interrupt controller** and **boot dest = seg 60** (both identified); still need the per-register bit meanings of the MB15652 glue (`0xe7`/`0xff`/`0xFF80-8F`) | M2 (floppy boot) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | FDU register map (µPD765 + 8237 + gate arrays known; the *governo↔host* register layout in the `E0`/`E1` slot window is not) + the **HDU** governo interface | M2–M4 (IPL, install) |
