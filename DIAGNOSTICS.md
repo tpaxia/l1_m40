@@ -52,31 +52,47 @@ subsystem-specific test payload. **[DISK]**
 
 ### 2.1 The three stages (traced)
 
-```
-Stage 1  ROM IPL          read track 0 (26 sec) -> seg 60, check "SYS0",
-                          jp <<25>>0x000c        (config table handed off in seg 1)
+The first-stage bootloader — the 512-byte code+tables prefix of the `SYS0` block —
+has been fully disassembled (round-trippable to a byte-identical image) and is
+**identical on all nine disks**. The flow:
 
-Stage 2  SYS0 bootloader  ~260 bytes of code+tables, runs at <<25>>:
-  0x0c   read <<1>>0x0308 marker -> calr 0x22 (load Monitor) -> jp <<25>>0x0234
-  0x22   ldb rh4,<<1>>0x0302        ; the boot slot (from the ROM)
-         ldb rl7,<<1>>0x0230(slot)  ; read config-table TYPE  <- reuses ROM's scan
-         dispatch: device-type table @0xdc -> loader-pointer table @0xe6
-  0xaa   LBA -> CHS conversion (mul/div by 26 sec/track, 2 heads); read the
-         Monitor as a run of logical sectors into <<25>>
+```
+Stage 1  ROM IPL          Read track 0 (26x128B) into the <<60>> DMA buffer, check
+                          "SYS0", then alias MMU descriptor 25 onto that same buffer
+                          and jp to the header entry <<25>>0x000c. The seg-1 config
+                          table is handed off unchanged.
+
+Stage 2  SYS0 bootloader  Runs at <<25>>; ~200 bytes of code + a few tables:
+  0x0c  r2 = boot marker (<<1>>0x0308); rr2 = &descriptor (0x0114); call the loader
+  0x22  loader: rl7 = config-table[bootslot].TYPE (<<1>>0x0230) — the ROM's own
+        enumeration, no bus re-scan. Look TYPE up in the device-type table (0xdc),
+        fetch a ROM (segment-0) read routine via the pointer table (0xe6), call it.
+        The loop is retry-on-error, NOT a descriptor list: rr2 never advances, so
+        exactly ONE load command is issued and retried (via ROM recovery routine
+        0x0d10) until the FDC status word is clean.
+  0xaa  LBA -> CHS (divide the start block by sectors/track, then heads).
+  ->    jp <<25>>0x0234   (Monitor entry, which lies inside the loaded image)
 
 Stage 3  Diagnostic Monitor   SYSTEM ENVIRONMENT screen, HIT ENTER, test menu
 ```
 
-The bootloader's **device-type table** (`0xdc`, 10 entries) lets it load the Monitor
-off whatever device the ROM booted from: `E4`(HDU) `E0`(MFDU) `66` `E6`(STC) `E7`
-`E1`(FDU) `60`(HDU-14 adapter) `61`(HDU-SMD) `62`(MTU) `65`(ST506) — each with a
-loader routine (`0xe6`). It reads sequential logical blocks, converting each **LBA to
-cylinder/head/sector** for the FDC. So the second stage can be an arbitrary number of
-sectors; the *first* stage (ROM) is always one track. **[ROM]+[DISK]**
+**The load command (exact second-stage size).** The 9-byte descriptor at
+`<<25>>0x0114` is `99 00 02 00 | 0e 00 | 01 00 01`: destination **`<<25>>0x0200`**,
+length **`0x0e00` (3584 bytes = 14 sectors × 256 B)**, start params `01 00 01`
+(C/H/S, the first MFM data track). The ROM loader copies it to `<<1>>0x0366` and
+reads the run. So the **entire second stage is a single 3584-byte load** to
+`<<25>>0x0200`; the Monitor entry `<<25>>0x0234` sits inside it. That core is small
+because the Monitor pulls each subsystem test in as an overlay afterwards. **[DISK]+[ROM]**
 
-*(Not yet unpacked: the exact Monitor load size — the load descriptor at bootloader
-`0x114` is `<<25>>0x0200`, len `0x0e00`, … — only needed if we want the precise
-second-stage sector count.)*
+**The loader lives in the ROM.** The bootloader carries no disk driver; it reaches
+one by a double indirection — `TYPE -> device-type table (0xdc) -> reversed index
+-> pointer table (0xe6) -> a segment-0 offset -> ROM[offset] = routine entry`. (The
+index is reversed because the `cpirb` search counter counts down.) In ROM 4.1 the
+FDU/MFDU (`E0`/`E1`) routine is `<<0>>0x1642`, STC (`E6`/`E7`) is `0x1e2c`, MTU
+(`62`) is `0x01c0`; the HDU types (`E4`/`66`/`60`/`61`/`65`) are unsupported by the
+8 KB 4.1 and would resolve only in the 16 KB 6.0. So the bootloader boots the Monitor
+off whatever device the ROM booted from, by **reusing that device's ROM read
+routine**. **[DISK]+[ROM]**
 
 ---
 
