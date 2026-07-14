@@ -519,12 +519,18 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 | # | Question | Needed for |
 |---|----------|------------|
 | 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
-| 2 | **`0xFF80..0xFF8F` = UC DMA/interrupt controller** and **boot dest = seg 60** (both identified); still need the per-register bit meanings of the MB15652 glue (`0xe7`/`0xff`/`0xFF80-8F`) | M2 (floppy boot) |
+| 2 | **`0xFF80..0xFF8F` = 16-register MB15652 DMA/interrupt arbiter** — init/self-tested at reset (`0x02aa`: NVI-paced zeroing of all 16 regs, the resident counterpart of disk-A's BUS ARBITER TEST); transfers use only `0xff84` (DMA request/gate open) + `0xff8c` (DMA control/close). Still need the **per-register bit meanings** of the MB15652 glue (`0xe7`/`0xff`/`0xFF80-8F`) | M2/M4 (DMA) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
-| 5 | ~~FDU register map~~ — **fully documented** now (manual `3963590`, §6.3); only the **HDU** governo interface remains | M4 (install) |
+| 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590`; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
 | 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
+
+> Two settled negatives (simplify the model): CPU **traps are unhandled** — the
+> segment / privileged-instruction / system-call PSA slots hold the banner text, so
+> the ROM assumes none fire during self-test; and there is **no serial console** —
+> the on-board 6850 ACIA is never touched, all diagnostic output is the `0xFFE0`
+> code latch + `0xFF64` indicator + video. **[ROM]**
 
 ---
 
