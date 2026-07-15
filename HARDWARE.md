@@ -273,15 +273,25 @@ disk image for `0xFF__` port accesses; functions inferred from the access patter
 | `0xFF00`–`0xFF02` | control latches (heavy `0xFF00` use) | UC control |
 | `0xFF20` / **`0xFF22`** | `0xFF22` very heavily read/written | UC status/control pair |
 | `0xFF11`, `0xFF19`, `0xFF40`, `0xFFB1`, `0xFFF0`, `0xFFFE` | scattered | misc control/status |
-| **`0xFF50`,`0xFF51`,`0xFF54`–`0xFF5F`** | a structured block | candidate **MASTER/SLAVE / MUX / adapter** |
+| **`0xFF50`,`0xFF51`,`0xFF54`–`0xFF5F`** | **multiprocessor / master-slave signaling** (disk-A `UCY` = *UCO.71 MULTIPROCESSOR UC TEST*, the "MASTER AND VIENO SIGNAL" test): `0xFF51` = status (bit 0 polled), `0xFF54`/`55`/`58`/`5E`/`5F` = signal/control | **master-slave (multiprocessor)** |
 | `0xFF60`–`0xFF6F` | indicator (`0xFF60+n`), read-back | diagnostic console (extends §4 rows) |
 | `0xFFA0`,`0xFFA5`,`0xFFAA` | config/jumper block | UC config |
 | **`0xFFC0`**–`0xFFC7` | 8253 (adds counter-0 data at `0xFFC0`) | 8253 (extends §4) |
 | **`0xFFD0`–`0xFFDB`** | **cache-memory controller** — the optional Fujitsu **S3000SV cache** (disk-A `FJCAC1`/`WRCAC` "CACHE TEST"): `0xFFD1` = status (bits 6–7 = tag **hit/miss**, bit 0 = flag), `0xFFD2–DB` = tag / data / associative-memory access + watch-dog | **cache (optional board)** |
 
-The `0xFF5x` and `0xFFD0–DB` blocks are the two substantial UC peripherals the boot
-ROM never uses; nailing them needs the corresponding A-test overlays (MASTER/SLAVE,
-S8000 TCM, ADAPTER) disassembled — a next step if we model those subsystems.
+**UC component list, from the `UCY`/`UCO.71 MULTIPROCESSOR UC TEST` menu.** The disk-A
+UC test enumerates its own sub-tests, which name the full on-board component set —
+several of which the boot ROM never exercises: **[DISK]**
+
+> `1) SLOT` · `2) MMU2 AND MMU1` · `3) MASTER AND VIENO SIGNAL` · `4) TIMER` ·
+> `5) ACIA` · `6) INTERRUPT` · `7) ABORT (MMU)` · `8) ROM` · `9) EAROM` ·
+> `10) SWITCHES` · `11) CACHE` · `12) WATCH-DOG` · `13) BUS ARBITER` · `14) RESET`
+
+New facts for the UC model: **two Z8010 MMUs** (MMU1 + MMU2 — the ROM programs only
+one at boot), a **6850 ACIA** that is real and tested (the ROM just never uses it), an
+**EAROM**, board **config switches**, a **watch-dog** timer, and the (optional) cache.
+This is the on-disk confirmation of the disk-A test set (BUS ARBITER = §4.1 above,
+etc.). Register-level detail for `0xFF5x` still needs the sub-test disassembled.
 
 ---
 
