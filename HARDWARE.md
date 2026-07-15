@@ -714,7 +714,8 @@ MAME device to write; **[?]** = open question. Cores already in MAME: `z8001`, `
 - [BUILD] **UC glue (MB15652-equivalent)** — the enumeration backbone: `0xFF41` READY/NMI+ISL `[?]` bit map (§9 #3), the `0xFF80–8F` **arbiter** (§4.1, decoded), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
 - [SPEC] **i8253** PIT, ch0→ch1 cascade → the tick/timeout (§ "which 8253 channel").
 - [SPEC] **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test.
-- Optional for M1: 6845 CRTC/video (diagnostic output can be the console latch alone); 6850 ACIA (present but unused at boot).
+- Optional for M1 *booting*: 6845 CRTC/video (the ROM autodiagnostic can report on the console latch `0xFFE0`/indicator `0xFF64` alone); 6850 ACIA (present but unused at boot).
+- **Required to *operate* the loaded diagnostics** (e.g. disk A): the **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + character framebuffer at **phys `0xFF0000`** (80×25, 2 B/cell; the loaded Monitor maps a segment onto that window) **+ the keyboard** (the Monitor menus read a test number). Without it, the ROM still boots the Monitor but there is nowhere to display and no way to interact.
 
 ### M2 / M3 — IPL + floppy boot
 - [BUILD] **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7`+`0xFF`/`0xED` bit0 / ID `0xFF`. Reg map: manual `3963590`. `[?]` exact `0xE7`/`0xFF` bits.
