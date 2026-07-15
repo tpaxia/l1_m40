@@ -238,7 +238,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
 | `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions — possibly the **6850 ACIA** (EF68B50) registers | [ROM]/[INF] |
 | `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
-| `0xFF41` | **NMI / READY control + status** | read+cleared in NMI handler; **bit 0 = BBU-valid**, **bit 1 = ISL boot-order switch**, bit 6 = probe outcome. Likely in the **MB15652 gate array** | [ROM/INF] |
+| `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = READY fault** (last access got no `READY` = unpopulated addr / empty slot — the NMI cause RAM-sizing & the slot-scan depend on, ROM NMI→`0xada`); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
@@ -709,7 +709,7 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 |---|----------|------------|
 | 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
 | 2 | ~~`0xFF80..0xFF8F` arbiter bit meanings~~ — **decoded** from disk-A's BUS ARBITER TEST (§4.1): `0xFF81` = grant (bit 7–4 = ch 0–3), `0xFF80–83` = per-channel ack, `0xFF84–87` = DMA request, `0xFF8C–8F` = DMA control. Remaining: the governo-side `0xe7`/`0xff` and HDU `0xb0` strobe bits | M2/M4 (DMA) |
-| 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
+| 3 | ~~`0xFF41` bit map~~ — **decoded** (§4): bit 0 = BBU-valid, bit 1 = ISL, **bit 6 = READY fault** (the unpopulated-access NMI cause), bit 7 = NMI-cause; write = clear/re-arm. Remaining: exact write/control-side bits | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590`; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
