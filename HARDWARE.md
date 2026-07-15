@@ -287,11 +287,13 @@ several of which the boot ROM never exercises: **[DISK]**
 > `5) ACIA` · `6) INTERRUPT` · `7) ABORT (MMU)` · `8) ROM` · `9) EAROM` ·
 > `10) SWITCHES` · `11) CACHE` · `12) WATCH-DOG` · `13) BUS ARBITER` · `14) RESET`
 
-New facts for the UC model: **two Z8010 MMUs** (MMU1 + MMU2 — the ROM programs only
-one at boot), a **6850 ACIA** that is real and tested (the ROM just never uses it), an
-**EAROM**, board **config switches**, a **watch-dog** timer, and the (optional) cache.
-This is the on-disk confirmation of the disk-A test set (BUS ARBITER = §4.1 above,
-etc.). Register-level detail for `0xFF5x` still needs the sub-test disassembled.
+New facts for the UC model: a **6850 ACIA** that is real and tested (the ROM just
+never uses it), an **EAROM**, board **config switches**, a **watch-dog** timer, and
+the (optional) cache. The `MMU2 AND MMU1` sub-test belongs to the **multiprocessor UC
+variant** (two Z8010s); the **target M40 board has a single Z8010** — the one the ROM
+programs at boot — so the model uses one MMU. This is the on-disk confirmation of the
+disk-A test set (BUS ARBITER = §4.1 above, etc.). Register-level detail for `0xFF5x`
+still needs the sub-test disassembled.
 
 ---
 
@@ -581,6 +583,19 @@ land on the stub `0x00b4`.
 > `0x01c0` table. (The FDU boot path masks VI and polls instead — §6.3 — but the
 > runtime/interrupt-driven mode uses vector 4 → `0x12ec`.)
 
+### 6.6 GIPO governo (IEEE-488, type `EF`) — *not modeled*
+
+The GIPO boot handler is `0x1a5e` (→ `0x1a9e`). Unlike the FDU/HDU governi, GIPO is an
+**intelligent IEEE-488 controller** with its own firmware, driven through a **mailbox
+in main memory (MMCA — Main Memory Communication Area)** rather than a register map.
+The ROM builds a command block at `<<1>>0x0310`/`0x0338`, signals the governo
+(`0x1c8c`: write `3` to the MMCA, poll the governo status port for nibble `== 8` =
+ready, then poke it via `0x1bc0`), and waits for completion — **interrupt-driven,
+sharing the HDU path's ISR** (`0x1cf8` clears busy flag `<<1>>0x0316`). It addresses up
+to 7 peripheral units (PU 1–7) over the IEEE-488 channel; the *Manuale dei Collaudi*
+GIPO test (doc 2-163) documents the MMCA/PU model. **Out of scope** for the target
+FD+HD model (the ST506 HDU uses the direct governo `0x1e58`/§6.4, not GIPO). **[ROM]+[MAN]**
+
 ---
 
 ## 7. RAM sizing (how memory is discovered)
@@ -685,18 +700,36 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 
 ---
 
-## 10. MAME model checklist (minimum to reach M1→M4)
+## 10. MAME model checklist — what a bootable **FD + HD (ST506)** system needs
 
-- [ ] Z8001 CPU core (segmented) — clock = 32 MHz ÷ divisor (TBD).
-- [ ] Z8010 MMU: Special-I/O command decode, 64 descriptors, translate/transparent.
-- [ ] Memory: ROM at seg-0/phys-0 (2×27128, even/odd); contiguous RAM; **unpopulated access → NMI**.
-- [ ] I/O decode: bits 15-12 → slot, low byte → register (bits 11-8 don't-care); **empty slot → NMI**.
-- [ ] i8253 PIT with counter0→counter1 cascade.
-- [ ] 6850 ACIA (serial console / aux line).
-- [ ] MB15652-equivalent glue: **NMI/READY logic (`0xFF41`)** + the **`0xFF80` block** + slot decode — the enumeration backbone.
-- [ ] Diagnostic console latch (`0xFFE0`, `0xFF64..6F`).
-- [ ] 6845-family CRTC + framebuffer at seg-61/phys-`0xFF0000` (80×25).
-- [ ] FDU governo (GO280): `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`, +`0xF6` addr-high) + `i8253`(`0x9x`) + control(`0xE7`)/status(`0xF7`)/ID(`0xFF`) → floppy image (M2/M3). Register map: manual `3963590`.
-- [ ] HDU governo (GO363, ST506): NEC µPD7261 HDC + 8253 + SRAM buffer → hard-disk image (M4).
+Target board: single-MMU M40, `REL 6.0` ROM, FDU (GO280) + direct ST506 HDU (GO363).
+Status: **[SPEC]** = behaviour fully documented here, ready to implement; **[BUILD]** =
+MAME device to write; **[?]** = open question. Cores already in MAME: `z8001`, `pit8253`,
+`upd765`, `i8237`(≈am9517), `mc6845`. **Not** in MAME: `z8010`, `upd7261`.
+
+### M1 — resident autodiagnostic runs clean
+- [SPEC] **Z8001** CPU, segmented; reset `<<0>>0x0106`. Core exists. `[?]` clock divisor (§9 #1).
+- [BUILD] **Z8010 MMU** — no MAME core; needs Special-I/O decode + 64 descriptors + translate/transparent. Seg 0→ROM, 61→video. (Single MMU — the 2-MMU variant is out of scope.)
+- [BUILD] **RAM + unpopulated-access → NMI** (the READY mechanism) — this *is* how sizing/slot-scan work; the memory map must fault on unpopulated addresses.
+- [BUILD] **UC glue (MB15652-equivalent)** — the enumeration backbone: `0xFF41` READY/NMI+ISL `[?]` bit map (§9 #3), the `0xFF80–8F` **arbiter** (§4.1, decoded), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
+- [SPEC] **i8253** PIT, ch0→ch1 cascade → the tick/timeout (§ "which 8253 channel").
+- [SPEC] **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test.
+- Optional for M1: 6845 CRTC/video (diagnostic output can be the console latch alone); 6850 ACIA (present but unused at boot).
+
+### M2 / M3 — IPL + floppy boot
+- [BUILD] **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7`+`0xFF`/`0xED` bit0 / ID `0xFF`. Reg map: manual `3963590`. `[?]` exact `0xE7`/`0xFF` bits.
+- [SPEC] Boot completion is **polled** (VI masked) via the INT-pending bit `0xFF`/`0xED`.0 (§6.3).
+- [BUILD] DMA path: governo DMA → system RAM, **gated by the arbiter** `0xFF84`(open)/`0xFF8C`(close).
+- [BUILD] **Floppy image** plumbing (IMD → MAME floppy; track0 = 26×128 FM, tracks 1+ = 26×256 MFM).
+
+### M4 — detect + boot the ST506 hard disk
+- [BUILD] **HDU governo (GO363)** = **`upd7261` skeleton + `l1_hdgov`** (started in `mame/`). Reg map (§6.4): DMA counter `0x80/82`, start `0x83`, status `0x90`, µPD7261 latch `0xB0`, drive/CHS `0xE0/E1`. `[?]` `0xB0` strobe bits + geometry-select.
+- [BUILD] **Interrupt vectoring** — completion is **VI-driven** (§6.5): the governo asserts a backplane INT carrying its **vector** (written to governo reg `0xAA`); the UC routes it to the Z8001 VI, which dispatches through the RAM table `<<1>>0x01c0`. Model the INT line + vector.
+- [BUILD] **ST506 hard-disk image** (CHD), with the L1 256-byte-sector geometry mapped.
+- [SPEC] IPL search selects `E4` (direct HDU) → handler `0x1e58` in 6.0.
+
+### Not needed for this target
+GIPO governo (§6.6, IEEE-488 — out of scope), the S3000SV **cache** (`0xFFD0–DB`, optional board),
+the `0xFF5x` master-slave block (multiprocessor variant), the second MMU, line/printer/PIN-PAD governi.
 
 *This document tracks the disassembly; update it as `re/` annotations advance.*
