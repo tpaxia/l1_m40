@@ -482,6 +482,44 @@ governo **assert a backplane vectored interrupt** on command completion (via the
 > strobe (`0x83`), a polled status (`0x90`), a command/control latch (`0xb0`), and a
 > drive/CHS select (`0xe0`/`0xe1`). Geometry and the exact strobe bits are still open.
 
+### 6.5 Interrupt / ISR model  ⭐
+
+How governo completions reach the CPU (the M4 interrupt loop). **[ROM]**
+
+**Fixed CPU exceptions** (PSA at `<<0>>0x0000`, copied to RAM at boot):
+- **Reset** → `<<0>>0x0106`. **Traps** (unimplemented / privileged / system-call /
+  segment) are **unhandled** — the banner text occupies their PSA slots.
+- **NMI** → `<<0>>0x00ce` — the **enumeration probe-fault** handler: an empty slot /
+  no-`READY` faults here and is **resumed via `jp @rr12`** (a resume address staged
+  before the risky access; this is how the slot scans tolerate empty slots). Special
+  case `0xFF41` bit 6 → `jp 0xada` (power-fail / BBU).
+- **NVI** → `<<0>>0x00f2` — minimal resumable handler (`jp @rr12`), used by the
+  bus-arbiter self-test.
+
+**Governo completion interrupts** use a **16-entry vector table at `<<1>>0x01c0`**
+(4-byte `{seg,off}` ISR pointers, indexed by **vector × 2** so vectors are even).
+It is built at `0x0516`, default-filled with a stub `<<0>>0x00b4`; then each governo,
+in its init/boot handler, is **assigned a vector via a governo register** and
+**installs its own ISR**:
+
+| Device | Vector | Vector reg | ISR | ISR action on completion |
+|--------|--------|-----------|-----|--------------------------|
+| 8253 tick | 2 | (UC 8253) | `0x0e2e` | decrement the command timeout `<<1>>0x030f` |
+| FDU / MFDU | 4 | governo `0xEF` | `0x12ec` | set ready bit `0x0354.0`, status `0x034a`/`0x034e` |
+| HDU (GO363) | block of 8 | governo `0xaa` | `0x1cf8` / `0x22ca` | `clrb <<1>>0x0316` (busy flag) |
+| STC | — | — | `0x298e` | — |
+
+On completion the governo raises its interrupt **carrying its vector**; the CPU
+vectors through `0x01c0[vector×2]` to the ISR, which records status / clears the busy
+flag and `iret`s, releasing the foreground spin-wait (§6.3/§6.4). Unassigned vectors
+land on the stub `0x00b4`.
+
+> To model M4: the `l1_hdgov` device needs a writable **vector register (`0xaa`)** and
+> must **assert the backplane interrupt carrying that vector** on command complete;
+> the machine routes the backplane INT to the Z8001 VI, which vectors through the
+> `0x01c0` table. (The FDU boot path masks VI and polls instead — §6.3 — but the
+> runtime/interrupt-driven mode uses vector 4 → `0x12ec`.)
+
 ---
 
 ## 7. RAM sizing (how memory is discovered)
