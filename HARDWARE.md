@@ -322,16 +322,19 @@ records the machine's configuration into system RAM **[ROM]**:
   entry**:
   - **`+0` = `type (XX)`** — one byte, the *nome logico* (`0xFF` UC, `0xFE` video,
     `0xE4` HDU, `0xE1` FDU, `0xE0` MFDU, `0xE6` STC, …).
-  - **`+2` = `diagnostic-response (YYYY)`** — one word: **`0x0000` for a present
-    non-video board** (just "present/OK"); for a **video board (`0xFE`)** a computed
-    word from `0x0996` (queries the CRTC via `0xbc6` / reg `0x81`, encoding the
-    controller **type + config**). An **absent slot faults (no `READY` → NMI) and is
-    written `0xFFFF/0xFFFF`**.
-- So the response is *not* a generic pass/fail — only video carries data; every
-  other present board reads back `type / 0x0000`. This 16×4-byte table is the data
-  behind the *"NLS 30000 SYSTEM ENVIRONMENT"* screen, and the two-stage boot loader
-  reads it directly (no re-scan). The RAM start/end are also published to
-  `<<1>>0x0220..0x022a`.
+  - **`+2` = `diagnostic-response (YYYY)`** — a **pass/fail** word: **`0x0000` =
+    present/OK**, `0xFFFF` = fault. Non-video boards are only probed for presence, so
+    they always read `0x0000`. A **video board (`0xFE`)** is the one that runs a live
+    functional check (`0x0996` → `0xbc6`): select the CRTC init string by controller
+    type (reg `0x81` & 7 → table `0xc44`), program the CRTC, size the framebuffer, and
+    confirm the status/retrace bit (reg `0x81` bit 3) **toggles** — **`0x0000` if the
+    video is alive, `0xFFFF` if it is dead**. An **absent slot faults (no `READY` →
+    NMI) and is written `0xFFFF/0xFFFF`**.
+- The video board's *detailed* config is captured **separately**, not in this table:
+  slot → `<<1>>0x0355`, a "video-found" flag → `0x0357`, framebuffer extent →
+  `0x035a`. This 16×4-byte table is the data behind the *"NLS 30000 SYSTEM
+  ENVIRONMENT"* screen, and the two-stage boot loader reads it directly (no re-scan).
+  The RAM start/end are also published to `<<1>>0x0220..0x022a`.
 
 ### 6.2 IPL device search & load (`0x065c`) — how the machine boots  ⭐
 
