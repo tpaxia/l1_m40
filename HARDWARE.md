@@ -242,12 +242,46 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
-| `0xFF80`–`0xFF8F` | **UC DMA / interrupt controller** (NVI source), in the MB15652 gate array | inits at `0x2a6` (writes all 16 regs + NVI handshake); the FDU transfer strobes `0xFF84`=gate / `0xFF8C`=control | [ROM]/[INF] |
+| `0xFF80`–`0xFF8F` | **MB15652 bus/DMA arbiter** — 4 channels × 4 register groups (see §4.1) | `0xFF80–83` = arbitration **acknowledge** (`0xFF81` reads back the **grant**); `0xFF84–87` = DMA **request/gate** (`0xFF84` boot); `0xFF8C–8F` = DMA **control** (`0xFF8C` boot). Inits all 16 at `0x2a6`; raises the **NVI** on a grant | [ROM]+[DISK] |
 | `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
 
 Chips to instantiate for the UC board (all confirmed on the UC042 photo, §0):
 **Z8001**, **Z8010**, **i8253 PIT**, **6850 ACIA**, the **MB15652 gate array** (bus /
 READY-NMI / decode / the `0xFF80` block), and the diagnostic-console latch. **[PHOTO]**
+
+### 4.1 UC registers revealed by the L1 diagnostic (disk A)
+
+The boot ROM touches only what booting needs; the **A diagnostic** (central-unit /
+RAM, DCOS 8.4) exercises far more of the `0xFF__` space. Extracted by scanning the
+disk image for `0xFF__` port accesses; functions inferred from the access pattern.
+**[DISK]** (bit-detail **[?]** unless noted).
+
+**Bus/DMA arbiter `0xFF80–8F` (MB15652)** — decoded from the *BUS ARBITER TEST* ISR:
+- **`0xFF81` read = grant register**: bit 7/6/5/4 set = channel 0/1/2/3 was granted
+  (e.g. `0x90` = channels 0 **and** 3 pending).
+- **`0xFF80–83` write = per-channel acknowledge** (`0xFF80`→ch0 … `0xFF83`→ch3); the
+  ISR reads `0xFF81`, then acks the granted channel(s).
+- `0xFF84–87` = DMA request/gate (ch0 = `0xFF84`, the boot gate); `0xFF8C–8F` = DMA
+  control/mask (ch0 = `0xFF8C`). The arbiter interrupt is serviced, `0xFF81` read,
+  and the channel acked — so a MAME model needs an arbiter that grants a channel,
+  raises the interrupt, exposes the grant at `0xFF81`, and clears on the ack write.
+
+**Other UC registers the diagnostic touches** (not seen from the ROM):
+
+| Port(s) | Observed use | Guess |
+|---------|--------------|-------|
+| `0xFF00`–`0xFF02` | control latches (heavy `0xFF00` use) | UC control |
+| `0xFF20` / **`0xFF22`** | `0xFF22` very heavily read/written | UC status/control pair |
+| `0xFF11`, `0xFF19`, `0xFF40`, `0xFFB1`, `0xFFF0`, `0xFFFE` | scattered | misc control/status |
+| **`0xFF50`,`0xFF51`,`0xFF54`–`0xFF5F`** | a structured block | candidate **MASTER/SLAVE / MUX / adapter** |
+| `0xFF60`–`0xFF6F` | indicator (`0xFF60+n`), read-back | diagnostic console (extends §4 rows) |
+| `0xFFA0`,`0xFFA5`,`0xFFAA` | config/jumper block | UC config |
+| **`0xFFC0`**–`0xFFC7` | 8253 (adds counter-0 data at `0xFFC0`) | 8253 (extends §4) |
+| **`0xFFD0`–`0xFFDB`** | 12-reg peripheral: status at `0xFFD1` (bits 6–7 = state, bit 0 = flag), data/control `0xFFD2–DB` | candidate **S8000 TCM / adapter** |
+
+The `0xFF5x` and `0xFFD0–DB` blocks are the two substantial UC peripherals the boot
+ROM never uses; nailing them needs the corresponding A-test overlays (MASTER/SLAVE,
+S8000 TCM, ADAPTER) disassembled — a next step if we model those subsystems.
 
 ---
 
@@ -602,7 +636,7 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 | # | Question | Needed for |
 |---|----------|------------|
 | 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
-| 2 | **`0xFF80..0xFF8F` = 16-register MB15652 DMA/interrupt arbiter** — init/self-tested at reset (`0x02aa`: NVI-paced zeroing of all 16 regs, the resident counterpart of disk-A's BUS ARBITER TEST); transfers use only `0xff84` (DMA request/gate open) + `0xff8c` (DMA control/close). Still need the **per-register bit meanings** of the MB15652 glue (`0xe7`/`0xff`/`0xFF80-8F`) | M2/M4 (DMA) |
+| 2 | ~~`0xFF80..0xFF8F` arbiter bit meanings~~ — **decoded** from disk-A's BUS ARBITER TEST (§4.1): `0xFF81` = grant (bit 7–4 = ch 0–3), `0xFF80–83` = per-channel ack, `0xFF84–87` = DMA request, `0xFF8C–8F` = DMA control. Remaining: the governo-side `0xe7`/`0xff` and HDU `0xb0` strobe bits | M2/M4 (DMA) |
 | 3 | Precise **`0xFF41`** bit map (READY/NMI control; incl. the BBU-valid bit 0) | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590`; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
