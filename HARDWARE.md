@@ -341,6 +341,31 @@ load R0..R15 via `0x41`/`0x43` → RAM read/write walk of the framebuffer → po
 reg for a live-signal (bit 3) toggle → enable (`0x6a`). Result word `0x0000` (OK) /
 `0xFFFF` (fail). **[ROM]**
 
+### 5.5 KDC details from the disk-B diagnostic (video + keyboard)
+
+Disk B is the KDC/video-keyboard (+MUX) test disk; it fills in the board beyond the
+ROM's minimal use. **[DISK]**
+
+- **Video controller variants.** The 8 CRTC types split into an **alphanumeric 6845**
+  path (base — this is what the Monitor renders text through) and a **colour/graphics
+  path built on a µPD7220 GDC** ("ALPHA 7220 INITIALIZATION", "CURSOR 7220", alpha
+  lookup table, graphics memory planes; monitor types *9"/14" COLOR ALPHANUM*). Disk-B
+  video tests: `RAMVID` (video-RAM march), `CRTAN5` (alphanumeric), `CRTGR2` (B&W
+  graphics), `COLOR ALPHA E GRAPH` (7220). The **retrace / vertical-field interrupt**
+  is real ("BAD VECTOR VERT. FIELD INTERRUPT").
+- **Keyboard subsystem** (`KEYTE1` test). **Interrupt-driven** — a dedicated keyboard
+  VI ("NO KEYBOARD INTERRUPT" / "BAD VECTOR KEYBOARD INTERRUPT"). Has **LEDs** (READY,
+  L1, L2, SHIFT-LOCK, KANA-MODE), a **buzzer**, **KANA** mode, and alpha/numeric
+  layouts with function keys (DP/PM/WP variants). The ROM never touches the keyboard,
+  so its **register offsets on the FE-slot are still open [?]** — needs the `KEYTE1`
+  overlay disassembled (blocked on locating it: DML mapping, see `re/DML_filesystem.md`).
+- The **MUX** (also on disk B) is a *separate* intelligent board — **Z80 + Z80-DART +
+  CTC + SIO + dual-port RAM** line multiplexer — not part of the keyboard path.
+
+**For a bootable + operable diagnostic-A model:** the 6845 alphanumeric video +
+framebuffer is enough to **display**; the **keyboard register interface is the one
+missing KDC piece** for **input**.
+
 ---
 
 ## 6. Backplane slot scan (how boards are enumerated)
