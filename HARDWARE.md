@@ -350,7 +350,8 @@ just read back `0xFF`. The NMI/READY path is load-bearing for enumeration.
 ### 6.1 Config table ("SYSTEM ENVIRONMENT") — `ricerca governo di caricamento`
 
 After RAM is set up, the ROM runs a second full 16-slot scan (`0x0590`) that
-records the machine's configuration into system RAM **[ROM]**:
+records the machine's configuration into system RAM **[ROM]** (format & the
+`%0000`/`%FFFF` video-response confirmed by the *Manuale dei Collaudi* §1 **[MAN]**):
 
 - For each slot it reads the type-ID at register `0xFF` and writes a **4-byte
   entry**:
@@ -369,6 +370,19 @@ records the machine's configuration into system RAM **[ROM]**:
   `0x035a`. This 16×4-byte table is the data behind the *"NLS 30000 SYSTEM
   ENVIRONMENT"* screen, and the two-stage boot loader reads it directly (no re-scan).
   The RAM start/end are also published to `<<1>>0x0220..0x022a`.
+
+**Nome-logico (type-ID) table** — the full set, from the *Manuale dei Collaudi* §1.
+The UC is always slot 15 (16th position). **[MAN]**
+
+| ID | Board | ID | Board |
+|----|-------|----|-------|
+| `FF` | Unità centrale (UC) | `D5` | line X24 |
+| `FE` | video / keyboard governo | `D7` | line "lion 9.6" |
+| `E1` | FDU | `CF` | Twin RS232 / Current Loop |
+| `E0` | MFDU | `B0` | Pin-Pad / Badge Reader |
+| `E4` | HDU | `EF` | GIPO (IEEE-488) |
+| `E6` | streaming-tape cartridge (STC) | `D1` | line "TTL" |
+| `D2`/`D3` | line V24 (unattended / normal) | `D4` | line X24 (unattended) |
 
 ### 6.2 IPL device search & load (`0x065c`) — how the machine boots  ⭐
 
@@ -598,23 +612,31 @@ diagnostic console; there is no graceful degradation. **[ROM]**
 
 ### 8.1 Diagnostic codes & halt map (for debugging an M1 hang)  ⭐
 
-There are **no text messages in the ROM** (only the banner, `$BBU ON`, `SYS0`).
-Diagnostics are **numeric**, on two surfaces **[ROM]**:
+The ROM has **no text messages** (only the banner, `$BBU ON`, `SYS0`); diagnostics
+are **numeric**, and the service manual (*Manuale dei Collaudi* §1) defines them. **[MAN]+[ROM]**
 
-- **Console code latch `0xFFE0` + 4-bit indicator `0xFF64..0xFF67`** — written by
-  `0x0baa` (`outb 0xFFE0,rl7`; then one port per bit `0xFF64+n`). Only two coarse
-  **steps** are shown here: **`1`** at reset entry (`0x011c`), **`2`** just before RAM
-  sizing (`0x0338`). So the latch tells you only *"started"* vs *"reached RAM phase."*
-- **Video (4 hex digits)** — `0x0d10` renders a code word into the string buffer
-  `<<1>>0x02d4` and stores the display state in `<<1>>0x0308` (which doubles as the
-  boot-success cell: **`0x5555` = booted**). State/error words seen: **`0x4444`**
-  (enumerating / building the config table, `0x058a`), **`0x5555`** (IPL loaded OK),
-  **`0x0008`** (no bootable device / waiting for IPL), **`0x0006`** (IPL device-load
-  error). The low nibble also drives the `0xFF64` indicator.
+**Non-blinking codes** — a single digit on the `0xFFE0` console latch + `0xFF64..67`
+indicator (written by `0x0baa`, code in `rl7`). The ROM shows the code for the phase
+it is **about to run**, so a hang leaves the failed phase's code up:
 
-Because the core self-tests **halt in place** on failure rather than emitting a code,
-the **PC of the spin identifies the failed test** — the map that actually helps when
-an M1 bring-up freezes:
+| Code | Meaning | Shown at |
+|------|---------|----------|
+| `1` | **UC-board fault** (CPU / ROM-CRC / Z8010 / 8253 / arbiter) | reset entry `0x011c` |
+| `2` | **system-RAM fault** (absent, or < 16 KB) | before RAM sizing `0x0338` |
+| `3` | unexpected interrupt-time vector | — |
+| `4` | no IPL controller found | IPL search |
+| `5` | waiting for the first IPL attempt | IPL search |
+
+**Blinking codes** — for UC↔IPL-controller dialogue errors: four values `X Y Z`, also
+shown on video as `X Y Z  REL 6.0`. `0x0d10` builds them from `rl7` + the boot slot
+(`0x0302`) + unit (`0x0303`): **X** = `1` controller / `2` peripheral / `4` media-read
+error / `8` no media or no OS; **Y** = controller slot; **Z** = unit. `0x0d10` also
+carries two states in `<<1>>0x0308`: `0x4444` (enumerating), `0x5555` (booted OK — the
+boot-success value).
+
+Because the UC self-tests **halt in place** on failure (code `1` stays up), the **PC
+of the spin identifies which** UC test failed — the map that helps when an M1 bring-up
+freezes:
 
 | Halt PC | Failed test |
 |---------|-------------|
