@@ -318,11 +318,20 @@ just read back `0xFF`. The NMI/READY path is load-bearing for enumeration.
 After RAM is set up, the ROM runs a second full 16-slot scan (`0x0590`) that
 records the machine's configuration into system RAM **[ROM]**:
 
-- For each slot it reads the type-ID and stores **`type (XX)` at `<<1>>0x0230 +
-  slot*4`** and a **diagnostic-response `(YYYY)` at `+2`** (for video, fetched via
-  a helper; `0x0000` ok / `0xFFFF` fail). An **absent slot → `0xFFFF/0xFFFF`**.
-- This 16×4-byte table is the data behind the *"NLS 30000 SYSTEM ENVIRONMENT"*
-  screen. The RAM start/end are also published to `<<1>>0x0220..0x022a`.
+- For each slot it reads the type-ID at register `0xFF` and writes a **4-byte
+  entry**:
+  - **`+0` = `type (XX)`** — one byte, the *nome logico* (`0xFF` UC, `0xFE` video,
+    `0xE4` HDU, `0xE1` FDU, `0xE0` MFDU, `0xE6` STC, …).
+  - **`+2` = `diagnostic-response (YYYY)`** — one word: **`0x0000` for a present
+    non-video board** (just "present/OK"); for a **video board (`0xFE`)** a computed
+    word from `0x0996` (queries the CRTC via `0xbc6` / reg `0x81`, encoding the
+    controller **type + config**). An **absent slot faults (no `READY` → NMI) and is
+    written `0xFFFF/0xFFFF`**.
+- So the response is *not* a generic pass/fail — only video carries data; every
+  other present board reads back `type / 0x0000`. This 16×4-byte table is the data
+  behind the *"NLS 30000 SYSTEM ENVIRONMENT"* screen, and the two-stage boot loader
+  reads it directly (no re-scan). The RAM start/end are also published to
+  `<<1>>0x0220..0x022a`.
 
 ### 6.2 IPL device search & load (`0x065c`) — how the machine boots  ⭐
 
@@ -511,6 +520,39 @@ Same `READY`→NMI mechanism as the slot scan; the emulated memory/bus must mode
 
 Any failing step in 4–7/9 **hangs** (e.g. `jr self`) or shows a numeric code on the
 diagnostic console; there is no graceful degradation. **[ROM]**
+
+### 8.1 Diagnostic codes & halt map (for debugging an M1 hang)  ⭐
+
+There are **no text messages in the ROM** (only the banner, `$BBU ON`, `SYS0`).
+Diagnostics are **numeric**, on two surfaces **[ROM]**:
+
+- **Console code latch `0xFFE0` + 4-bit indicator `0xFF64..0xFF67`** — written by
+  `0x0baa` (`outb 0xFFE0,rl7`; then one port per bit `0xFF64+n`). Only two coarse
+  **steps** are shown here: **`1`** at reset entry (`0x011c`), **`2`** just before RAM
+  sizing (`0x0338`). So the latch tells you only *"started"* vs *"reached RAM phase."*
+- **Video (4 hex digits)** — `0x0d10` renders a code word into the string buffer
+  `<<1>>0x02d4` and stores the display state in `<<1>>0x0308` (which doubles as the
+  boot-success cell: **`0x5555` = booted**). State/error words seen: **`0x4444`**
+  (enumerating / building the config table, `0x058a`), **`0x5555`** (IPL loaded OK),
+  **`0x0008`** (no bootable device / waiting for IPL), **`0x0006`** (IPL device-load
+  error). The low nibble also drives the `0xFF64` indicator.
+
+Because the core self-tests **halt in place** on failure rather than emitting a code,
+the **PC of the spin identifies the failed test** — the map that actually helps when
+an M1 bring-up freezes:
+
+| Halt PC | Failed test |
+|---------|-------------|
+| `0x01e6` | **ROM checksum** mismatch (`0x01c0` sums the image, compares at `0x01e4`) |
+| `0x0206` | **8253 timer** count/overflow test |
+| `0x021e`, `0x023e` | further **timer / counter** checks |
+| `0x02f0`, `0x0300`, `0x0310`, `0x0320` | **bus-arbiter interrupt test** — the expected NVI from an `0xFF80–8F` write never arrived |
+| `0x06be` | *not a fault* — the normal IPL "wait for load complete" spin on `<<1>>0x02fc` |
+
+So in MAME: watch the **`0xFFE0` latch** and the **CPU PC** — a spin at one of the
+rows above names the missing/mis-modeled device
+(ROM image, 8253, or the `0xFF80–8F` arbiter's NVI), and a latch stuck on `1` vs `2`
+brackets it to the pre- vs post-RAM phase. **[ROM]**
 
 ---
 
