@@ -277,7 +277,7 @@ disk image for `0xFF__` port accesses; functions inferred from the access patter
 | `0xFF60`–`0xFF6F` | indicator (`0xFF60+n`), read-back | diagnostic console (extends §4 rows) |
 | `0xFFA0`,`0xFFA5`,`0xFFAA` | config/jumper block | UC config |
 | **`0xFFC0`**–`0xFFC7` | 8253 (adds counter-0 data at `0xFFC0`) | 8253 (extends §4) |
-| **`0xFFD0`–`0xFFDB`** | 12-reg peripheral: status at `0xFFD1` (bits 6–7 = state, bit 0 = flag), data/control `0xFFD2–DB` | candidate **S8000 TCM / adapter** |
+| **`0xFFD0`–`0xFFDB`** | **cache-memory controller** — the optional Fujitsu **S3000SV cache** (disk-A `FJCAC1`/`WRCAC` "CACHE TEST"): `0xFFD1` = status (bits 6–7 = tag **hit/miss**, bit 0 = flag), `0xFFD2–DB` = tag / data / associative-memory access + watch-dog | **cache (optional board)** |
 
 The `0xFF5x` and `0xFFD0–DB` blocks are the two substantial UC peripherals the boot
 ROM never uses; nailing them needs the corresponding A-test overlays (MASTER/SLAVE,
@@ -665,9 +665,11 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 | 6 | Character **cell width** (font ROM) | exact video raster |
 | 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
 
-> Two settled negatives (simplify the model): CPU **traps are unhandled** — the
-> segment / privileged-instruction / system-call PSA slots hold the banner text, so
-> the ROM assumes none fire during self-test; and there is **no serial console** —
+> Two settled negatives (simplify the model): CPU **traps are unhandled by the ROM** —
+> the segment / privileged-instruction / system-call PSA slots hold the banner text,
+> so the ROM assumes none fire during self-test (the *loaded* diagnostic does install
+> them — it has `*** SEGMENT TRAP ***` / `*** PRIVILEGED INSTRUCTION TRAP ***`
+> handlers); and there is **no serial console** —
 > the on-board 6850 ACIA is never touched, all diagnostic output is the `0xFFE0`
 > code latch + `0xFF64` indicator + video. **[ROM]**
 
