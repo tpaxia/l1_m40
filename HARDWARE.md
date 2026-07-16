@@ -238,7 +238,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
 | `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions — possibly the **6850 ACIA** (EF68B50) registers | [ROM]/[INF] |
 | `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
-| `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = READY fault** (last access got no `READY` = unpopulated addr / empty slot — the NMI cause RAM-sizing & the slot-scan depend on, ROM NMI→`0xada`); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
+| `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = NMI cause-classifier** (the NMI handler reads it to dispatch: **clear** → `jp @rr12` = the RAM-sizing / slot-scan resume path taken by a plain no-`READY` unpopulated-address fault; **set** → `jp 0xada`, a *distinct* cause — power-fail / BBU — that keeps the scan running. A plain unpopulated-access fault raises the NMI with **bit 6 = 0**; the NMI itself is the fault signal); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
 | `0xFF20` | control latch | written `0x03` at init | [ROM] |
 | `0xFF01` | control latch | written at init | [ROM] |
@@ -579,8 +579,13 @@ How governo completions reach the CPU (the M4 interrupt loop). **[ROM]**
   segment) are **unhandled** — the banner text occupies their PSA slots.
 - **NMI** → `<<0>>0x00ce` — the **enumeration probe-fault** handler: an empty slot /
   no-`READY` faults here and is **resumed via `jp @rr12`** (a resume address staged
-  before the risky access; this is how the slot scans tolerate empty slots). Special
-  case `0xFF41` bit 6 → `jp 0xada` (power-fail / BBU).
+  before the risky access; this is how the slot scans and RAM sizing tolerate empty
+  slots / absent banks). It dispatches on `0xFF41` **bit 6**: **clear** → `jp @rr12`
+  (the normal resume — the case a plain no-`READY` unpopulated-address fault takes);
+  **set** → `jp 0xada`, a *distinct* NMI cause (power-fail / BBU) that continues the
+  scan rather than resuming. So a plain unpopulated-access fault must present **bit 6 =
+  0** — modelling it the other way makes the sizing loop treat every absent bank as
+  "keep going" and run past the real top of RAM.
 - **NVI** → `<<0>>0x00f2` — minimal resumable handler (`jp @rr12`), used by the
   bus-arbiter self-test.
 
@@ -628,14 +633,30 @@ FD+HD model (the ST506 HDU uses the direct governo `0x1e58`/§6.4, not GIPO). **
 `0x0a94`, the manual's *ricerca allocazione fisica RAM* **[ROM]**:
 
 - Uses **segment 60** as a movable probe window; reprograms descriptor 60's base to
-  each 64 KB physical bank (`0x01`…`0xEF`) and reads it.
-- Absent RAM → no `READY` → **NMI** → resume at the loop checkpoint (`rr12` =
-  `0xaa8`/`0xaea`); present RAM records start (`r4:r5`) / end (`r6:r7`).
+  each 64 KB physical bank (`0x01`…`0xEF`) at 16 KB granularity and reads it.
+- Two phases, distinguished by the checkpoint staged in `rr12` (its low word `r13`):
+  **phase 1** (`rr12 = 0xaa8`) walks up until the **first populated** bank and records
+  the start (`r4:r5`); **phase 2** (`rr12 = 0xaea`) walks up until the **first
+  no-`READY`** bank and records the end (`r6:r7`), then computes the extent.
+- Absent RAM → no `READY` → **NMI**. The handler (§6.5) reads `0xFF41` bit 6; for a
+  plain unpopulated fault it is **clear**, so it resumes via `jp @rr12` — in phase 2
+  that checkpoint is the **size-compute** exit (`0xaea`), which is what stops the scan
+  at the true top of RAM. (If the fault instead presented bit 6 = 1 the handler would
+  `jp 0xada` and keep scanning to bank `0xEF`, "finding" ~15 MB of phantom RAM.)
 - Requires the contiguous extent to be **≥ 16 KB**, else returns fault → the ROM
   shows **code 2** (system-RAM fault).
 
+After sizing, `0x0b0e` maps the discovered RAM into descriptors: **segment 2** →
+physical RAM base, and **segment 1** → a small window at the **top of real RAM**
+(base = top − `0x0400`, limit `0x03`) used as the system stack. A too-large sizing
+result therefore points the stack descriptor at unpopulated memory, so every
+interrupt-frame push faults and the machine drowns in an NMI storm — which is exactly
+the failure the bit-6 polarity above prevents.
+
 Same `READY`→NMI mechanism as the slot scan; the emulated memory/bus must model
-"unpopulated address → NMI".
+"unpopulated address → NMI **with `0xFF41` bit 6 = 0**". With that in place the model
+sizes 512 KB, passes the destructive RAM test (write/verify `0x5555`/complement across
+segments 2…8), and advances to the device-enumeration phase (**code `0x44`**).
 
 ---
 
@@ -707,9 +728,9 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 
 | # | Question | Needed for |
 |---|----------|------------|
-| 1 | CPU-clock **divisor** from the 32 MHz master (photo gives the master, not the divide) | timing accuracy |
+| 1 | ~~CPU-clock **divisor** from the 32 MHz master~~ — **CPU runs at 4 MHz** (32 MHz ÷ 8). Remaining: confirm the video/other divides | timing accuracy |
 | 2 | ~~`0xFF80..0xFF8F` arbiter bit meanings~~ — **decoded** from disk-A's BUS ARBITER TEST (§4.1): `0xFF81` = grant (bit 7–4 = ch 0–3), `0xFF80–83` = per-channel ack, `0xFF84–87` = DMA request, `0xFF8C–8F` = DMA control. Remaining: the governo-side `0xe7`/`0xff` and HDU `0xb0` strobe bits | M2/M4 (DMA) |
-| 3 | ~~`0xFF41` bit map~~ — **decoded** (§4): bit 0 = BBU-valid, bit 1 = ISL, **bit 6 = READY fault** (the unpopulated-access NMI cause), bit 7 = NMI-cause; write = clear/re-arm. Remaining: exact write/control-side bits | M1 (RAM/slot probing) |
+| 3 | ~~`0xFF41` bit map~~ — **decoded** (§4/§6.5/§7): bit 0 = BBU-valid, bit 1 = ISL, **bit 6 = NMI cause-classifier** (**clear** on a plain no-`READY` unpopulated fault → sizing/slot-scan resume via `jp @rr12`; **set** = power-fail/BBU → `jp 0xada`), bit 7 = further NMI-cause; write = clear/re-arm. Remaining: exact write/control-side bits | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
 | 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590`; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
@@ -733,9 +754,9 @@ MAME device to write; **[?]** = open question. Cores already in MAME: `z8001`, `
 `upd765`, `i8237`(≈am9517), `mc6845`. **Not** in MAME: `z8010`, `upd7261`.
 
 ### M1 — resident autodiagnostic runs clean
-- [SPEC] **Z8001** CPU, segmented; reset `<<0>>0x0106`. Core exists. `[?]` clock divisor (§9 #1).
+- [SPEC] **Z8001** CPU, segmented; reset `<<0>>0x0106`. Core exists. Clock **4 MHz** (32 MHz ÷ 8, §9 #1).
 - [BUILD] **Z8010 MMU** — no MAME core; needs Special-I/O decode + 64 descriptors + translate/transparent. Seg 0→ROM, 61→video. (Single MMU — the 2-MMU variant is out of scope.)
-- [BUILD] **RAM + unpopulated-access → NMI** (the READY mechanism) — this *is* how sizing/slot-scan work; the memory map must fault on unpopulated addresses.
+- [BUILD] **RAM + unpopulated-access → NMI** (the READY mechanism) — this *is* how sizing/slot-scan work; the memory map must fault on unpopulated addresses, raising the NMI with **`0xFF41` bit 6 = 0** (§6.5/§7 — the polarity that lets RAM sizing stop at the true top of RAM instead of running into phantom banks).
 - [BUILD] **UC glue (MB15652-equivalent)** — the enumeration backbone: `0xFF41` READY/NMI+ISL `[?]` bit map (§9 #3), the `0xFF80–8F` **arbiter** (§4.1, decoded), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
 - [SPEC] **i8253** PIT, ch0→ch1 cascade → the tick/timeout (§ "which 8253 channel").
 - [SPEC] **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test.
