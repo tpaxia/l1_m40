@@ -14,6 +14,8 @@ Every non-obvious fact carries a tag:
 - **[MAN]** — stated in an Olivetti service manual.
 - **[PHOTO]** — read off a physical **UC042** central-unit board.
 - **[INF]** — inferred/derived (reasoning given); plausible but not proven.
+- **[EMU]** — confirmed by running the ROM in the MAME model (the interpretation
+  reproduces the observed boot behaviour).
 - **[?]** — unknown / needs a schematic or further RE.
 
 > Where a value is tagged **[INF]** or **[?]**, the MAME model should keep it
@@ -305,16 +307,27 @@ still needs the sub-test disassembled.
 > CRTC plus an `MB15651` gate array and `TMM2016` video SRAM. **[PHOTO]**
 
 
-Accessed register-indirect at the board's window (`0x?F..`):
+Accessed register-indirect at the board's slot window. **Slot decode: I/O address
+bits 15-12 = slot, low byte = register; bits 11-8 are don't-care** (the two boot
+scans read the same board at `0x?0FF` and `0x?FFF` — both decode to slot `?`,
+register `0xFF`). **[ROM]**
 
 | Reg (low byte) | Function | Tag |
 |----------------|----------|-----|
 | `0x41` | CRTC **address** register (selects R0..R15) | [ROM] |
 | `0x43` | CRTC **data** register | [ROM] |
-| `0x81` | board **status / type**; low 3 bits = monitor type 0..7 | [ROM] |
+| `0x81` | board **status / type**; low 3 bits = monitor type 0..7, **bit 3 = live signal** (CRTC vsync/display — the self-test polls it for a *change*) | [ROM] |
 | `0x01` | control (armed with `0x03` during video test) | [ROM] |
 | `0x6a` | "enable normal video" after a successful self-test | [ROM] |
 | `0xFF` | type-ID register → reports `0xFE` | [ROM] |
+
+**Recognition (slot scan).** Boot scans all 16 slots reading register `0xFF`
+(ROM `0x0280` early, then `0x0594` at enumeration): an **absent slot faults (no
+`READY`) → NMI → the entry is marked `0xFFFF`**; a present board returns its
+type-ID. Type **`0xFE` routes to the video self-test** (ROM `0x0bc6`); other types
+go into the device table for the FDU/HDU enumeration (§6). In emulation this needs
+only the one present board answering `0xFE` — unmapped slot I/O already reads back
+`0xFF`, identical to the absent-slot marker. **[ROM]+[EMU]**
 
 ### 5.2 Geometry (decoded from the per-type CRTC tables in ROM)
 
@@ -326,6 +339,19 @@ Accessed register-indirect at the board's window (`0x?F..`):
 **[ROM].** Character text is 80×25. Character **cell width in dots is unknown [?]**,
 so the horizontal pixel count is open; vertical active lines follow directly from
 rows × scan-lines.
+
+**Type 0 register values** the ROM actually writes (captured from the `0x41`/`0x43`
+programming during the self-test) **[EMU]**:
+
+| R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R9 | R10 | R11 | R12/13 | R14/15 |
+|----|----|----|----|----|----|----|----|----|-----|-----|--------|--------|
+| 105 | 80 | 83 | 10 | 25 | 0 | 25 | 25 | 16 | 75 | 11 | 0 | 0x3FFF |
+| H-tot(+1=106) | H-disp | H-sync | sync-w | V-tot(+1=26) | adj | V-disp | V-sync | max-scan(17 lines) | cur-start | cur-end | start-addr | cursor-addr |
+
+So type 0 = **80×25, 17-scanline cells → ~640×425** (assuming 8 dots/char). The MAME
+model reports type 0 via status `0x81`; switching the low 3 bits selects a different
+per-type table (§5.2 groups). Char clock ≈ `32 MHz / 12` (~2.67 MHz, ~57 Hz frame) is
+a placeholder pending the real dot clock. **[EMU]**
 
 ### 5.3 Framebuffer
 
