@@ -303,8 +303,12 @@ still needs the sub-test disassembled.
 
 ### 5.1 CRTC (6845-family)
 
-> Physically confirmed: the video board **GO252** carries an **`MC68B45P` (MC6845)**
-> CRTC plus an `MB15651` gate array and `TMM2016` video SRAM. **[PHOTO]**
+> Physically confirmed (silk *"S3000 GO252 P001 A COD.339193"*): the video board
+> **GO252** carries an **`MC68B45P` (MC6845)** CRTC, an `MB15651` gate array, 2×
+> `TMM2016AP-15` video SRAM, and the **character generator `GI 9428DS-2067 MK3L`**
+> (General Instruments — a **mask ROM, not yet dumped**; it holds the real glyphs).
+> The board has no CPU/firmware — the char-gen is its only ROM. **[PHOTO]**
+> (Board-photo → board map: `docs/Pictures (M40 + spares)/BOARD_INDEX.md`.)
 
 
 Accessed register-indirect at the board's slot window. **Slot decode: I/O address
