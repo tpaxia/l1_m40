@@ -51,9 +51,8 @@ Major devices read off the board:
   chip — very likely the **READY/NMI generation and slot decode** the ROM leans on
   (empty-slot → NMI, the `0xFF80..0xFF8F` register block, etc.). Its exact behaviour
   needs a schematic.
-- **Master clock is 32.000 MHz**; the Z8001 clock is a divided value (`/8` → 4 MHz or
-  `/4` → 8 MHz; M30/M40 is the pre-8 MHz generation, so ~4 MHz is likely). A video dot
-  clock of 16 MHz (`/2`) is plausible. Still needs the divider from a schematic.
+- **Master clock is 32.000 MHz**; the Z8001 clock is **4 MHz** (`/8`). A video dot
+  clock of 16 MHz (`/2`) is plausible but still needs the divider from a schematic.
 
 ---
 
@@ -107,7 +106,7 @@ follow *"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
 | Item | Value | Tag |
 |------|-------|-----|
 | CPU | Zilog **Z8001** (segmented, 48-pin) | [ROM] |
-| Clock | Master oscillator **32.000 MHz** [PHOTO]; the CPU clock is a divided value (`/8`→4 MHz likely, `/4`→8 MHz). M30/M40 is the pre-8 MHz generation. Divisor unconfirmed. | [PHOTO]/[?] |
+| Clock | Master oscillator **32.000 MHz** [PHOTO]; CPU clock **4 MHz** (`/8`). | [PHOTO]/[MAN] |
 | MMU | Zilog **Z8010** (single unit → 64 segments, 0–63) | [ROM] |
 | Reset FCW | `0xC000` (SEG=1, system mode) | [ROM] |
 | Reset PC | `<<0>>0x0106` (seg 0, offset 0x106) | [ROM] |
@@ -258,15 +257,22 @@ RAM, DCOS 8.4) exercises far more of the `0xFF__` space. Extracted by scanning t
 disk image for `0xFF__` port accesses; functions inferred from the access pattern.
 **[DISK]** (bit-detail **[?]** unless noted).
 
-**Bus/DMA arbiter `0xFF80–8F` (MB15652)** — decoded from the *BUS ARBITER TEST* ISR:
+**Bus/DMA arbiter `0xFF80–8F` (MB15652)** — decoded from the *BUS ARBITER TEST*
+ISR plus the UCO.71 test-13 body:
 - **`0xFF81` read = grant register**: bit 7/6/5/4 set = channel 0/1/2/3 was granted
   (e.g. `0x90` = channels 0 **and** 3 pending).
 - **`0xFF80–83` write = per-channel acknowledge** (`0xFF80`→ch0 … `0xFF83`→ch3); the
   ISR reads `0xFF81`, then acks the granted channel(s).
-- `0xFF84–87` = DMA request/gate (ch0 = `0xFF84`, the boot gate); `0xFF8C–8F` = DMA
-  control/mask (ch0 = `0xFF8C`). The arbiter interrupt is serviced, `0xFF81` read,
-  and the channel acked — so a MAME model needs an arbiter that grants a channel,
-  raises the interrupt, exposes the grant at `0xFF81`, and clears on the ack write.
+- `0xFF84–87` / `0xFF88–8B` = request/gate strobe groups; `0xFF8C–8F` =
+  control/release strobe group. ROM boot uses `0xFF84`/`0xFF8C`; the disk-A bus
+  arbiter body uses `0xFF88..8B` to assert channel requests and `0xFF8D..8F` to
+  release lower-priority grants. The model needs an arbiter that grants a channel,
+  raises NVI, exposes the grant at `0xFF81`, and clears on the ack write. See
+  `re/UCY805_bus_arbiter.md` for the exact diagnostic sequence.
+- Access width caveat: disk A proves byte `inb/outb`; the ROM also uses word `out`
+  instructions. Treat the addressed port as the meaningful strobe and the data word
+  as don't-care for now. Do not assume adjacent-byte effects from a word cycle until
+  the Z8001 bus/gate-array decode is confirmed.
 
 **Other UC registers the diagnostic touches** (not seen from the ROM):
 
@@ -512,35 +518,39 @@ gate arrays, and the AM9517 DMAC). It matches the ROM RE. **[MAN]+[ROM]**
 |----------------|-----------------|
 | `0x1D` | **FDC (µPD765/NEC765) Main Status** (read; poll RQM) |
 | `0x1F` | **FDC data register** (command / result bytes) |
-| `0x40`–`0x5E` | **AM9517 DMAC** internal registers: `40/42`=ch0 addr/count, `44/46`=ch1, `48/4A`=**ch2** addr/count (the FDC data channel), `4C/4E`=ch3, `50`=command(w)/status(r), `52`=request, `54`=single-mask, `56`=mode, `58`=clear byte-ptr, `5A`=master-clear/temp, `5E`=channel mask |
+| `0x40`–`0x5E` | **AM9517 DMAC** internal registers: `40/42`=ch0 addr/count, `44/46`=ch1 addr/count, `48/4A`=ch2 addr/count, `4C/4E`=ch3, `50`=command(w)/status(r), `52`=request, `54`=single-mask, `56`=mode, `58`=clear byte-ptr, `5A`=master-clear/temp, `5E`=channel mask. In the FDU's anomalous DMA scheme ch1 and ch2 cooperate; ch1 carries the memory-address setup path and ch2 is the FDC byte-transfer channel. |
 | `0x9x` | **8253 timer** (counters + control) — motor spin-up 500 ms, motor-off 2 s, **read/write time-out 800 ms** (4 disk revolutions) |
-| `0xE7` | **control register `CONTR`** (write): `EN10`=IRQ enable, `RESFD`=reset FDC, `MOTO1/MOTO2`=drive-motor enable, `SCRVO`=direction (1=write/0=read), `DIAG`/`SCAN`/`ERRO1` |
-| `0xED`, `0xEF` | diagnostic ports (read); `0xEF` also = interrupt-vector write (`VETTN`) |
+| `0xE7` | **control register `CONTR`** (write): bit 0 `EN100`=IRQ enable, bit 1 `RESFD`=FDC reset (active low), bit 2 `SCANO`, bit 3 `MOTO1`, bit 4 `DIAGN`, bit 5 `ERRO1`, bit 6 `SCRVO`=direction (1=write/0=read), bit 7 `MOTO2` |
+| `0xED`, `0xEF` | diagnostic ports (read, `RDGNN`); `0xEF` also = interrupt-vector write (`VETTN`) |
 | `0xF6` | **DMA address high byte** (`ADRLN`, bits ADD16–23) — see below |
 | `0xF7` | **interrupt status** (read): `INTMO`(8253), `INTOO`(FDC), `PERRO`(parity), **`FUMEO`(DMA "out-of-memory" time-out)** |
-| `0xFF` | **identifier / nome logico** (read): `E0`=MFDU, `E1`=FDU, selected by the **NOM10 jumper** — *this is where the `E0`/`E1` type ID comes from* |
+| `0xFF` | **identifier / nome logico** (read): `E0`=MFDU, `E1`=FDU, selected by the **NOM10 jumper**; write = `E01NT` strobe to reset the pending interrupt |
 
 The boot read is a **µPD765 READ DATA** command (templates `0x17dc`/`0x17e6`:
 `06`(READ) `HDUS` `C=0 H=0 R=1` `N` `EOT` `GPL` `DTL` — **cylinder 0, head 0, sector 1**;
 two disk formats, EOT `0x10`/`0x1a`).
 
-#### DMA model (manual §3.3)  ⭐
+#### DMA model (manual §3.3 + ROM/diagnostic setup)  ⭐
 
 The **governo's own AM9517 DMAC** moves the sector data — the UC `0xFF80..0xFF8F`
 block is only the **system-bus arbitration** the governo requests (via `BAXXN`/`REQOO`;
 `0xFF84`/`0xFF8C` are the UC-side gate). The DMAC runs an "anomalous" **two-channel**
-scheme: **channel 1** sets up the address for the next cycle (no data), **channel 2**
-does the FDC↔memory transfer — and because the FDC bus is 8-bit, **2 channel-2 cycles
-per 16-bit word**. On write `SCRVO=1`; on read `SCRVO=0` (channel-1 cycle skipped).
+scheme: **channel 1** sets up the memory address for the next cycle (no data),
+**channel 2** does the FDC↔memory byte transfer — and because the FDC bus is 8-bit,
+**2 channel-2 cycles per 16-bit word**. On write `SCRVO=1`; on read `SCRVO=0`
+(the manual says the channel-1 cycle is skipped on reads, but the firmware still
+programs the ch1 registers as the memory-address path).
 
 **Physical DMA address = 24 bits (§3.3.4):** the low **16 bits come from the DMAC
-channel-2 address register** (`0x48`), the **high 8 bits (ADD16–23) from register
-`0xF6`** (board logic, auto-incremented across 64 KB blocks). So the destination **is**
-software-programmed. A **2 µs no-`READY` time-out** raises `FUMEO` ("fuori memoria").
+address registers** and the **high 8 bits (ADD16–23) from register `0xF6`**
+(board logic, auto-incremented across 64 KB blocks). The ROM and disk-D diagnostics
+show the programmed address is shifted right by one before being split across `0xF6`
+and the DMAC registers; this matches the 16-bit system bus / two-FDC-byte-per-word
+scheme. A **2 µs no-`READY` time-out** raises `FUMEO` ("fuori memoria").
 
-**Where the track lands (`0x85e`):** the driver programs the DMAC ch2 address + `0xF6`
-so the transfer targets **logical segment 60** (physically = whatever MMU descriptor 60
-maps). It then validates the boot image and jumps:
+**Where the track lands (`0x85e`):** the driver programs the DMAC address registers
+plus `0xF6` so the transfer targets **logical segment 60** (physically = whatever
+MMU descriptor 60 maps). It then validates the boot image and jumps:
 
 1. magic: the first 4 bytes at `<<60>>0x0000` must be **`"SYS0"`** (`0x53595330`);
 2. **entry point** = the longword at `<<60>>0x0004`;
@@ -555,12 +565,14 @@ the destination is fully known. **[MAN]+[ROM]**
 > thin gate-array wrapper. The manual `3963590` is the reference. **[MAN]**
 
 **Completion signaling — FDU boot = polled.** The boot read runs with **VI masked**
-(`di vi` at `0x0ec8`; FCW restored at `0x0f12`) and detects transfer completion by
-**polling the governo interrupt-status register** — reg `0xFF` bit 0 (fallback reg
-`0xED` bit 0), routine `0x0f2e` — plus µPD765 RQM (reg `0x1D`). A full VI handler
-(`0x1304`–`0x137a iret`, records status to `<<1>>0x034a`/`0x034e`, sets ready bit
-`0x0354.0`) exists for interrupt-driven runtime use, but the ROM boot path does not
-use it. So the model needs a readable **INT-pending bit at `0xFF`/`0xED` bit 0**. **[ROM]**
+(`di vi` at `0x0ec8`; FCW restored at `0x0f12`). The ROM helper `0x0f2e` polls
+the FDU slot's `0xFF` bit 0, then falls back to diagnostic port `0xED` bit 0,
+and the boot loop also uses µPD765 RQM (`0x1D`). This is a ROM-observed boot
+readback, not the general interrupt-status register: the hardware manual names
+`0xF7` as `RD1NT` (`INTMO`/`INTOO`/`PERRO`/`FUMEO`), and the disk-D diagnostics use
+`0xF7` for interrupt/timer/DMA status. A full VI handler (`0x1304`–`0x137a iret`,
+records status to `<<1>>0x034a`/`0x034e`, sets ready bit `0x0354.0`) exists for
+interrupt-driven runtime use, but the ROM boot path does not use it. **[ROM]+[MAN]**
 
 ### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
 
@@ -705,8 +717,9 @@ segments 2…8), and advances to the device-enumeration phase (**code `0x44`**).
 9. Show step 2 → **RAM sizing**; map RAM into segments (`0x0b0e`); BBU warm-start
    check; **memory pattern test** (`0x03ba`). **[ROM]**
 10. Build the **config table** (`0x0590`); **IPL device search + load** (`0x065c`):
-    pick order by ISL switch, find a controller, call its handler; the **floppy
-    loader `0x0eae`** is the remaining piece toward M2. **[ROM]** / handler internals **[?]**
+    pick order by ISL switch, find a controller, call its handler. The **floppy
+    loader `0x0eae`** and disk-D `6030T6` diagnostic now specify the GO280 FDC/DMA
+    path for M2/M3. **[ROM]+[DISK]+[MAN]**
 
 Any failing step in 4–7/9 **hangs** (e.g. `jr self`) or shows a numeric code on the
 diagnostic console; there is no graceful degradation. **[ROM]**
@@ -759,10 +772,10 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 | # | Question | Needed for |
 |---|----------|------------|
 | 1 | ~~CPU-clock **divisor** from the 32 MHz master~~ — **CPU runs at 4 MHz** (32 MHz ÷ 8). Remaining: confirm the video/other divides | timing accuracy |
-| 2 | ~~`0xFF80..0xFF8F` arbiter bit meanings~~ — **decoded** from disk-A's BUS ARBITER TEST (§4.1): `0xFF81` = grant (bit 7–4 = ch 0–3), `0xFF80–83` = per-channel ack, `0xFF84–87` = DMA request, `0xFF8C–8F` = DMA control. Remaining: the governo-side `0xe7`/`0xff` and HDU `0xb0` strobe bits | M2/M4 (DMA) |
+| 2 | ~~`0xFF80..0xFF8F` arbiter bit meanings~~ — **decoded** from disk-A's BUS ARBITER TEST (§4.1): `0xFF81` = grant (bit 7–4 = ch 0–3), `0xFF80–83` = per-channel ack, `0xFF84–87`/`0xFF88–8B` = request/gate strobe groups, `0xFF8C–8F` = control/release strobes. Remaining: the HDU `0xb0` strobe bits and the exact GO280 boot-readback semantics of `0xff` bit 0 vs `0xed` bit 0 | M2/M4 (DMA) |
 | 3 | ~~`0xFF41` bit map~~ — **decoded** (§4/§6.5/§7): bit 0 = BBU-valid, bit 1 = ISL, **bit 6 = NMI cause-classifier** (**clear** on a plain no-`READY` unpopulated fault → sizing/slot-scan resume via `jp @rr12`; **set** = power-fail/BBU → `jp 0xada`), bit 7 = further NMI-cause; write = clear/re-arm. Remaining: exact write/control-side bits | M1 (RAM/slot probing) |
 | 4 | **RAM base/size** and bank granularity on real boards | memory model |
-| 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590`; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
+| 5 | ~~FDU + HDU register maps~~ — **documented** (FDU §6.3 from manual `3963590` + disk-D GO280 diagnostics; HDU §6.4 from handler `0x1e58`). Remaining: exact `0xb0` strobe bits + geometry-select logic | M4 (install) |
 | 6 | Character **cell width** (font ROM) | exact video raster |
 | 7 | Confirm the **slot I/O decode** (slot = bits 15–12, register = low byte) against schematics | bus model |
 
@@ -794,8 +807,8 @@ MAME device to write; **[?]** = open question. Cores already in MAME: `z8001`, `
 - **Required to *operate* the loaded diagnostics** (e.g. disk A): the **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + character framebuffer at **phys `0xFF0000`** (80×25, 2 B/cell; the loaded Monitor maps a segment onto that window) **+ the keyboard** (the Monitor menus read a test number). Without it, the ROM still boots the Monitor but there is nowhere to display and no way to interact.
 
 ### M2 / M3 — IPL + floppy boot
-- [BUILD] **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7`+`0xFF`/`0xED` bit0 / ID `0xFF`. Reg map: manual `3963590`. `[?]` exact `0xE7`/`0xFF` bits.
-- [SPEC] Boot completion is **polled** (VI masked) via the INT-pending bit `0xFF`/`0xED`.0 (§6.3).
+- [BUILD] **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7` / diagnostic readback `0xED` / ID+strobe `0xFF`. Reg map: manual `3963590`; low-level protocol expanded from disk-D `6030T6`.
+- [SPEC] Boot completion is **polled** (VI masked) via the ROM's `0xFF` bit-0 then `0xED` bit-0 readback helper; general interrupt status is `0xF7` (§6.3).
 - [BUILD] DMA path: governo DMA → system RAM, **gated by the arbiter** `0xFF84`(open)/`0xFF8C`(close).
 - [BUILD] **Floppy image** plumbing (IMD → MAME floppy; track0 = 26×128 FM, tracks 1+ = 26×256 MFM).
 

@@ -57,8 +57,8 @@ Ordered roughly by the sequence in which the ROM exercises them.
 ### 3.1 CPU — Zilog **Z8001** (segmented)
 - Segmented mode, system/normal split; reset vector at seg 0 (`FCW=0xC000`,
   `PC=<<0>>0x0106`).
-- A UC042 board photo shows a **32.000 MHz master oscillator**; the CPU clock is a
-  divided value (divisor TBD — `/8`→4 MHz likely for this pre-8 MHz generation).
+- A UC042 board photo shows a **32.000 MHz master oscillator**; the CPU clock is
+  **4 MHz** (`32 MHz / 8`).
 - Program Status Area at `<<0>>0x0000`; NMI and NVI vectors used (RAM sizing,
   timer). No CPU instruction self-test was found in the reset path.
 
@@ -101,8 +101,9 @@ Ordered roughly by the sequence in which the ROM exercises them.
 ### 3.6 FDU — floppy governo (IPL source)
 - The IPL device search (`0x065c`) is traced: order set by the **ISL switch**
   (`0xFF41` bit 1), priority list `E4`(HDU) `EF`(GIPO) `E1`(FDU) `E0`(MFDU) `E6`(STC),
-  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`** — tracing
-  its governo command/DMA interface is the next step toward M2/M3.
+  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`**; its
+  GO280 register model is now cross-checked against manual `3963590` and the disk-D
+  `6030T6` diagnostic (`uPD765` + `AM9517/8237` + `8253` + GO280 glue).
 
 ### 3.7 HDU — hard-disk governo (IPL source + installation target)
 - In the IPL search as types `E4` (direct disk-controller governo, handler
@@ -160,5 +161,7 @@ Reverse-engineering is under way from the reset vector outward. Characterised so
 far: the reset path and Program Status Area, the diagnostic console + video
 display, video-controller detect/init, the **ROM checksum** (algorithm confirmed
 to reproduce the stored word), the **Z8010 MMU test + map**, the **8253 timer
-test**, and the **video geometry** (80×25 CRTC). Next: the backplane slot scan /
-config-table build, then the FDU and HDU governi toward the IPL milestones.
+test**, **video geometry** (80×25 CRTC), backplane slot scan/config-table build,
+the UC bus arbiter, and the FDU GO280 register/DMA/FDC model. Remaining high-value
+work is the exact HDU `0xb0` strobe detail, hard-disk geometry selection, and then
+MAME implementation against the documented milestones.

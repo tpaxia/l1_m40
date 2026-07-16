@@ -22,7 +22,7 @@ subsystem-specific test payload. **[DISK]**
 | **A** | central unit / RAM | **BUS ARBITER TEST**, RESET TEST, S8000 TCM, BURST TRANSFER, MASTER/SLAVE (multiprocessor), ADAPTER, PIN-PAD |
 | **B** | KDC (video/keyboard), MUX | keyboard (alpha/num/KANA/LED/buzzer), **VIDEO GRAPHICS COLOUR** |
 | **C** | LINE | Z80-SIO / Z-SCC / DART, LION 9.6 + LCU V24, STARLAN, LCC loopback |
-| **D** | **FDU / MFDU / STC / MTU** | CHECK COMMAND & STATUS PORT, R/W VECTOR INTERRUPTS, **R/W DATA IN MAIN MEMORY (DMA)**, **MEM-TO-MEM DMA CONTROLLER**, NMI-generation, tape |
+| **D** | **FDU / MFDU / STC / MTU** | `6030T6` XU/XG6030 FDU test (**controller communication**, timer, interrupt, DMA, format/read/write), `FDUMA2` alignment/eccentricity, `7032E5` error rate, `4301T4`/`4305T6` MFDU variants, tape |
 | **E** | HDU 18/14 MB | GIPO routines (`GID_*`), floppy I/O (`mfior_*`), XU5006, ERMAP |
 | **F** | HDU 60/120 MB (Fujitsu SMD) | controller/slot, **SEGM.ADDRESS 16/23 OF DMA RAM**, seek/error-rate |
 | **G** | HDU WREN/Micropolis/ST506 | **PROGRAM 'NEC' & R/W FIFO** (µPD7261), **8253 TIMER & DMA TRANSFER LOGIC**, **DMA & RAM & ADDRESS COUNTER**, ECC |
@@ -150,3 +150,38 @@ driver, so they are the best reference for the register-level behaviour still op
 
 The images share the ROM's toolchain (segmented Z8001), so the same round-trip
 disassembly pipeline applies; specific tests are disassembled on demand.
+
+### 5.1 Disk D / GO280 details
+
+Disk D is the most useful image for the FDU/MFDU governo (`GO280`/`G0280`) because
+its catalog contains the tests named by the functional-checks manual:
+
+```
+7032E584870331   FDU/MFDU error-rate program
+FDUMA280840810   FDU alignment/eccentricity program
+4301T483851212   MFDU running test variant
+4305T684870331   MFDU running test variant
+6030T683861117   XU/XG6030 FDU running test
+```
+
+The best protocol target is `6030T6`, whose menu explicitly starts with
+`CONTROLLER COMMUNICATION TEST` and then exercises timer, interrupt, DMA,
+compatibility, speed, seek, format, read, write/read sector, deleted-data,
+control-mark, and cylinder tests. Its embedded runtime names include the useful
+low-level entry points:
+
+```
+mfior_contrinit      mfior_contrtype      mfior_contrreset
+mfior_fdcreset       mfior_dmasend        mfior_dmaend
+mfior_dmaregisters   mfior_intrtype       mfior_intrenab
+mfior_intrdisab      mfior_timerintr      mfior_diagportread
+mfior_samplespeed
+```
+
+The disassembly confirms the same register model as the GO280 hardware manual:
+slot/select in the high byte of the I/O address, register in the low byte;
+uPD765 at `0x1D/0x1F`; AM9517/8237-style DMA at `0x40..0x5E` plus high-address
+latch `0xF6`; control at `0xE7`; interrupt status at `0xF7`; diagnostic readback
+at `0xED`; ID/strobe at `0xFF`; timer group at `0x99..0x9F`. The DMA setup shifts
+the long memory address right by one before programming `0xF6` and the DMAC
+address registers, matching the 16-bit system bus / two-FDC-byte-per-word model.
