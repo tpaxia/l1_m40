@@ -241,7 +241,8 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
 | `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = NMI cause-classifier** (the NMI handler reads it to dispatch: **clear** → `jp @rr12` = the RAM-sizing / slot-scan resume path taken by a plain no-`READY` unpopulated-address fault; **set** → `jp 0xada`, a *distinct* cause — power-fail / BBU — that keeps the scan running. A plain unpopulated-access fault raises the NMI with **bit 6 = 0**; the NMI itself is the fault signal); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
 | `0xFFA0` | config / jumper read | read once at init | [ROM] |
-| `0xFF20` | control latch | written `0x03` at init | [ROM] |
+| `0xFF20` | control/status latch; used by the resident FE/KDC keyboard interrupt code | written `0x03` at init; disk-B direct keyboard ISR reads bit 2 here as byte-ready status | [ROM]+[DISK] |
+| `0xFF22` | byte-data latch for the resident FE/KDC keyboard path | disk-B direct keyboard ISR reads received bytes here into `rl0` before calling the active callback | [DISK] |
 | `0xFF01` | control latch | written at init | [ROM] |
 | `0xFF80`–`0xFF8F` | **MB15652 bus/DMA arbiter** — 4 channels × 4 register groups (see §4.1) | `0xFF80–83` = arbitration **acknowledge** (`0xFF81` reads back the **grant**); `0xFF84–87` = DMA **request/gate** (`0xFF84` boot); `0xFF8C–8F` = DMA **control** (`0xFF8C` boot). Inits all 16 at `0x2a6`; raises the **NVI** on a grant | [ROM]+[DISK] |
 | `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
@@ -279,7 +280,7 @@ ISR plus the UCO.71 test-13 body:
 | Port(s) | Observed use | Guess |
 |---------|--------------|-------|
 | `0xFF00`–`0xFF02` | control latches (heavy `0xFF00` use) | UC control |
-| `0xFF20` / **`0xFF22`** | `0xFF22` very heavily read/written | UC status/control pair |
+| `0xFF20` / **`0xFF22`** | resident FE/KDC keyboard handler uses `0xFF20` as status/control and `0xFF22` as byte-data | UC/KDC keyboard path |
 | `0xFF11`, `0xFF19`, `0xFF40`, `0xFFB1`, `0xFFF0`, `0xFFFE` | scattered | misc control/status |
 | **`0xFF50`,`0xFF51`,`0xFF54`–`0xFF5F`** | **multiprocessor / master-slave signaling** (disk-A `UCY` = *UCO.71 MULTIPROCESSOR UC TEST*, the "MASTER AND VIENO SIGNAL" test): `0xFF51` = status (bit 0 polled), `0xFF54`/`55`/`58`/`5E`/`5F` = signal/control | **master-slave (multiprocessor)** |
 | `0xFF60`–`0xFF6F` | indicator (`0xFF60+n`), read-back | diagnostic console (extends §4 rows) |
@@ -392,15 +393,23 @@ ROM's minimal use. **[DISK]**
 - **Keyboard subsystem** (`KEYTE1` test). **Interrupt-driven** — a dedicated keyboard
   VI ("NO KEYBOARD INTERRUPT" / "BAD VECTOR KEYBOARD INTERRUPT"). Has **LEDs** (READY,
   L1, L2, SHIFT-LOCK, KANA-MODE), a **buzzer**, **KANA** mode, and alpha/numeric
-  layouts with function keys (DP/PM/WP variants). The ROM never touches the keyboard,
-  so its **register offsets on the FE-slot are still open [?]** — needs the `KEYTE1`
-  overlay disassembled (blocked on locating it: DML mapping, see `re/DML_filesystem.md`).
+  layouts with function keys (DP/PM/WP variants). Disk-B resident FE/KDC code in
+  logical segment `0x1d` shows the host-facing byte path: FE register `0x01` is a
+  control/status handshake latch, while UC ports `0xff20`/`0xff22` provide the
+  interrupt-time status/data path used to deliver bytes into the active keyboard
+  callback. In the loaded disk-B diagnostic PSA, the monitor's direct keyboard
+  byte path is VI vector `0x28 -> 0x1d:02a4`; `0xff20` bit 2 is the observed
+  byte-ready bit and `0xff22` carries the byte. These UC byte ports appear on the
+  high byte lane of even Z8000 I/O word cycles. Bit-level assignments beyond that
+  are still incomplete; see
+  `re/GO252_keyboard_reverse_engineering.md`.
 - The **MUX** (also on disk B) is a *separate* intelligent board — **Z80 + Z80-DART +
   CTC + SIO + dual-port RAM** line multiplexer — not part of the keyboard path.
 
 **For a bootable + operable diagnostic-A model:** the 6845 alphanumeric video +
-framebuffer is enough to **display**; the **keyboard register interface is the one
-missing KDC piece** for **input**.
+framebuffer plus the `0xff20`/`0xff22` VI-driven KDC byte path is enough for basic
+monitor input. The remaining KDC keyboard work is the full FE handshake/LED/status
+model needed by the dedicated `KEYTE1` diagnostic.
 
 ---
 
@@ -573,6 +582,21 @@ readback, not the general interrupt-status register: the hardware manual names
 `0xF7` for interrupt/timer/DMA status. A full VI handler (`0x1304`–`0x137a iret`,
 records status to `<<1>>0x034a`/`0x034e`, sets ready bit `0x0354.0`) exists for
 interrupt-driven runtime use, but the ROM boot path does not use it. **[ROM]+[MAN]**
+
+**Runtime diagnostic loader status — still open.** Disk-B monitor option `2`
+(`MAP`) and direct `LOAD 013` now fail at the same disk-resident library path,
+after many successful FDC reads and after the final read reports a clean µPD765
+result (`ST0=0x01`, `ST1=0`, `ST2=0`, final `C/H/R/N=0F/00/17/01`). The loaded
+segment-2 FDU code then performs `Sense Drive Status` (`ST3=0x29`: ready, unit 1),
+starts a timer-guarded motor/settle delay, and enters the `RD1NT`/`E01NT` path at
+`0x2:bdf0`/`0x2:c180`. Current MAME source exposes `RD1NT.INTMO` as
+`latched INTMO OR raw 8253 output`; this makes the second `RD1NT` read at
+`0x2:c186` still see `INTMO` after `E01NT`, producing `ac_mmulogfi: 02`.
+An experimental latch-only `RD1NT.INTMO` avoids that immediate branch but exposes
+a later repeated timer-delay path ending in `ERROR ON UNIT 1`. Therefore the
+definitive runtime model is **not** settled: likely next variables are exact
+`RD1NT` latch/raw semantics after `E01NT`, 8253 ch1 output-clear behavior, and the
+timer/index/drive-settle logic used by the loaded FDU library. **[DISK]+[TRACE]**
 
 ### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
 
