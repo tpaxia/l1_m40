@@ -34,6 +34,10 @@ device handlers, including the direct hard-disk governo.
   identified-board inventory, and a MAME device checklist.
 - **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
   contents, the two-stage boot flow, and the ROM→bootloader config-table handoff.
+- **[KDC.md](KDC.md)** — the **GO252 video/keyboard governo** behavioral model: the
+  keyboard VI interrupt path, the keyboard serial protocol and positional scancode
+  tables, the ANK 1426 / 1427 keyboards, and the character-cell attribute encoding
+  (reverse / high light / blink / line attributes).
 - **[L1WSE.md](L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
   "L1 Work-Station Emulator" (see §6).
 
