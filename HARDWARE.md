@@ -1,10 +1,16 @@
 # Olivetti M30 / M40 (L1) — Hardware Reference for Emulation
 
-A structured hardware description of the M40 (and its M30 sibling) intended as the
-build spec for a **MAME** machine model. It is synthesised from the boot-ROM
-disassembly and the Olivetti service manuals. This document is **separate from the
-project goals** (`README.md`); it aims for enough fidelity that a MAME driver can be
-written from it directly.
+A structured hardware description of the M40 (and its M30 sibling). It is synthesised
+from the boot-ROM disassembly and the Olivetti service manuals. This document is
+**separate from the project goals** (`README.md`).
+
+**This is no longer just a spec — the MAME driver exists.** `src/mame/olivetti/m40.cpp`
+implements the model below and **boots the DCOS 8.4 diagnostic disk to its interactive
+monitor**, running the KEYTE1 (keyboard) and CRTAN5 (video/attribute) diagnostics. The
+Z8010 MMU (`machine/z8010.cpp`) and the M40 FDC/DMA glue were written for this project;
+the µPD7261 HDC already existed in MAME. What remains is the GO363 hard-disk wrapper
+(M4). The sections below are now both the spec **and** the as-built reference — where
+an item is implemented it is tagged **[EMU]** or noted in §10.
 
 ### Confidence tags
 
@@ -574,10 +580,10 @@ MMU descriptor 60 maps). It then validates the boot image and jumps:
 So the boot image is self-describing: **`"SYS0"` + 4-byte entry address + code**, and
 the destination is fully known. **[MAN]+[ROM]**
 
-> To model: `upd765` (`0x1D`=status, `0x1F`=data) + `i8253` (`0x9x`) + **`am9517` DMAC
-> (`0x40-5E`)** with an extra high-address latch (`0xF6`), a control reg (`0xE7`), an
-> interrupt-status reg (`0xF7`), and the `0xFF` type ID — all stock MAME devices plus a
-> thin gate-array wrapper. The manual `3963590` is the reference. **[MAN]**
+> Modeled (✅, boots): `upd765` (`0x1D`=status, `0x1F`=data) + `i8253` (`0x9x`) +
+> **`am9517` DMAC (`0x40-5E`)** with an extra high-address latch (`0xF6`), a control reg
+> (`0xE7`), an interrupt-status reg (`0xF7`), and the `0xFF` type ID — stock MAME devices
+> plus a thin gate-array wrapper in `m40.cpp`. Manual `3963590` is the reference. **[EMU]**
 
 **Completion signaling — FDU boot = polled.** The boot read runs with **VI masked**
 (`di vi` at `0x0ec8`; FCW restored at `0x0f12`). The ROM helper `0x0f2e` polls
@@ -679,8 +685,9 @@ vectors through `0x01c0[vector×2]` to the ISR, which records status / clears th
 flag and `iret`s, releasing the foreground spin-wait (§6.3/§6.4). Unassigned vectors
 land on the stub `0x00b4`.
 
-> To model M4: the `l1_hdgov` device needs a writable **vector register (`0xaa`)** and
-> must **assert the backplane interrupt carrying that vector** on command complete;
+> For M4 (open): the GO363 wrapper (around MAME's existing `upd7261`) needs a writable
+> **vector register (`0xaa`)** and must **assert the backplane interrupt carrying that
+> vector** on command complete;
 > the machine routes the backplane INT to the Z8001 VI, which vectors through the
 > `0x01c0` table. (The FDU boot path masks VI and polls instead — §6.3 — but the
 > runtime/interrupt-driven mode uses vector 4 → `0x12ec`.)
@@ -797,7 +804,10 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 
 ---
 
-## 9. Open questions blocking a complete model
+## 9. Open questions / refinements
+
+*(M1–M3 are implemented and boot; these are accuracy refinements and M4 items, no
+longer blockers.)*
 
 | # | Question | Needed for |
 |---|----------|------------|
@@ -819,34 +829,34 @@ brackets it to the pre- vs post-RAM phase. **[ROM]**
 
 ---
 
-## 10. MAME model checklist — what a bootable **FD + HD (ST506)** system needs
+## 10. MAME model — as-built status
 
 Target board: single-MMU M40, `REL 6.0` ROM, FDU (GO280) + direct ST506 HDU (GO363).
-Status: **[SPEC]** = behaviour fully documented here, ready to implement; **[BUILD]** =
-MAME device to write; **[?]** = open question. Cores already in MAME: `z8001`, `pit8253`,
-`upd765`, `i8237`(≈am9517), `mc6845`. **Not** in MAME: `z8010`, `upd7261`.
+Driver: `src/mame/olivetti/m40.cpp`. **✅ = implemented and working; 🔶 = partial/open.**
+Device cores now in MAME: `z8001`, **`z8010`** (`machine/z8010.cpp`, written for this
+project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`upd7261`**
+(`machine/upd7261.cpp`, pre-existing). Nothing on the M1–M3 path is still a to-write core.
 
-### M1 — resident autodiagnostic runs clean
-- [SPEC] **Z8001** CPU, segmented; reset `<<0>>0x0106`. Core exists. Clock **4 MHz** (32 MHz ÷ 8, §9 #1).
-- [BUILD] **Z8010 MMU** — no MAME core; needs Special-I/O decode + 64 descriptors + translate/transparent. Seg 0→ROM, 61→video. (Single MMU — the 2-MMU variant is out of scope.)
-- [BUILD] **RAM + unpopulated-access → NMI** (the READY mechanism) — this *is* how sizing/slot-scan work; the memory map must fault on unpopulated addresses, raising the NMI with **`0xFF41` bit 6 = 0** (§6.5/§7 — the polarity that lets RAM sizing stop at the true top of RAM instead of running into phantom banks).
-- [BUILD] **UC glue (MB15652-equivalent)** — the enumeration backbone: `0xFF41` READY/NMI+ISL `[?]` bit map (§9 #3), the `0xFF80–8F` **arbiter** (§4.1, decoded), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
-- [SPEC] **i8253** PIT, ch0→ch1 cascade → the tick/timeout (§ "which 8253 channel").
-- [SPEC] **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test.
-- Optional for M1 *booting*: 6845 CRTC/video (the ROM autodiagnostic can report on the console latch `0xFFE0`/indicator `0xFF64` alone); 6850 ACIA (present but unused at boot).
-- **Required to *operate* the loaded diagnostics** (e.g. disk A): the **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + character framebuffer at **phys `0xFF0000`** (80×25, 2 B/cell; the loaded Monitor maps a segment onto that window) **+ the keyboard** (the Monitor menus read a test number). Without it, the ROM still boots the Monitor but there is nowhere to display and no way to interact.
+### M1 — resident autodiagnostic runs clean — ✅ done
+- ✅ **Z8001** CPU, segmented; reset `<<0>>0x0106`; clock **4 MHz** (32 MHz ÷ 8).
+- ✅ **Z8010 MMU** — Special-I/O decode + descriptors + translate. Seg 0→ROM, 61→video.
+- ✅ **RAM + unpopulated-access → NMI** (READY mechanism) — sizing/slot-scan work; NMI carries **`0xFF41` bit 6 = 0** on a plain no-`READY` fault (§6.5/§7).
+- ✅ **UC glue** — `0xFF41` READY/NMI+ISL, the `0xFF80–8F` **bus arbiter** (§4.1), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
+- ✅ **i8253** PIT (ch0→ch1 cascade → tick/timeout).
+- ✅ **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test passes.
+- ✅ **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + framebuffer at phys `0xFF0000` (80×25, 2 B/cell) **with character attributes + L1 font**, plus the **keyboard** (VI, serial protocol, ANK scancodes → PS/2). See **[KDC.md](KDC.md)**. (6850 ACIA present but unused at boot — not modeled.)
 
-### M2 / M3 — IPL + floppy boot
-- [BUILD] **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7` / diagnostic readback `0xED` / ID+strobe `0xFF`. Reg map: manual `3963590`; low-level protocol expanded from disk-D `6030T6`.
-- [SPEC] Boot completion is **polled** (VI masked) via the ROM's `0xFF` bit-0 then `0xED` bit-0 readback helper; general interrupt status is `0xF7` (§6.3).
-- [BUILD] DMA path: governo DMA → system RAM, **gated by the arbiter** `0xFF84`(open)/`0xFF8C`(close).
-- [BUILD] **Floppy image** plumbing (IMD → MAME floppy; track0 = 26×128 FM, tracks 1+ = 26×256 MFM).
+### M2 / M3 — IPL + floppy boot — ✅ done (boots DCOS 8.4 monitor)
+- ✅ **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7` / readback `0xED` / ID+strobe `0xFF`.
+- ✅ Boot completion **polled** (VI masked) via `0xFF` bit-0 then `0xED` bit-0; interrupt-source latch **RD1NT** at `0xF7`.
+- ✅ DMA path: governo **word-addressed** DMA → system RAM, gated by the arbiter `0xFF84`(open)/`0xFF8C`(close).
+- ✅ **Floppy image** plumbing (IMD; track0 = 26×128 FM, tracks 1+ = 26×256 MFM; 500 kbps).
 
-### M4 — detect + boot the ST506 hard disk
-- [BUILD] **HDU governo (GO363)** = **`upd7261` skeleton + `l1_hdgov`** (started in `mame/`). Reg map (§6.4): DMA counter `0x80/82`, start `0x83`, status `0x90`, µPD7261 latch `0xB0`, drive/CHS `0xE0/E1`. `[?]` `0xB0` strobe bits + geometry-select.
-- [BUILD] **Interrupt vectoring** — completion is **VI-driven** (§6.5): the governo asserts a backplane INT carrying its **vector** (written to governo reg `0xAA`); the UC routes it to the Z8001 VI, which dispatches through the RAM table `<<1>>0x01c0`. Model the INT line + vector.
-- [BUILD] **ST506 hard-disk image** (CHD), with the L1 256-byte-sector geometry mapped.
-- [SPEC] IPL search selects `E4` (direct HDU) → handler `0x1e58` in 6.0.
+### M4 — detect + boot the ST506 hard disk — 🔶 in progress
+- 🔶 **HDU governo (GO363)** — the **µPD7261 device already exists in MAME** and is the disk-I/O core; the remaining work is the **GO363 gate-array wrapper**: opcode/parameter translation (`0xB0` command word, `0xE0/E1` params, `0x00-03` results), board word-addressed DMA (`0x80/82`, start `0x83`), status `0x90`, and the VI. `[?]` `0xB0` strobe bits + geometry-select.
+- 🔶 **Interrupt vectoring** — completion is **VI-driven** (§6.5): governo asserts a backplane INT carrying its **vector** (governo reg `0xAA`); UC routes it to the Z8001 VI (RAM table `<<1>>0x01c0`). The KDC/FDU VI path is already built; the HDU one reuses it.
+- 🔶 **ST506 hard-disk image** (CHD) with the L1 256-byte-sector geometry.
+- ✅ IPL search selects `E4` (direct HDU) → handler `0x1e58` (traced).
 
 ### Not needed for this target
 GIPO governo (§6.6, IEEE-488 — out of scope), the S3000SV **cache** (`0xFFD0–DB`, optional board),
