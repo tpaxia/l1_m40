@@ -315,6 +315,8 @@ still needs the sub-test disassembled.
 > `TMM2016AP-15` video SRAM, and the **character generator `GI 9428DS-2067 MK3L`**
 > (General Instruments — a **mask ROM, not yet dumped**; it holds the real glyphs).
 > The board has no CPU/firmware — the char-gen is its only ROM. **[PHOTO]**
+> (The emulator currently renders with the Olivetti **M20/L1 house font**, which a
+> live L1/ESE console photo confirms is the same family — see **[KDC.md](KDC.md)** §6.)
 > (Board-photo → board map: `docs/Pictures (M40 + spares)/BOARD_INDEX.md`.)
 
 
@@ -406,10 +408,13 @@ ROM's minimal use. **[DISK]**
 - The **MUX** (also on disk B) is a *separate* intelligent board — **Z80 + Z80-DART +
   CTC + SIO + dual-port RAM** line multiplexer — not part of the keyboard path.
 
-**For a bootable + operable diagnostic-A model:** the 6845 alphanumeric video +
-framebuffer plus the `0xff20`/`0xff22` VI-driven KDC byte path is enough for basic
-monitor input. The remaining KDC keyboard work is the full FE handshake/LED/status
-model needed by the dedicated `KEYTE1` diagnostic.
+**For a bootable + operable diagnostic model:** the 6845 alphanumeric video +
+framebuffer plus the `0xff20`/`0xff22` VI-driven KDC byte path drives the monitor.
+This is **implemented**, and the KDC keyboard is now modeled far enough to run the
+dedicated `KEYTE1` diagnostic — VI gating on the control-register RX/TX enables, the
+serial status/data protocol, the read-ID response, and the ANK positional scancodes
+mapped onto a PS/2 keyboard. See **[KDC.md](KDC.md)**. Remaining: LED-status detail
+and the graphics/special glyphs above `0x7E`.
 
 ---
 
@@ -491,8 +496,9 @@ stage **[ROM]**:
    showing a "waiting for IPL" indication otherwise.
 
 So for the MAME model, the FDU/HDU governi are reached here. The **floppy loader
-`0x0eae`** is the next routine to trace toward **M2** — it will show exactly how the
-FDU governo's command/DMA interface works.
+`0x0eae`** has been traced and the FDU governo's command/DMA interface **modeled**
+(µPD765 + AM9517 word-addressed DMA + 8253 + RD1NT latch + UC arbiter); the machine
+IPLs from floppy (**M2/M3 done**). The HDU governo (GO363/µPD7261) is the open **M4**.
 
 ### 6.3 FDU floppy governo — board **GO280** (from a board photo)  ⭐
 

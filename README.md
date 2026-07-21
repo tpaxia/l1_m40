@@ -10,10 +10,17 @@ tested** by the resident power-on autodiagnostic — and from that, derive the
 That hardware is then reimplemented in **MAME**, and the machine is driven
 through a fixed sequence of milestones:
 
-1. execute the **BIOS / resident autodiagnostic** to completion,
-2. perform an **IPL** (initial program load),
-3. **boot from floppy**, and
-4. **detect the hard disk** (as required for installation).
+1. execute the **BIOS / resident autodiagnostic** to completion — **done**,
+2. perform an **IPL** (initial program load) — **done**,
+3. **boot from floppy** — **done** (boots the DCOS 8.4 field-diagnostic disk to its
+   interactive monitor and runs standalone diagnostics), and
+4. **detect the hard disk** (as required for installation) — **in progress**.
+
+The MAME driver (`src/mame/olivetti/m40.cpp`) already models the Z8001 CPU,
+Z8010 MMU, RAM, 8253 timer, the MC6845 video board (GO252 KDC, with keyboard,
+character attributes and the L1 font), and the floppy governo (GO280: µPD765 +
+AM9517 DMA + the UC bus arbiter) — enough to boot the diagnostic disk and drive its
+menus and tests (KEYTE1 keyboard test, CRTAN5 video/attribute test).
 
 The M40 is the segmented-CPU member of the Olivetti **L1** line; the M30 is its
 sibling and shares this ROM family. The firmware in scope is **`REL 6.0`** (16 KB
@@ -90,30 +97,40 @@ Ordered roughly by the sequence in which the ROM exercises them.
   - **Diagnostic console**: code latch `0xFFE0` + a 4-bit indicator at `0xFF64..0xFF6F`.
   - **NMI / READY logic** at `0xFF41`.
   - Config/jumper reads (`0xFFA0`), control latches (`0xFF20`, `0xFF01`).
-  - `0xFF80..0xFF8F` — 16-register device, not yet identified (NVI source).
+  - `0xFF80..0xFF8F` — the **MB15652/UC bus arbiter** (NVI source): `0xFF81` grant,
+    `0xFF80-83` ack, request/release strobe groups (decoded from disk-A's arbiter test).
   - `0xF0E0/0xF0E2` = the console latch (`0xFFE0/E2`) via the don't-care bits;
     the reset writes them to clear the console indicator.
   - `0xF0E0/0xF0E2` — a UC latch (the only non-`FF` immediate I/O), to be identified.
 
-### 3.5 Video — **6845-family CRTC**, character display
+### 3.5 Video / keyboard — **GO252 KDC** (6845-family CRTC) — *modeled*
 - Register-select `0x41` (address) / `0x43` (data); type/status at `0x81`.
 - **80 × 25** character text (40 × 13 alternate); character cell height
   12/16/17 scan lines depending on monitor type (→ 300/400/425 active lines). The
   character *width* in dots is not yet determined, so horizontal dot count is open.
-- Framebuffer at **seg 61 / phys `0xFF0000`**, 2 bytes per character cell.
+- Framebuffer at **seg 61 / phys `0xFF0000`**, 2 bytes per character cell (character +
+  attribute). Implemented in MAME: the CRTC text display, the **character-cell
+  attributes** (reverse / high light / blink / high-low-left-right line), the L1 house
+  font, and the **keyboard** (VI interrupt, serial protocol, ANK positional scancodes
+  mapped to a PS/2 keyboard). Full behavioural model in **[KDC.md](KDC.md)**.
 
-### 3.6 FDU — floppy governo (IPL source)
+### 3.6 FDU — floppy governo (IPL source) — *modeled, boots*
 - The IPL device search (`0x065c`) is traced: order set by the **ISL switch**
   (`0xFF41` bit 1), priority list `E4`(HDU) `EF`(GIPO) `E1`(FDU) `E0`(MFDU) `E6`(STC),
-  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`**; its
-  GO280 register model is now cross-checked against manual `3963590` and the disk-D
-  `6030T6` diagnostic (`uPD765` + `AM9517/8237` + `8253` + GO280 glue).
+  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`**.
+- Implemented in MAME (GO280 governo): **µPD765** FDC at 500 kbps, **AM9517** DMA with
+  the anomalous word-addressed 2-channel scheme, the **8253** command timer, the
+  **RD1NT** interrupt-source latch, and the **MB15652/UC bus arbiter** — enough to
+  boot the DCOS 8.4 diagnostic disk. Register model cross-checked against manual
+  `3963590` and the disk-D `6030T6` diagnostic.
 
-### 3.7 HDU — hard-disk governo (IPL source + installation target)
+### 3.7 HDU — hard-disk governo (installation target) — *in progress*
 - In the IPL search as types `E4` (direct disk-controller governo, handler
-  `0x1e58`) and `EF` (via GIPO/IEEE-488, handler `0x1a5e`); highest priority when
-  ISL selects HDU-first. The **direct governo `0x1e58`** is the M4 target — detect
-  the HD for installation.
+  `0x1e58`) and `EF` (via GIPO/IEEE-488, handler `0x1a5e`). The **direct governo
+  `0x1e58`** (GO363, **NEC µPD7261** controller) is the M4 target.
+- The **µPD7261 device already exists in MAME** (`machine/upd7261.cpp`) and is reused
+  as the disk-I/O core; what remains is the **GO363 gate-array wrapper** (opcode/
+  parameter translation, board DMA, VI) — the open work for M4.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
 - Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
@@ -130,12 +147,12 @@ Ordered roughly by the sequence in which the ROM exercises them.
 
 ## 4. Milestones (MAME bring-up)
 
-| # | Milestone | Done when |
-|---|-----------|-----------|
-| **M1** | Resident autodiagnostic runs clean | CPU + MMU + RAM + 8253 + video pass; no diagnostic hang; reaches the IPL stage |
-| **M2** | IPL | ROM selects an IPL controller and loads the first stage per the priority order |
-| **M3** | Boot from floppy | FDU governo modeled well enough to load the OS/monitor image |
-| **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it |
+| # | Milestone | Done when | Status |
+|---|-----------|-----------|--------|
+| **M1** | Resident autodiagnostic runs clean | CPU + MMU + RAM + 8253 + video pass; no diagnostic hang; reaches the IPL stage | ✅ done |
+| **M2** | IPL | ROM selects an IPL controller and loads the first stage per the priority order | ✅ done |
+| **M3** | Boot from floppy | FDU governo modeled well enough to load the OS/monitor image | ✅ done (DCOS 8.4 diagnostic monitor) |
+| **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it | 🔶 in progress (µPD7261 in MAME; GO363 wrapper pending) |
 
 IPL device priority (from the service manual, absent the ISL switch): HDU 5010 →
 HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
@@ -161,11 +178,19 @@ expects.
 
 ## 7. Status
 
-Reverse-engineering is under way from the reset vector outward. Characterised so
-far: the reset path and Program Status Area, the diagnostic console + video
-display, video-controller detect/init, the **ROM checksum** (algorithm confirmed
-to reproduce the stored word), the **Z8010 MMU test + map**, the **8253 timer
-test**, **video geometry** (80×25 CRTC), backplane slot scan/config-table build,
-the UC bus arbiter, and the FDU GO280 register/DMA/FDC model. Remaining high-value
-work is the exact HDU `0xb0` strobe detail, hard-disk geometry selection, and then
-MAME implementation against the documented milestones.
+**The MAME driver boots the DCOS 8.4 field-diagnostic disk to its interactive
+monitor and runs standalone diagnostics** (M1–M3 done; M4 in progress).
+
+Modeled and working: the Z8001 reset path + PSA, Z8010 MMU test + map, ROM checksum,
+8253 timer, RAM sizing, the backplane slot scan / config-table build, the UC bus
+arbiter, and the **GO280 floppy governo** (µPD765 + AM9517 word-addressed DMA + 8253
++ RD1NT latch) — the machine IPLs from floppy and reaches the diagnostic monitor
+(LOAD / MAP / HELP / GO). The **GO252 KDC** is modeled too: MC6845 text video with
+character attributes (reverse / high light / blink / lines), the L1 font, and the
+keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diagnostics
+**KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
+
+Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
+wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type
+register and the character-attribute bit map; and obtain the real `GI 9428DS`
+char-gen glyphs. Details in **[HARDWARE.md](HARDWARE.md)** and **[KDC.md](KDC.md)**.
