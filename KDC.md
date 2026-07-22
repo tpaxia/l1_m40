@@ -135,9 +135,15 @@ positional scancodes); they differ only in legends and the present-key subset. *
 | **ANK 1426** | 105 | LED lights, no lock keys; **BASIC-keyword** function legends (RUN/DRAW/OLD/LIST/RES/FETCH/EXIT, F1-F8, S2-S5). The layout the driver reports (KEYTE1 layout-select option 3). |
 | **ANK 1427** | 99 | **Spanish** legends (`¿Ç`, `Ñ`, `¡`, `£`, `§`); terminal/editing function block (F1-F6, S2-S5, RUN, INQ, DEL CHAR, INS CHAR, HARD COPY, cursor arrows). Front LEDs POWER-ON/READY/L1/L2. Identical positional matrix → same scancodes; the emulator mapping covers it as a strict subset. |
 
-The MAME driver maps a standard PS/2 keyboard onto this matrix (letters/keypad/space/
-tab, **Esc = EXIT `3D`**), with the PC number-row + Enter routed to the keypad codes so
-menu/boot navigation works.
+The MAME driver maps a standard PC keyboard onto this matrix following the
+**official L1 MOS PC-keyboard table** (MOS Programmer Guide 4002570 L, §7 pp.
+7-14…7-16 — the mapping L1WSE itself uses): **PC top row → the M40 main number
+row** (`01 04 07…`), **PC numpad → the M40 keypad** (`5F 60 5D…` — the two digit
+groups are now distinct, as on the real machine), **EXIT on End** (`3D`), **SKIP on
+PgDn** (`52`; officially Shift+Tab, which a single matrix key can't express),
+DEL-char on Backspace, ENTER (`61`) on both Enter keys, keypad 00/000 on Ins/Home.
+The digit *characters* are declared on the numpad bits so natural-keyboard
+(automated) typing lands on the keypad the monitor menus actually read.
 
 ---
 
