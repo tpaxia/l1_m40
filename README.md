@@ -193,13 +193,25 @@ character attributes (reverse / high light / blink / lines), the L1 font, and th
 keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diagnostics
 **KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
 
-**The UC central-unit factory test (disk-A `UC3003`) passes with zero errors**:
-TRAP (all Z8010 MMU violation types — bit-exact VTR/BCS/status-register semantics),
-VIENO, TIMER (8253 channels 0/1/2 incl. the ch1 vectored interrupt), ACIA (the UC
-EF68B50P at `0xFF20/22`, polling + interrupt modes with internal loopback),
-INTERRUPT NOT-VECTORED (bus arbiter NVI) and VECTORED (per-source vector latches:
-timer `0xFF01`, ACIA `0xFFA0`), and ROM. This factory-test-verified the Z8010 device
-and the UC interrupt architecture.
+**The factory diagnostic suite passes on every M40-applicable test.**
+- **UC3003** (UC central-unit test): zero errors — TRAP (all Z8010 MMU violation
+  types, bit-exact VTR/BCS/status semantics), VIENO, TIMER 0/1/2 (incl. the ch1
+  vectored interrupt), ACIA (EF68B50P at `0xFF20/22`, polling + interrupt modes),
+  INTERRUPT NOT-VECTORED (arbiter NVI) and VECTORED (vector latches `0xFF01`
+  timer / `0xFFA0` ACIA), ROM.
+- **UCV305** (S.3000 V/SV UC test): all subtests incl. the MASTO master/slave
+  flip-flop (`0xFF19`/`0xFF11`/`0xFFB1` bit 6) and the ch1-OUT latch (`0xFF41`
+  bit 4); sole counted error = the M44-only MMU1 sub-test self-skipping.
+- **MEM813** memory pattern suite and **RAMVID** video-RAM march: zero errors.
+  RAMVID exposed a decades-old MAME Z8000 core bug — `COMB @Rd` decoded its
+  destination register from the wrong opcode nibble — fixed upstream-ready.
+- **6030T6** (disk-D FDU running test): controller-communication, timer,
+  interrupt and compatibility tests pass; the remaining subtests verify the
+  governo as an MFDU (XU6030, NOM10 jumper) with a 5.25" drive — future work.
+
+This campaign factory-verified the Z8010 device, the UC interrupt architecture,
+the memory and video-RAM subsystems, and fixed two Z8000 core bugs (COMB @Rd,
+block-I/O flags) affecting every Z8000 machine in MAME.
 
 Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
 wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type

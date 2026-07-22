@@ -185,3 +185,24 @@ latch `0xF6`; control at `0xE7`; interrupt status at `0xF7`; diagnostic readback
 at `0xED`; ID/strobe at `0xFF`; timer group at `0x99..0x9F`. The DMA setup shifts
 the long memory address right by one before programming `0xF6` and the DMAC
 address registers, matching the 16-bit system bus / two-FDC-byte-per-word model.
+
+## 6. Verified in emulation — suite scorecard
+
+The MAME model boots these disks and runs the programs interactively (driven via
+the monitor: LOAD → code → GO). Status of every suite attempted:
+
+| disk / code | program | verdict |
+|---|---|---|
+| A-008 | **UC3003** — S3000 UC (UC036/51) test | **zero errors** across TRAP / VIENO / TIMER 0-2 / ACIA (4 modes) / NVI / VI / ROM; EAROM skips by design |
+| A-010 | **UCV305** — S.3000 V/SV UC test | all M40-applicable subtests pass; sole counted error = the M44-only MMU1 sub-test self-skipping ("PHYS. RAM ADDRESS OUT") |
+| A-014 | **MEM813** — memory workbench | pattern suite over the detected RAM block: `ERR 00000` (pre-test "block on monitor address space" warning is expected) |
+| B-010 | **RAMVID** — video-RAM march | `ERR 00000`; exposed and led to the fix of a decades-old MAME Z8000 core bug (`COMB @Rd` register-decode nibble) |
+| B-011 | **CRTAN5** — CRT/attribute test | runs; TEST1 video-type check and the char-ROM sweep remain open (video-type register + real char-gen glyphs) |
+| B-013 | **KEYTE1** — keyboard test | runs to its interactive tests; alpha/keypad scancodes verified |
+| D-007 | **6030T6** — XU6030 FDU running test | tests 1/2/3/5 (controller comms, timer, interrupt, compatibility) pass; tests 4/6-9 verify an **MFDU**-jumpered governo (NOM10=0) with a 5.25" drive — out of current scope |
+| A-023 | CESTE0 | S8000 **multiprocessor console** test — targets the 0xFF5x master/slave hardware, out of scope |
+| — | cache family (FJCAC1/WRCAC1/TCM801/CACH84/…), printers, graphics/colour, workstation, MULTxx | hardware not modeled — out of scope |
+
+Driving quirk worth knowing: the monitor GO keystroke ("4"+ENTER) leaks into the
+first prompt of the loaded program (e.g. 6030T6's slot number); plan the answer
+sequence accordingly.

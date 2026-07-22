@@ -183,7 +183,7 @@ a ROM dump or a CRTAN5 CRT-ROM-pattern capture to confirm glyph-exact. Codes out
 |---|---|---|
 | **KEYTE1** | — | keyboard-MCU scancode correspondence, LEDs, modifier make/break, layout select |
 | **CRTAN5** | **011** | video type/geometry (TEST1 "VIDEO FEATURES"), CRT-ROM character pattern, attribute matrix (TEST4) |
-| **RAMVID** | — | video-RAM pattern test |
+| **RAMVID** | 010 (disk B) | video-RAM march test — **passes** (`ERR 00000`); marches the 4 KB bank via logical seg `0x1B` → phys `0xFF0000` |
 
 **CRTAN5 TEST1 shows `UNIDENTIFIED ERROR` even on operator-OK:** the `IF OK THEN ENTER`
 prompt is a visual confirm, but `UNIDENTIFIED ERROR` is a *separate* automatic

@@ -177,7 +177,7 @@ Physical memory map (as the ROM assumes it):
 |----------|----------|-----|
 | `0x000000`… | **ROM** (16 KB, `REL 6.0`) | [ROM] |
 | `0x010000`–`0xEF0000` | **RAM**, in 64 KB banks; contiguous; sized at boot; ≥ 16 KB required | [ROM] |
-| `0xF00000` | video window (seg 62) | [ROM] |
+| `0xF00000` | video window (seg 62). **Not yet modeled**: naively aliasing it onto the VRAM makes the RAM-sizing probe see it respond and mis-size memory, so it needs a decode-aware model | [ROM]+[EMU] |
 | `0xFF0000` | **video framebuffer** (seg 61); 80×25 char cells, 2 bytes/cell | [ROM] |
 
 > RAM sizing probes banks `0x01`…`0xEF` (`rh1` high byte) at 16 KB granularity; the
@@ -244,7 +244,7 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFC7` | 8253 control | control words `0x34`,`0x70`,`0xB6`; `0x40` latch | [ROM] |
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
 | `0xFF60`–`0xFF6F` | **diagnostic lamp latch** (3-bit): write `0xFF68`-`6A` = set lamp 0-2, `0xFF60`-`62` = clear; read = `0xC0 \| L \| L<<3` (each lamp in two bit positions, bits 7:6 high). Decoded from UC3003's self-diagnostic-signal test | [DISK]+[EMU] |
-| `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = NMI cause-classifier** (the NMI handler reads it to dispatch: **clear** → `jp @rr12` = the RAM-sizing / slot-scan resume path taken by a plain no-`READY` unpopulated-address fault; **set** → `jp 0xada`, a *distinct* cause — power-fail / BBU — that keeps the scan running. A plain unpopulated-access fault raises the NMI with **bit 6 = 0**; the NMI itself is the fault signal); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
+| `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = NMI cause-classifier** (the NMI handler reads it to dispatch: **clear** → `jp @rr12` = the RAM-sizing / slot-scan resume path taken by a plain no-`READY` unpopulated-address fault; **set** → `jp 0xada`, a *distinct* cause — power-fail / BBU — that keeps the scan running. A plain unpopulated-access fault raises the NMI with **bit 6 = 0**; the NMI itself is the fault signal); **bit 4 = latched 8253 ch1 OUT level** (the UCV305 timer test samples it inside the timer ISR); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK]+[EMU] |
 | `0xFFA0` | read = config / jumpers (also re-enables the MMU suppression gate, see `0xFF00`); **write = the UC ACIA VI vector latch** (UC3003 test 6 phase 2 loops vectors through it) | [ROM]+[DISK]+[EMU] |
 | `0xFF20` | **EF68B50P ACIA control/status** (the UC 6850): `0x03` at init = the classic 6850 master reset. The keyboard byte stream is overlaid on this interface (RDRF + the bit-2 byte-ready trigger the resident ISR checks). Baud clock = **8253 ch2 OUT**; TXD is looped back to RXD (the UC internal diagnostic loop, exercised by UC3003 test 4) | [ROM]+[DISK]+[EMU] |
 | `0xFF22` | **ACIA data register** — keyboard scancodes in / TX (loops back) out; the resident keyboard ISR reads received bytes here | [DISK]+[EMU] |
@@ -287,7 +287,8 @@ ISR plus the UCO.71 test-13 body:
 |---------|--------------|-------|
 | `0xFF00`–`0xFF02` | control latches (heavy `0xFF00` use) | UC control |
 | `0xFF20` / **`0xFF22`** | resident FE/KDC keyboard handler uses `0xFF20` as status/control and `0xFF22` as byte-data | UC/KDC keyboard path |
-| `0xFF11`, `0xFF19`, `0xFF40`, `0xFFB1`, `0xFFF0`, `0xFFFE` | scattered | misc control/status |
+| `0xFF11` / `0xFF19` / `0xFFB1` | **MASTO flip-flop** (master/slave master-out): write `0xFF19` = set, write `0xFF11` = clear, read back at `0xFFB1` **bit 6**; master (1) at reset. Decoded from UCV305 test 2 ("MASTO & VIENO SIGNAL") | UC master/slave |
+| `0xFF40`, `0xFFF0`, `0xFFFE` | scattered | misc control/status |
 | **`0xFF50`,`0xFF51`,`0xFF54`–`0xFF5F`** | **multiprocessor / master-slave signaling** (disk-A `UCY` = *UCO.71 MULTIPROCESSOR UC TEST*, the "MASTER AND VIENO SIGNAL" test): `0xFF51` = status (bit 0 polled), `0xFF54`/`55`/`58`/`5E`/`5F` = signal/control | **master-slave (multiprocessor)** |
 | `0xFF60`–`0xFF6F` | indicator (`0xFF60+n`), read-back | diagnostic console (extends §4 rows) |
 | `0xFFA0`,`0xFFA5`,`0xFFAA` | config/jumper block | UC config |
@@ -545,7 +546,7 @@ gate arrays, and the AM9517 DMAC). It matches the ROM RE. **[MAN]+[ROM]**
 | `0xED`, `0xEF` | diagnostic ports (read, `RDGNN`); `0xEF` also = interrupt-vector write (`VETTN`) |
 | `0xF6` | **DMA address high byte** (`ADRLN`, bits ADD16–23) — see below |
 | `0xF7` | **interrupt status** (read): `INTMO`(8253), `INTOO`(FDC), `PERRO`(parity), **`FUMEO`(DMA "out-of-memory" time-out)** |
-| `0xFF` | **identifier / nome logico** (read): `E0`=MFDU, `E1`=FDU, selected by the **NOM10 jumper**; write = `E01NT` strobe to reset the pending interrupt |
+| `0xFF` | **identifier / nome logico** (read): `E0`=MFDU, `E1`=FDU, selected by the **NOM10 jumper** (static — modeling bit 0 as a dynamic pending flag breaks the boot's slot-scan type read); write = `E01NT` strobe to reset the pending interrupt. The disk-D `6030T6` (XU6030) suite verifies the ID as `0xE0` = it targets an **MFDU-jumpered** machine with a 5.25" drive; its completion word pairs `{0xED bit 0, 0xFF}` |
 
 The boot read is a **µPD765 READ DATA** command (templates `0x17dc`/`0x17e6`:
 `06`(READ) `HDUS` `C=0 H=0 R=1` `N` `EOT` `GPL` `DTL` — **cylinder 0, head 0, sector 1**;
@@ -840,11 +841,26 @@ project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`
 
 ### M1 — resident autodiagnostic runs clean — ✅ done
 
-> **The UC central-unit factory test passes clean**: disk-A `UC3003` runs all its
-> subtests — TRAP (every MMU violation type), VIENO, TIMER (8253 ch 0/1/2), ACIA
-> (polling + interrupt modes), INTERRUPT NOT-VECTORED (arbiter NVI), INTERRUPT
-> VECTORED (timer `0xFF01` + ACIA `0xFFA0` vector latches), ROM — with
-> **`error(s): 0`**. Details in `re/UC3003_cpu_test.md`.
+> **The factory diagnostic suite is green on every M40-applicable test.**
+> - **UC3003** (UC test): all subtests — TRAP (every MMU violation type), VIENO,
+>   TIMER (8253 ch 0/1/2), ACIA (polling + interrupt modes), INTERRUPT NOT-VECTORED
+>   (arbiter NVI) and VECTORED (timer `0xFF01` + ACIA `0xFFA0` vector latches),
+>   ROM — `error(s): 0`.
+> - **UCV305** (S.3000 V/SV UC test): all subtests incl. MASTO & VIENO and the
+>   ch1-OUT latch; the only counted "error" is the M44-only MMU1 sub-test's
+>   self-skip.
+> - **MEM813**: memory pattern suite over the RAM block — `ERR 00000`.
+> - **RAMVID**: video-RAM march — `ERR 00000` (exposed and fixed a decades-old
+>   MAME Z8000 core bug: `COMB @Rd` decoded its register from the wrong nibble).
+> - **6030T6** (disk-D FDU running test): tests 1/2/3/5 (controller comms, timer,
+>   interrupt, compatibility) pass; tests 4/6-9 require an MFDU-jumpered machine
+>   with a 5.25" drive (out of current scope).
+> - Out of scope by design: CESTE0 / MULTxx (multiprocessor), cache family,
+>   printers, graphics/colour, workstation line.
+>
+> Along the way the campaign fixed two Z8000 **core** bugs (COMB @Rd register
+> decode; block-I/O instruction flags) and rebuilt the z8010 violation semantics
+> bit-exactly. Details in `re/UC3003_cpu_test.md`.
 - ✅ **Z8001** CPU, segmented; reset `<<0>>0x0106`; clock **4 MHz** (32 MHz ÷ 8).
 - ✅ **Z8010 MMU** — Special-I/O decode + descriptors + translate + segment trap (SEGT→Z8001, segtack). Seg 0→ROM, 61→video. Violation semantics factory-test-verified (see §2).
 - ✅ **RAM + unpopulated-access → NMI** (READY mechanism) — sizing/slot-scan work; NMI carries **`0xFF41` bit 6 = 0** on a plain no-`READY` fault (§6.5/§7).
