@@ -94,9 +94,12 @@ Ordered roughly by the sequence in which the ROM exercises them.
 - The **UC (central unit) is slot 15**, so its on-board chips live at high nibble
   `0xF_` (canonically `0xFF__`):
   - **8253 PIT** at `0xFFC1/C3/C5/C7` (system tick + a rate/interrupt test).
-  - **Diagnostic console**: code latch `0xFFE0` + a 4-bit indicator at `0xFF64..0xFF6F`.
+  - **Diagnostic console**: code latch `0xFFE0` + the 3-bit lamp latch at `0xFF60..0xFF6F`
+    (set `0xFF68-6A`, clear `0xFF60-62`, readback).
   - **NMI / READY logic** at `0xFF41`.
-  - Config/jumper reads (`0xFFA0`), control latches (`0xFF20`, `0xFF01`).
+  - **EF68B50P ACIA** at `0xFF20/22` (serial keyboard link + UC3003 loopback test);
+    VI vector latches `0xFF01` (timer) and `0xFFA0` write-side (ACIA); `0xFFA0` read =
+    config/jumpers.
   - `0xFF80..0xFF8F` — the **MB15652/UC bus arbiter** (NVI source): `0xFF81` grant,
     `0xFF80-83` ack, request/release strobe groups (decoded from disk-A's arbiter test).
   - `0xF0E0/0xF0E2` = the console latch (`0xFFE0/E2`) via the don't-care bits;
@@ -189,6 +192,14 @@ arbiter, and the **GO280 floppy governo** (µPD765 + AM9517 word-addressed DMA +
 character attributes (reverse / high light / blink / lines), the L1 font, and the
 keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diagnostics
 **KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
+
+**The UC central-unit factory test (disk-A `UC3003`) passes with zero errors**:
+TRAP (all Z8010 MMU violation types — bit-exact VTR/BCS/status-register semantics),
+VIENO, TIMER (8253 channels 0/1/2 incl. the ch1 vectored interrupt), ACIA (the UC
+EF68B50P at `0xFF20/22`, polling + interrupt modes with internal loopback),
+INTERRUPT NOT-VECTORED (bus arbiter NVI) and VECTORED (per-source vector latches:
+timer `0xFF01`, ACIA `0xFFA0`), and ROM. This factory-test-verified the Z8010 device
+and the UC interrupt architecture.
 
 Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
 wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type

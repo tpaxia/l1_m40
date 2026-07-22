@@ -113,7 +113,7 @@ follow *"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
 |------|-------|-----|
 | CPU | Zilog **Z8001** (segmented, 48-pin) | [ROM] |
 | Clock | Master oscillator **32.000 MHz** [PHOTO]; CPU clock **4 MHz** (`/8`). | [PHOTO]/[MAN] |
-| MMU | Zilog **Z8010** (single unit → 64 segments, 0–63) | [ROM] |
+| MMU | Zilog **Z8010** (single unit → 64 segments, 0–63). Violation semantics verified against the UC3003 factory test: VTR bit order `01`=read-only, `02`=system, `04`=**length**, `08`=cpu-inhibit, `10`=execute-only, `20`=PWW, `40`=SWW, `80`=FATL (a repeat violation records only FATL); BCS latches the pin levels (N/S̄, R/W̄ active-low → system write reads `0x08`); the violation register set (VTR/seg/off/BCS/instr-seg/off) freezes until VTR is cleared (cmd `0x11`); SUP suppresses the violating transfer to the end of the instruction (released at the trap acknowledge) | [ROM]+[DISK]+[EMU] |
 | Reset FCW | `0xC000` (SEG=1, system mode) | [ROM] |
 | Reset PC | `<<0>>0x0106` (seg 0, offset 0x106) | [ROM] |
 | PSAP | `<<0>>0x0000` (Program Status Area at ROM start) | [ROM] |
@@ -243,14 +243,14 @@ All confirmed from the ROM. Offsets are the I/O **low byte**.
 | `0xFFC5` | 8253 counter 2 | mode 3 (square wave) | [ROM] |
 | `0xFFC7` | 8253 control | control words `0x34`,`0x70`,`0xB6`; `0x40` latch | [ROM] |
 | `0xFFE0` | diagnostic **console code latch** | receives the step/error code | [ROM] |
-| `0xFF64`–`0xFF67` | diagnostic console char/indicator | 4 positions — possibly the **6850 ACIA** (EF68B50) registers | [ROM]/[INF] |
-| `0xFF6C`–`0xFF6F` | console indicator "set" variants | bit-per-code display | [ROM/INF] |
+| `0xFF60`–`0xFF6F` | **diagnostic lamp latch** (3-bit): write `0xFF68`-`6A` = set lamp 0-2, `0xFF60`-`62` = clear; read = `0xC0 \| L \| L<<3` (each lamp in two bit positions, bits 7:6 high). Decoded from UC3003's self-diagnostic-signal test | [DISK]+[EMU] |
 | `0xFF41` | **NMI / READY control + status** (read = status; write = clear/re-arm the NMI latch) | **bit 0 = BBU-valid** (battery RAM OK → warm start, skip destructive RAM test, ROM `0x035c`); **bit 1 = ISL** boot-order switch (1 = HDU-first, ROM `0x0660`); **bit 6 = NMI cause-classifier** (the NMI handler reads it to dispatch: **clear** → `jp @rr12` = the RAM-sizing / slot-scan resume path taken by a plain no-`READY` unpopulated-address fault; **set** → `jp 0xada`, a *distinct* cause — power-fail / BBU — that keeps the scan running. A plain unpopulated-access fault raises the NMI with **bit 6 = 0**; the NMI itself is the fault signal); **bit 7** = further NMI-cause bit (disk-A NMI handler classifies via bits 6/7). In the MB15652 gate array | [ROM]+[DISK] |
-| `0xFFA0` | config / jumper read | read once at init | [ROM] |
-| `0xFF20` | control/status latch; used by the resident FE/KDC keyboard interrupt code | written `0x03` at init; disk-B direct keyboard ISR reads bit 2 here as byte-ready status | [ROM]+[DISK] |
-| `0xFF22` | byte-data latch for the resident FE/KDC keyboard path | disk-B direct keyboard ISR reads received bytes here into `rl0` before calling the active callback | [DISK] |
-| `0xFF01` | control latch | written at init | [ROM] |
-| `0xFF80`–`0xFF8F` | **MB15652 bus/DMA arbiter** — 4 channels × 4 register groups (see §4.1) | `0xFF80–83` = arbitration **acknowledge** (`0xFF81` reads back the **grant**); `0xFF84–87` = DMA **request/gate** (`0xFF84` boot); `0xFF8C–8F` = DMA **control** (`0xFF8C` boot). Inits all 16 at `0x2a6`; raises the **NVI** on a grant | [ROM]+[DISK] |
+| `0xFFA0` | read = config / jumpers (also re-enables the MMU suppression gate, see `0xFF00`); **write = the UC ACIA VI vector latch** (UC3003 test 6 phase 2 loops vectors through it) | [ROM]+[DISK]+[EMU] |
+| `0xFF20` | **EF68B50P ACIA control/status** (the UC 6850): `0x03` at init = the classic 6850 master reset. The keyboard byte stream is overlaid on this interface (RDRF + the bit-2 byte-ready trigger the resident ISR checks). Baud clock = **8253 ch2 OUT**; TXD is looped back to RXD (the UC internal diagnostic loop, exercised by UC3003 test 4) | [ROM]+[DISK]+[EMU] |
+| `0xFF22` | **ACIA data register** — keyboard scancodes in / TX (loops back) out; the resident keyboard ISR reads received bytes here | [DISK]+[EMU] |
+| `0xFF01` | **UC timer VI vector latch** — 8253 ch1 OUT raises a VI (gated by the VIENO flip-flop, edge-latched) delivering this vector (UC3003 test 6 phase 1 loops 14 vectors through it) | [DISK]+[EMU] |
+| `0xFF00` | read side-effect: **disables the MMU-violation write-suppression gate** (a violating write then reaches memory; UC3003 "DISABLE INHIBITION MEMORY" sub-case); reading `0xFFA0` re-enables it | [DISK]+[EMU] |
+| `0xFF80`–`0xFF8F` | **MB15652 bus/DMA arbiter** — 4 channels × 4 register groups (see §4.1) | `0xFF80–83` = arbitration **acknowledge** (`0xFF81` reads back the **grant**); `0xFF84–87` = DMA **request/gate** (`0xFF84` boot); `0xFF8C–8F` = DMA **control** (`0xFF8C` boot). Inits all 16 at `0x2a6`; raises the **NVI** on a grant. **`0xFF81` bit 3 = the VIENO flip-flop** (VI-enable: set by any `0xFF8C-8F` write, cleared by any `0xFF84-87` write; ORed with any-grant), bits 0-2 = idle marker — decoded from UC3003 test 2 | [ROM]+[DISK]+[EMU] |
 | `0xF0E0`,`0xF0E2` | *= `0xFFE0/E2`* (bits 11–8 don't-care) — clears the console latch at reset | [ROM] |
 
 Chips to instantiate for the UC board (all confirmed on the UC042 photo, §0):
@@ -823,9 +823,10 @@ longer blockers.)*
 > the segment / privileged-instruction / system-call PSA slots hold the banner text,
 > so the ROM assumes none fire during self-test (the *loaded* diagnostic does install
 > them — it has `*** SEGMENT TRAP ***` / `*** PRIVILEGED INSTRUCTION TRAP ***`
-> handlers); and there is **no serial console** —
-> the on-board 6850 ACIA is never touched, all diagnostic output is the `0xFFE0`
-> code latch + `0xFF64` indicator + video. **[ROM]**
+> handlers); and the boot ROM uses **no serial console** — at boot the on-board 6850
+> ACIA only gets its `0x03` master reset, all diagnostic output is the `0xFFE0` code
+> latch + lamp latch + video. (The ACIA itself is real, lives at `0xFF20/22`, carries
+> the keyboard byte stream, and is fully exercised by UC3003 test 4.) **[ROM]+[DISK]**
 
 ---
 
@@ -838,8 +839,14 @@ project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`
 (`machine/upd7261.cpp`, pre-existing). Nothing on the M1–M3 path is still a to-write core.
 
 ### M1 — resident autodiagnostic runs clean — ✅ done
+
+> **The UC central-unit factory test passes clean**: disk-A `UC3003` runs all its
+> subtests — TRAP (every MMU violation type), VIENO, TIMER (8253 ch 0/1/2), ACIA
+> (polling + interrupt modes), INTERRUPT NOT-VECTORED (arbiter NVI), INTERRUPT
+> VECTORED (timer `0xFF01` + ACIA `0xFFA0` vector latches), ROM — with
+> **`error(s): 0`**. Details in `re/UC3003_cpu_test.md`.
 - ✅ **Z8001** CPU, segmented; reset `<<0>>0x0106`; clock **4 MHz** (32 MHz ÷ 8).
-- ✅ **Z8010 MMU** — Special-I/O decode + descriptors + translate. Seg 0→ROM, 61→video.
+- ✅ **Z8010 MMU** — Special-I/O decode + descriptors + translate + segment trap (SEGT→Z8001, segtack). Seg 0→ROM, 61→video. Violation semantics factory-test-verified (see §2).
 - ✅ **RAM + unpopulated-access → NMI** (READY mechanism) — sizing/slot-scan work; NMI carries **`0xFF41` bit 6 = 0** on a plain no-`READY` fault (§6.5/§7).
 - ✅ **UC glue** — `0xFF41` READY/NMI+ISL, the `0xFF80–8F` **bus arbiter** (§4.1), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
 - ✅ **i8253** PIT (ch0→ch1 cascade → tick/timeout).

@@ -29,8 +29,11 @@ side is:
 | `0x81` | R | status / monitor type + live-signal bit 3 (HARDWARE.md §5.1) |
 | `0xFF` | R | type-ID → **`0xFE`** (routes boot to the video self-test) **[ROM]** |
 
-The resident FE/KDC keyboard handler also uses the fixed latches **`0xFF20`**
-(status/control) and **`0xFF22`** (byte-data) — see HARDWARE.md §4.
+The resident FE/KDC keyboard handler also uses the UC-side interface at **`0xFF20`**
+(status/control) and **`0xFF22`** (data) — now identified as the **UC EF68B50P ACIA**
+(the keyboard byte stream rides its RX; the UC3003 ACIA test exercises the same chip
+with a TXD→RXD loopback). Its VI vector comes from the UC latch `0xFFA0`. See
+HARDWARE.md §4.
 
 ---
 
@@ -93,7 +96,11 @@ byte on every ANK variant. Three confidence tiers:
 |--------|--------|--------|-|--------|--------|--------|
 | **1 `5F`** | **2 `60`** | **3 `5D`** | | **0 `67`** | **. `62`** | **− `59`** |
 
-Keypad **RETURN = `52`** (this is the CR the boot/menu accept — see the note below).
+**ENTER = `61` and SKIP = `52`** — two distinct terminator keys by the keypad. Both
+end line input (which is why either boots and drives menus), but go/skip prompts
+distinguish them: the DCOS monitor (disk-A `seg03:0x1bf2`) decodes raw `61` as
+ENTER/go-on and `52` as SKIP/go-back. The emulator maps PC-Enter → `61` and
+PC-numpad-Enter → `52` (SKIP).
 
 **Alpha block letters / digits (geometry-grounded):**
 
@@ -112,9 +119,9 @@ are checked by KEYTE1's make+break test — they are *not* letters. **[DISK]/[MA
 
 > **Critical for driving diagnostics:** the boot prompt (`HIT "ENTER"`) and the monitor
 > menu (`HIT 1..4 + ENTER`) read the **numeric-keypad** scancodes
-> (`1..0 = 5F 60 5D 57 58 55 4F 50 4D 67`, RETURN `52`) — **not** the main number row
-> (`01 04 …`) or the alpha RETURN (`38`). A PC keyboard must send keypad codes for
-> those keys or menu/boot input does nothing. **[EMU]**
+> (`1..0 = 5F 60 5D 57 58 55 4F 50 4D 67`, ENTER `61`, SKIP `52`) — **not** the main
+> number row (`01 04 …`) or the alpha RETURN (`38`). A PC keyboard must send keypad
+> codes for those keys or menu/boot input does nothing. **[EMU]**
 
 ---
 
