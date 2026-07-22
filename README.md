@@ -45,6 +45,9 @@ device handlers, including the direct hard-disk governo.
   keyboard VI interrupt path, the keyboard serial protocol and positional scancode
   tables, the ANK 1426 / 1427 keyboards, and the character-cell attribute encoding
   (reverse / high light / blink / line attributes).
+- **[KEYMAP.md](KEYMAP.md)** — the official **L1 MOS ↔ PC keyboard mapping**
+  (MOS Programmer Guide §7, Tab. 7-3, used by L1WSE) and its realization in the
+  MAME driver.
 - **[L1WSE.md](L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
   "L1 Work-Station Emulator" (see §6).
 
@@ -193,6 +196,12 @@ character attributes (reverse / high light / blink / lines), the L1 font, and th
 keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diagnostics
 **KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
 
+The **complete ANK 1426 keyboard** is modeled from KEYTE1's own expected-scancode
+grids: every key of the alpha block, function row, keypad and editing block is wired
+to a real PC key, with SHIFT/CONTROL make+break, and mapped per the official L1 MOS
+PC-keyboard table so a PC keyboard drives the M40 the way L1WSE drives it from an
+M24. See **[KEYMAP.md](KEYMAP.md)** and **[KDC.md](KDC.md)** §4–5.
+
 **The factory diagnostic suite passes on every M40-applicable test.**
 - **UC3003** (UC central-unit test): zero errors — TRAP (all Z8010 MMU violation
   types, bit-exact VTR/BCS/status semantics), VIENO, TIMER 0/1/2 (incl. the ch1
@@ -209,9 +218,16 @@ keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diag
   interrupt and compatibility tests pass; the remaining subtests verify the
   governo as an MFDU (XU6030, NOM10 jumper) with a 5.25" drive — future work.
 
+- **KEYTE1** (keyboard): the alpha and functions/numerical sections address every
+  key by cell and print the scancode each one must return — which makes the test a
+  complete keyboard map. Both sections' grids now match the driver key-for-key.
+
 This campaign factory-verified the Z8010 device, the UC interrupt architecture,
 the memory and video-RAM subsystems, and fixed two Z8000 core bugs (COMB @Rd,
-block-I/O flags) affecting every Z8000 machine in MAME.
+block-I/O flags) affecting every Z8000 machine in MAME. KEYTE1 additionally
+corrected the published scancode map (the letter row was off by one cell) and
+exposed a video-attribute bug: LOW LINE was drawn on a fixed scanline instead of
+the cell's last one (MC6845 R9), leaving box bottoms a pixel short of their corners.
 
 Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
 wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type

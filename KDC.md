@@ -99,23 +99,49 @@ byte on every ANK variant. Three confidence tiers:
 **ENTER = `61` and SKIP = `52`** — two distinct terminator keys by the keypad. Both
 end line input (which is why either boots and drives menus), but go/skip prompts
 distinguish them: the DCOS monitor (disk-A `seg03:0x1bf2`) decodes raw `61` as
-ENTER/go-on and `52` as SKIP/go-back. The emulator maps PC-Enter → `61` and
-PC-numpad-Enter → `52` (SKIP).
+ENTER/go-on and `52` as SKIP/go-back. The alpha RETURN (`35`) is *also* accepted as
+a line terminator (boot + menu verified). The emulator maps PC-numpad-Enter → `61`,
+PC-Enter → `35`, PgDn → `52`.
 
-**Alpha block letters / digits (geometry-grounded):**
+**Alpha block — VERIFIED** against KEYTE1's own expected-code grid
+(`re/SCANCODES_ALPHA.png`; scancode table `seg21:0x03c0` paired index-for-index with
+the cell table `seg21:0x2b40`): **[DISK]**
 
 ```
-A 02  B 1C  C 10  D 0F  E 08  F 0D  G 18  H 15  I 25  J 1B  K 1A  L 28  M 27
-N 16  O 26  P 30  Q 03  R 1F  S 09  T 11  U 19  V 20  W 0C  X 0E  Y 14  Z 0B
-1 01  2 04  3 07  4 17  5 1D  6 1E  7 13  8 21  9 24  0 2E
-SPACE 12   TAB 05   DEL 06   ↵RETURN 38   green-key 37
+row 0:  DEL 06   1 01  2 04  3 07  4 17  5 1D  6 1E  7 13  8 21  9 24  0 2E
+        -= 2C    ~^ 2B    BS 31
+row 1:  TAB 05   Q 03  W 0C  E 08  R 1F  T 11  Y 14  U 19  I 25  O 26  P 30
+        @' 2A    [{ 36    CLEAR 37 (the red key)
+row 2:  KB-MODE 02   A 09  S 0F  D 0D  F 18  G 15  H 1B  J 1A  K 28  L 22
+        ;+ 2F    *: 34    ]} 38    RETURN 35
+row 3:  SHIFT    \ 0A (left of Z)   Z 0B  X 0E  C 10  V 20  B 1C  N 16  M 27
+        , 23     . 2D     ? 29
+row 4:  CONTROL   SPACE 12   REPEAT (sends no code — it makes the KDC auto-repeat)
 ```
 
-**Modifier keys (make / break):** LOCK `6F`/`77`, SHIFT `6E`/`76`, CONTROL `70`/`78`;
-simultaneous-keys marker `FE`. These occupy the **left column** of the letter rows and
-are checked by KEYTE1's make+break test — they are *not* letters. **[DISK]/[MAN]**
+Earlier releases of this document listed the letter row shifted by one cell
+(`A 02 … S 09 …`); that was a geometry error, corrected here from the live grid.
 
-**EXIT / abort key = `3D`** — every diagnostic test loop aborts on this code. **[DISK]**
+**Modifier keys (make / break):** SHIFT `6E`/`76`, CONTROL `70`/`78`, LOCK `6F`/`77`;
+simultaneous-keys marker `FE`. They occupy the **left column** of the letter rows and
+are checked by KEYTE1's make+break test — they are *not* letters. LOCK exists only on
+keyboards that carry the key (no ANK 1426 cell emits `6F`). **[DISK]/[MAN]**
+
+**Function / keypad block — VERIFIED** (`re/SCANCODES_NUMERIC.png`, KEYTE1 TEST 2;
+tables `seg21:0x2e5a` + `0x2df8`): **[DISK]**
+
+```
+F9/F1..F16/F8 = 44 46 63 5B 53 4B 56 5A     top-right key 39
+row 2:  \ 42   E^ 43   ( 41   ) 47   ERASE 48   EXIT 3D   LIST 54
+        FETCH 5C   DEL LINE 3B
+keypad: * 49 / − 59 / . 62 / 0 67 · 00 68 · 000 65 · digits as above
+        tall keys: SKIP 52 (upper), ENTER 61 (lower)
+right block:  RES 51   |← 4C   →| 3A        AUTO# 5E   ↑ 4E   ↓ 3C
+              OLD 66   ← 4A    → 3E         RUN 64     DRAW 40   PR ALL/NO PR 3F
+```
+
+**EXIT / abort key = `3D`** — every diagnostic test loop aborts on this code; its cell
+is function row 2, position 6. **[DISK]**
 
 > **Critical for driving diagnostics:** the boot prompt (`HIT "ENTER"`) and the monitor
 > menu (`HIT 1..4 + ENTER`) read the **numeric-keypad** scancodes
@@ -132,18 +158,26 @@ positional scancodes); they differ only in legends and the present-key subset. *
 
 | Model | Keys | Notes |
 |---|---|---|
-| **ANK 1426** | 105 | LED lights, no lock keys; **BASIC-keyword** function legends (RUN/DRAW/OLD/LIST/RES/FETCH/EXIT, F1-F8, S2-S5). The layout the driver reports (KEYTE1 layout-select option 3). |
+| **ANK 1426** | 105 | LED lights (POWER-ON/READY/L1/L2), no lock keys; **BASIC-keyword** function legends (RUN/DRAW/OLD/LIST/RES/FETCH/AUTO#/ERASE/SAVE/DEL LINE, F9/F1…F16/F8) and BASIC keywords on the alpha key *fronts* (REM/IF/THEN/GOTO/PRINT…). The layout the driver reports (KEYTE1 layout-select option 3; the US unit identifies as `KUSA02`). Photographs: deskthority thread t=14649. **[PHOTO]** |
 | **ANK 1427** | 99 | **Spanish** legends (`¿Ç`, `Ñ`, `¡`, `£`, `§`); terminal/editing function block (F1-F6, S2-S5, RUN, INQ, DEL CHAR, INS CHAR, HARD COPY, cursor arrows). Front LEDs POWER-ON/READY/L1/L2. Identical positional matrix → same scancodes; the emulator mapping covers it as a strict subset. |
 
-The MAME driver maps a standard PC keyboard onto this matrix following the
-**official L1 MOS PC-keyboard table** (MOS Programmer Guide 4002570 L, §7 pp.
-7-14…7-16 — the mapping L1WSE itself uses): **PC top row → the M40 main number
-row** (`01 04 07…`), **PC numpad → the M40 keypad** (`5F 60 5D…` — the two digit
-groups are now distinct, as on the real machine), **EXIT on End** (`3D`), **SKIP on
-PgDn** (`52`; officially Shift+Tab, which a single matrix key can't express),
-DEL-char on Backspace, ENTER (`61`) on both Enter keys, keypad 00/000 on Ins/Home.
-The digit *characters* are declared on the numpad bits so natural-keyboard
-(automated) typing lands on the keypad the monitor menus actually read.
+The MAME driver maps a standard PC keyboard onto this matrix 1:1 by character and
+position wherever the PC has the key, per the **official L1 MOS PC-keyboard table**
+(MOS Programmer Guide 4002570 L, §7 pp. 7-14…7-16 — the mapping L1WSE itself uses;
+Note 1 of that table makes unlisted keys 1:1). Full transcription and the complete
+per-key binding list are in **[KEYMAP.md](KEYMAP.md)**. Highlights: **PC top row →
+the M40 main number row**, **PC numpad → the M40 keypad** (the two digit groups stay
+distinct, as on the real machine), **EXIT on End** (`3D`), **SKIP on PgDn** (`52`;
+officially Shift+Tab, which a single matrix key can't express), DEL on Delete (`06`)
+and BS on Backspace (`31`), **F1–F8 giving F9–F16 under Shift** exactly as the manual
+specifies, since that is the M40's own shift level. The digit *characters* are
+declared on the numpad bits so natural-keyboard (automated) typing lands on the
+keypad the monitor menus actually read.
+
+On macOS, set `uimodekey F12` — MAME's default UI-mode key there is Delete, which
+would otherwise swallow the M40 DEL key. The layout uses every key of a 104-key
+board, so the UI toggle must orphan one M40 key; F12 (`(`, `41`) is the cheapest
+donor because `(` is also Shift+8. **[EMU]**
 
 ---
 
@@ -173,7 +207,11 @@ pending the CRTAN5 attribute-fill disassembly): **[EMU]/[DISK]**
 | 6 | `0x40` | REVERSE VIDEO |
 
 The MAME renderer implements all seven, with a 3-level palette (off / normal / high
-light) and a frame-counter blink phase. The **character generator `GI 9428DS-2067`** is
+light) and a frame-counter blink phase. The **LOW LINE** attribute must be drawn on
+the cell's *true* last scanline, taken from **MC6845 R9** (the firmware programs
+`R9 = 0x10`, i.e. 17-line cells) — a hardcoded line 15 leaves the bottom edge one
+scanline high, where it no longer meets the LEFT/RIGHT verticals at the corners.
+Visible on any boxed diagnostic screen. **[EMU]** The **character generator `GI 9428DS-2067`** is
 a mask ROM, **not yet dumped**; the emulator currently renders text with the **Olivetti
 M20/L1 house font** (a 5×7 dot-matrix set, ASCII `0x20`–`0x7E`). The M20 is the same L1
 product line, and a photo of a live **L1/ESE** console shows the same font — matching
