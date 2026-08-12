@@ -39,6 +39,10 @@ device handlers, including the direct hard-disk governo.
   confirmed chipset (from board photos), the three address spaces, MMU segment and
   physical memory maps, per-board register maps, the interrupt/boot model, an
   identified-board inventory, and a MAME device checklist.
+- **[MAME_DRIVER.md](MAME_DRIVER.md)** — the implementation and reverse-engineering
+  companion to `m40.cpp`: MMU suppression, READY/NMI behavior, UC/KDC multiplexing,
+  shared interrupt priority, GO280 DMA/latches, video rendering, arbiter behavior,
+  trace anchors, and known approximations.
 - **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
   contents, the two-stage boot flow, and the ROM→bootloader config-table handoff.
 - **[KDC.md](KDC.md)** — the **GO252 video/keyboard governo** behavioral model: the

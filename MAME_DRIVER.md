@@ -1,0 +1,344 @@
+# MAME M40/M44 driver — implementation and reverse-engineering notes
+
+This document records the hardware knowledge, diagnostic discoveries and deliberate
+emulation choices embodied in `src/mame/olivetti/m40.cpp`. It complements
+[`HARDWARE.md`](HARDWARE.md), which is the hardware/ROM reference,
+[`KDC.md`](KDC.md), which owns the keyboard/video protocol, and
+[`DIAGNOSTICS.md`](DIAGNOSTICS.md), which owns the diagnostic-disk workflow.
+
+Provenance tags follow the rest of this repository: **[ROM]**, **[DISK]**,
+**[MAN]**, **[PHOTO]**, **[EMU]** and **[?]**. Statements explicitly labelled
+**model** describe a MAME implementation choice rather than proven hardware.
+
+## 1. Driver scope and machine composition
+
+The current driver models the single-MMU M40 sufficiently to pass the resident
+self-test, boot the DCOS 8.4 diagnostic disks, reach the Diagnostic Monitor and run
+the M40-applicable standalone tests. It instantiates:
+
+- Z8001 at 4 MHz (`32 MHz / 8`) and one Z8010 MMU;
+- 16 KB REL 6.0 ROM, RAM beginning at physical `0x010000`, and the GO252 video
+  window at physical `0xFF0000`;
+- UC 8253, EF68B50P/6850 ACIA, MB15652 bus arbiter and UC glue latches;
+- GO252 KDC with MC6845, keyboard protocol, ANK 1426 matrix and text renderer;
+- GO280 FDU with µPD765, AM9517 DMA, on-board 8253 and four 8-inch connectors.
+
+The M44 ROM set is kept with this driver because it belongs to the same M30/M40/M44
+hardware family, not to the M20 driver. The M44 currently reuses the M40 machine
+configuration as a bring-up approximation; its different UC048/two-MMU hardware is
+not yet modeled. **[EMU]**
+
+The direct hard-disk governo GO363 is not yet instantiated. MAME already supplies a
+µPD7261 core; the open work is the Olivetti wrapper, DMA, VI and disk geometry
+described in `HARDWARE.md` §6.4. **[EMU]**
+
+## 2. CPU, MMU and physical memory
+
+### 2.1 Address spaces and translation
+
+The Z8001 program, data and stack spaces are distinct and all pass through the
+Z8010. The driver classifies MMU bus cycles as first instruction fetch, subsequent
+instruction fetch, stack request or data request. The CPU's actual FCW bit 14 drives
+the Z8010 N/S input; this is essential for the UC3003 system-only violation test.
+The upper-range-select bit is masked because the M40 has the single-range wiring.
+When the MMU master-enable bit is clear, translation is transparent. **[DISK]/[EMU]**
+
+Special I/O is the Z8010 programming space. Standard I/O uses the L1 backplane
+decode: address bits 15–12 select a slot, bits 7–0 select a register, and bits 11–8
+are ignored. The current configuration places GO252 in slot 1, GO280 in slot 2 and
+the UC in slot 15. **[ROM]/[EMU]**
+
+### 2.2 Violation suppression (SUP)
+
+The Z8010's SUP output suppresses the violating transfer and all remaining CPU
+memory transfers through the end of that instruction. The model records the
+violating PC, returns a harmless `NOP` word for a suppressed instruction fetch and
+all ones for suppressed data reads, and drops suppressed writes. A first-word fetch
+for the next instruction ends the normal suppression window. **[MAN]/[DISK]/[EMU]**
+
+There are two important exceptions discovered with UC3003:
+
+- reading UC register `0xFF00` disables write inhibition, so a violating write
+  reaches memory; reading `0xFFA0` re-enables inhibition;
+- a segment-trap or NMI acknowledge ends the violating instruction and must release
+  suppression immediately. Otherwise the PSA vector read and trap-frame stack
+  writes still appear at the violating PC, are suppressed, and the CPU vectors into
+  garbage. This was the cause of the post-SUP trap failures. **[DISK]/[EMU]**
+
+The Z8010 drives the Z8001 SEGT line. During the SEGT acknowledge cycle the CPU reads
+the MMU identifier/status word and the MMU drops SEGT. UC3003 installs a segment-trap
+handler at PSA+`0x20`, write-protects a descriptor, performs the violating write and
+checks that the handler and all violation registers are correct. **[DISK]/[EMU]**
+
+### 2.3 Physical map and READY faults
+
+The current physical decode is:
+
+| Physical address | Model |
+|---|---|
+| `0x000000–0x003FFF` | REL 6.0 ROM; writes ignored |
+| `0x010000…` | contiguous configured RAM |
+| `0xFF0000–0xFFFFFF` | GO252 framebuffer window |
+| everything else | no `READY` → NMI |
+
+RAM and VRAM are stored big-endian: the byte at an even address is the high byte of
+the Z8001 word. A plain unpopulated access sets `0xFF41` bit 7 as the modeled NMI
+cause, leaves bit 6 clear, and asserts NMI. The ROM's RAM-sizing/slot-scan handler
+interprets bit 6 clear as the ordinary no-`READY` case and resumes through `rr12`.
+Setting bit 6 for this fault makes the ROM follow its distinct power/BBU path and
+mis-size memory. DMA to an unpopulated/ROM address is ignored rather than generating
+a CPU READY fault. **[ROM]/[DISK]/[EMU]**
+
+## 3. UC glue, ACIA and shared interrupts
+
+The UC register map is tabulated in `HARDWARE.md` §4. The implementation details
+that matter in addition to the table are:
+
+- `0xFFE0` writes are printed as resident diagnostic phase/error codes;
+- `0xFF60–0xFF6F` implement the three-lamp set/clear/readback latch;
+- `0xFF19` sets MASTO, `0xFF11` clears it, and `0xFFB1` bit 6 reads it;
+- `0xFF41` bit 4 reflects the 8253 channel-1 output sampled by UCV305; writing
+  `0xFF41` clears/re-arms the NMI latch;
+- `0xFF01` is the UC timer VI vector latch and write-side `0xFFA0` is the ACIA VI
+  vector latch. Read-side `0xFFA0` remains configuration/jumpers plus the suppression
+  re-enable side effect. **[DISK]/[EMU]**
+
+### 3.1 ACIA/KDC multiplexing at `0xFF20/0xFF22`
+
+The EF68B50P is a real 6850 used by UC3003, with TXD looped to RXD for the internal
+diagnostic. The resident keyboard byte stream is overlaid on the same status/data
+interface:
+
+- a queued keyboard byte adds both RDRF (bit 0) and the resident handler's byte-ready
+  trigger (bit 2) to the real 6850 status;
+- keyboard bytes take priority on data reads; when the keyboard FIFO is empty the
+  read reaches the 6850 loopback data;
+- writes remain visible in the byte latch, are not fed back into the host-key FIFO,
+  and are also transmitted through the 6850 loopback path. **[DISK]/[EMU]**
+
+The 6850 IRQ joins the shared Z8001 VI line. Its interrupt enable remains off during
+normal monitor use (the boot writes only the `0x03` master reset), but UC3003 enables
+and tests its polling and interrupt modes. **[DISK]/[EMU]**
+
+### 3.2 Shared VI arbitration
+
+GO280, GO252, the UC timer and the UC ACIA share VI. The driver's acknowledge order
+matches the diagnostic requirements:
+
+1. GO252 KDC if RX is pending/enabled or TX completion is enabled;
+2. GO280 FDU if its latched request and `EN100` are active;
+3. UC timer edge latch, gated by VIENO, using vector `0xFF01`;
+4. UC ACIA IRQ using vector `0xFFA0`.
+
+KDC/FDU sources therefore take priority over UC timer/ACIA sources. The timer request
+is edge-latched and cleared by acknowledge; the 6850 IRQ clears when its ISR services
+the ACIA status/data cause. **[DISK]/[EMU]**
+
+## 4. GO252 KDC and keyboard protocol
+
+Detailed keyboard tables and bindings are in `KDC.md` and `KEYMAP.md`.
+
+### 4.1 Board interface and video self-test
+
+GO252 reports type `0xFE`. Its status register `0x81` returns monitor type 0 in bits
+0–2 and a toggling live-signal in bit 3. The resident video self-test selects one of
+eight CRTC tables, programs MC6845 index/data at `0x41/0x43`, walks the segment-61
+framebuffer, observes the live-signal change, writes control `0x01`, and finally
+writes `0x6A` to enable normal video. **[ROM]/[EMU]**
+
+The byte-oriented board registers are exposed on the Z8001's 16-bit I/O bus. Reads
+mirror the selected byte into both halves of the returned word; writes dispatch the
+high and low byte lanes to consecutive board registers. **[EMU]**
+
+### 4.2 Status, control and VI
+
+Read-side register `0x00/0x01` returns TX-ready bit 1 and RX-data-available bit 2.
+The two bits are independent and must combine: returning RX instead of TX+RX makes a
+pending key fail the resident direct-send TX-ready test with error `0x8006`.
+Reading status arms the following data read when RX data exists. **[DISK]/[EMU]**
+
+Write-side control bits are:
+
+- bit 5: TX/completion VI enable. The modeled transmitter is always empty, so this
+  is a level source until the resident driver clears the bit;
+- bit 6: direct-send handshake;
+- bit 7: RX VI enable. RX availability is edge-latched for acknowledge. **[DISK]**
+
+Both causes use the vector programmed through `0x20/0x21`. The VI handler reads
+status: bit 2 set selects the RX/data path; bit 2 clear selects TX/completion. A
+vector write alone must never arm the interrupt, and KDC acknowledge must only win
+the shared line when a KDC source is genuinely enabled and pending. **[DISK]/[EMU]**
+
+### 4.3 Commands, identification and FIFO
+
+KEYTE1 sends initialization bytes `0x06`, `0x08`, `0x0A`, `0x0C`, `0x10` and `0x02`.
+The current model gives `0x02` its decoded meaning: read keyboard ID/jumpers. The
+keyboard replies `0xFB`, then a configuration byte whose low five bits are the
+layout and high three bits are straps. KEYTE1's table defines layouts 0
+(international) through 10 (Italy), 11 (Japan/Kana), and 17 (USA ASCII). The modeled
+reply `0xF1` is layout 17 with strap value 7, the D.P./KUSA02 configuration. KEYTE1
+waits for `0xFB` before dequeuing the configuration byte. **[DISK]/[EMU]**
+
+Command transmission completes immediately in the model. If bit 5 remains set for a
+multi-byte command, the level TX VI reasserts for the next byte. Host keys enter a
+small FIFO; reading either the GO252 data path or the UC ACIA overlay consumes the
+next queued byte and keeps RX pending while more bytes remain. **[EMU]**
+
+## 5. GO280 FDU
+
+The authoritative register map and manual evidence are in `HARDWARE.md` §6.3 and
+`re/FDU_governo_3963590.md`. This section records the exact implemented behavior.
+
+### 5.1 Controller, rate and READY
+
+GO280 reports type `0xE1` (FDU; NOM10=1). The µPD765/P8272 appears at `0x1D`
+(main status) and `0x1F` (FIFO). The four connectors use 8-inch double-sided,
+double-density drives. The governo runs at a fixed 500 kbit/s; the command's MF bit
+selects FM versus MFM. Leaving MAME's default 250 kbit/s rate halves the cell clock
+and prevents address-mark detection. **[MAN]/[EMU]**
+
+The board supplies `RDY10` in its own logic rather than relying on the drive's
+actuator-interface READY. In MAME the external READY input is inverted, so the model
+drives it low for ready. Clearing DIAGN must not manufacture a ready-to-not-ready
+transition and a false FDC interrupt. The governo control register also controls
+FDC reset, interrupt enable and motor outputs; the current model runs mounted-drive
+motors while enabled. **[MAN]/[EMU]**
+
+### 5.2 Anomalous two-channel DMA
+
+FDC `DMARO` drives AM9517 channel 2. Channel 2 transfers the FDC bytes, but channel 1
+plus the `0xF6` high-address latch holds the memory word address. Firmware forms this
+address by shifting the physical byte address right by one. The running physical
+byte address is therefore:
+
+```text
+((0xF6 << 16) | channel_1_address) << 1 | byte_offset
+```
+
+The channel-2 AM9517 address is not the system-memory destination; its count controls
+the transfer. Register `0x58` clears only the AM9517 first/second-byte flip-flop. A
+complete two-byte channel-1 address load resets the board transfer cursor. DMA
+bypasses the Z8010 and writes the big-endian RAM backing directly. **[MAN]/[ROM]/[EMU]**
+
+When GO280 requests the system bus, the model immediately grants it and holds the
+CPU for the DMA cycle. AM9517 terminal count drives µPD765 TC and terminates the FDC
+transfer. **[EMU]**
+
+### 5.3 Interrupt and timer latches
+
+µPD765 `INTRQ` (`INTOO`) is rising-edge latched into board pending latch `INTP1`.
+8253 channel-1 end-of-count (`INTMO`) reaches the same latch. `EN100` gates the
+pending request onto VI; the VI acknowledge gates the programmed vector onto the bus
+and clears `INTP1`. Writing `E01NT` at register `0xFF` acknowledges/resets the pending
+interrupt and the source latches. `RD1NT` at `0xF7` reports the timer and FDC causes.
+**[MAN]/[DISK]/[EMU]**
+
+The on-board 8253 uses channel 0 as an approximately 10 ms time base cascaded into
+channel 1. Channel 1 provides the 500 ms motor spin-up, 2 s motor-off and 800 ms
+read/write timeout. Channel 2 masks/samples the FDC index signal. **[MAN]/[EMU]**
+
+The ROM boot masks VI and polls completion, while loaded diagnostic/runtime code can
+use the programmed FDU vector. Tests 1/2/3/5 of 6030T6 verify controller
+communication, timer, interrupt and compatibility. **[ROM]/[DISK]/[EMU]**
+
+## 6. GO252 text rendering
+
+Each framebuffer cell is two bytes: even address = attribute, odd address =
+character. Pen 0 is beam off, pen 1 normal intensity and pen 2 high light. The
+provisional attribute mapping, derived from CRTAN5 order and monitor writes, is:
+
+| Mask | Effect |
+|---|---|
+| `0x01` | high/top line |
+| `0x02` | low/bottom line |
+| `0x04` | left line |
+| `0x08` | right line |
+| `0x10` | blink |
+| `0x20` | high light |
+| `0x40` | reverse video |
+
+Blink is a field/frame-derived board function (approximately 1.5 Hz), not an MC6845
+feature. Reverse swaps foreground/background. Edge attributes force pixels on the
+cell boundary; the bottom line uses the actual MC6845 R9 maximum raster value rather
+than a hard-coded scanline, otherwise boxed corners do not meet on the 17-line mode.
+**[DISK]/[EMU]**
+
+The real character generator is the undumped `GI 9428DS-2067`. The model derives an
+8×16 readable font from the M20/L1 5×7 house font: each row is shifted left one and
+the ten-row form is centered on scanlines 3–12. Photos show matching shapes and a
+slashed zero, but glyph-exact identity and codes above ASCII `0x7E` remain open.
+**[PHOTO]/[EMU]/[?]**
+
+The ROM programs 80×25 mode with 17-line cells. The current eight-dot character
+width, approximately 57 Hz refresh, 2.67 MHz character clock and 2.5 ms vblank are
+modeling approximations pending the GO252 dot-clock/schematic evidence. **[EMU]/[?]**
+
+## 7. MB15652 bus/DMA arbiter
+
+The behavioral decode comes from the resident self-test, UC3003 VIENO test and
+UCY805/UCO.71 bus-arbiter test:
+
+- `0xFF80–0xFF83`: acknowledge/clear channels 0–3;
+- `0xFF84–0xFF87` and `0xFF88–0xFF8B`: request/gate strobe groups;
+- `0xFF8C–0xFF8F`: control/release strobes;
+- read `0xFF81`: grants in bits 7–4 (`ch0` through `ch3`), VIENO/active in bit 3,
+  and an idle marker in bits 2–0. **[DISK]/[EMU]**
+
+VIENO is set by writes to `0xFF8C–0xFF8F` and cleared by writes to
+`0xFF84–0xFF87`. A grant also makes bit 3 visible. Bits 2–0 read as `111` while
+idle and clear while a grant is active, reconciling UC3003's bit-3 checks with
+UCY805's expected `0x0F` idle and `0xF8` all-granted values. **[DISK]/[EMU]**
+
+Priority is channel 0, then 1, 2 and 3. Channel 0 can grant immediately; channel 1
+requires release through `0xFF8D`, channel 2 through `0xFF8D/8E`, and channel 3
+through `0xFF8D/8E/8F`. A request arriving while an arbitration cycle is active is
+ignored by the model. A fixed timer delays NVI until after the request-write burst,
+matching the ROM's post-`ei nvi` wait loop. The exact latency is a plausible
+approximation because no MB15652 timing data is available. **[DISK]/[EMU]/[?]**
+
+NVI acknowledge clears only the CPU line. The grant remains readable at `0xFF81`
+until software writes the corresponding channel acknowledge. Writing a control
+strobe must not itself start arbitration; doing so generates a spurious NVI during
+device enumeration and resumes through stale `rr12`. **[ROM]/[DISK]/[EMU]**
+
+## 8. Driver-side trace instrumentation
+
+The driver prints every write to the diagnostic console latch. Two optional files
+are enabled by environment variables when debug tracing is compiled:
+
+| Variable | Contents |
+|---|---|
+| `M40_VRAM_TRACE` | VRAM writes and CRTC register programming |
+| `M40_FDU_TRACE` | GO280 register events, interrupt/timer edges, VI acknowledge and DMA context |
+
+FDU events record PC, register/data, pending/enable state, latched and raw INTMO/
+INTOO state, vector, `0xF6`, channel-1 address and byte cursor. The diagnostic write
+probes additionally watch logical `0x04A480–0x04A4BF` and the error buffer at
+`0x048F40–0x048F80`, dumping registers on error-buffer writes. The VRAM probe dumps
+full CPU context for the monitor write site at PC `<<3>>0x1156`. **[EMU]**
+
+The compiled PC-context anchors are:
+
+| Area | Anchors |
+|---|---|
+| disk/runtime paths | `<<2>>7FDE` entry, `<<2>>7FE8` fatal, `<<2>>8002` return, `<<2>>A800`, `<<2>>A92A`, `<<2>>B668`, `<<4>>4586` |
+| RAMVID | `<<21>>018C` setup, `02B4` fill, `02CE` first march, `0366` mismatch, `038A` error print |
+| UC3003 | `<<21>>0304` gate, `0330` dispatch, `0358` test 1, `06DC` invalid test, `0720` next test, `3576` trap body, `34F6` trap handler, `0EA2` error, `0180` return |
+
+The reusable Lua/Python orchestration and trace-decoder workflow is documented in
+`re/MAME_diagnostic_trace_harness.md`. **[EMU]**
+
+## 9. Known approximations and source-comment caveats
+
+- GO252 monitor type/config registers other than the implemented status paths return
+  all ones; this is why CRTAN5's automatic video-type check remains open.
+- The attribute low-four-bit ordering remains provisional, and the original
+  character-generator ROM is missing.
+- MB15652 arbitration latency is chosen behaviorally, not from timing data.
+- GO280 models the proven paths needed by boot and the passing diagnostics; several
+  minor control/readback bits remain incomplete.
+- A historical comment above the GO280 handlers says DMA and floppy boot are still
+  TODO. That comment predates the implemented AM9517 path and is obsolete: the
+  diagnostic disk boots and the verified 6030T6 subset passes.
+- M44 currently shares the M40 configuration and is not a faithful M44 model.
+

@@ -118,6 +118,15 @@ follow *"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
 | Reset PC | `<<0>>0x0106` (seg 0, offset 0x106) | [ROM] |
 | PSAP | `<<0>>0x0000` (Program Status Area at ROM start) | [ROM] |
 
+**MMU bus-cycle and SUP detail.** Program, data and stack requests are distinct on
+the Z8001/Z8010 interface; instruction fetches further distinguish the first word
+from continuation words. FCW bit 14 supplies the real N/S state. SUP suppresses the
+violating transfer and subsequent accesses through the end of the instruction, but
+must release on SEGT/NMI acknowledge before the PSA vector fetch and trap-frame stack
+writes. Holding it through acknowledge suppresses the dispatch itself and vectors the
+CPU into garbage. Reading `0xFF00` disables write inhibition for the UC3003 sub-test;
+reading `0xFFA0` restores it. **[DISK]+[EMU]**
+
 ### 2.1 Z8001 reset vector (physical bytes at seg-0 offset 0)
 
 ```
@@ -140,7 +149,7 @@ follow *"OLIVETTI MADE IN ITALY S3000 GOxxx P001 A COD.33xxxx"*. **[PHOTO]**
 | Source | Line | Use | Tag |
 |--------|------|-----|-----|
 | **`READY` timeout** on a bus access | **NMI** | absent RAM / absent board detection (see §6, §7) | [ROM] |
-| **`0xFF80..0xFF8F` device** | **NVI** | paces a device init sequence (device unidentified) | [ROM]/[?] |
+| **MB15652 `0xFF80..0xFF8F` arbiter** | **NVI** | bus/DMA grant and resident/UCY805 arbiter tests | [ROM]+[DISK]+[EMU] |
 | Backplane governi | **VI** + 3 priority levels (L1A/L1B/L2) | normal device interrupts (daisy-chained by slot) | [MAN] |
 
 The NMI and NVI handlers **do not `iret`**; they pop the 8-byte frame (`inc r15,#8`)
@@ -280,6 +289,15 @@ ISR plus the UCO.71 test-13 body:
   instructions. Treat the addressed port as the meaningful strobe and the data word
   as don't-care for now. Do not assume adjacent-byte effects from a word cycle until
   the Z8001 bus/gate-array decode is confirmed.
+
+**Implemented priority/timing model.** Priority is channel 0 → 1 → 2 → 3. Channel 0
+can grant immediately; channels 1/2/3 require release strobes through `0xFF8D`,
+`8D+8E`, and `8D+8E+8F`, respectively. A fixed delay raises NVI after the ROM's
+request-write burst so it lands in the post-`ei nvi` wait loop; this latency is a
+behavioral approximation pending MB15652 timing data. NVI acknowledge clears only
+the CPU line: the grant remains readable until its `0xFF80–83` channel acknowledge.
+Control/release writes must not themselves start arbitration, or enumeration receives
+a spurious NVI and resumes through stale `rr12`. **[ROM]+[DISK]+[EMU]/[?]**
 
 **Other UC registers the diagnostic touches** (not seen from the ROM):
 
@@ -570,6 +588,17 @@ show the programmed address is shifted right by one before being split across `0
 and the DMAC registers; this matches the 16-bit system bus / two-FDC-byte-per-word
 scheme. A **2 µs no-`READY` time-out** raises `FUMEO` ("fuori memoria").
 
+In the implemented board cursor, the exact byte address is
+`(((0xF6 << 16) | ch1_address) << 1) + byte_offset`; channel 2 supplies the transfer
+count rather than the destination. Register `0x58` clears only the AM9517 byte-pointer
+flip-flop, and completing the two-byte channel-1 address load resets the byte cursor.
+DMA bypasses the MMU and maps directly onto big-endian physical RAM. **[ROM]+[EMU]**
+
+`RDY10` is supplied by GO280 board logic rather than the drive actuator READY line.
+MAME's external READY input is inverted, so the working model drives it low; clearing
+DIAGN must not create a false ready transition/FDC interrupt. The governo itself runs
+at fixed 500 kbit/s, with the µPD765 command's MF bit selecting FM or MFM. **[MAN]+[EMU]**
+
 **Where the track lands (`0x85e`):** the driver programs the DMAC address registers
 plus `0xF6` so the transfer targets **logical segment 60** (physically = whatever
 MMU descriptor 60 maps). It then validates the boot image and jumps:
@@ -596,20 +625,14 @@ readback, not the general interrupt-status register: the hardware manual names
 records status to `<<1>>0x034a`/`0x034e`, sets ready bit `0x0354.0`) exists for
 interrupt-driven runtime use, but the ROM boot path does not use it. **[ROM]+[MAN]**
 
-**Runtime diagnostic loader status — still open.** Disk-B monitor option `2`
-(`MAP`) and direct `LOAD 013` now fail at the same disk-resident library path,
-after many successful FDC reads and after the final read reports a clean µPD765
-result (`ST0=0x01`, `ST1=0`, `ST2=0`, final `C/H/R/N=0F/00/17/01`). The loaded
-segment-2 FDU code then performs `Sense Drive Status` (`ST3=0x29`: ready, unit 1),
-starts a timer-guarded motor/settle delay, and enters the `RD1NT`/`E01NT` path at
-`0x2:bdf0`/`0x2:c180`. Current MAME source exposes `RD1NT.INTMO` as
-`latched INTMO OR raw 8253 output`; this makes the second `RD1NT` read at
-`0x2:c186` still see `INTMO` after `E01NT`, producing `ac_mmulogfi: 02`.
-An experimental latch-only `RD1NT.INTMO` avoids that immediate branch but exposes
-a later repeated timer-delay path ending in `ERROR ON UNIT 1`. Therefore the
-definitive runtime model is **not** settled: likely next variables are exact
-`RD1NT` latch/raw semantics after `E01NT`, 8253 ch1 output-clear behavior, and the
-timer/index/drive-settle logic used by the loaded FDU library. **[DISK]+[TRACE]**
+**Runtime diagnostic status — verified subset.** The disk-resident loader now reads
+overlays successfully. In `6030T6`, controller communication, timer, interrupt and
+compatibility tests (1/2/3/5) pass. FDC `INTRQ` (`INTOO`) and the on-board 8253
+channel-1 end-of-count (`INTMO`) are rising-edge latched into the common `INTP1`
+pending path; `EN100` gates VI, VI acknowledge supplies `VETTN` and clears the pending
+latch, and `E01NT` acknowledges/reset source latches. The remaining 6030T6 tests
+target an MFDU-jumpered XU6030 with a 5.25-inch drive and are outside the current M40
+FDU configuration. **[MAN]+[DISK]+[EMU]**
 
 ### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
 
@@ -867,7 +890,7 @@ project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`
 - ✅ **UC glue** — `0xFF41` READY/NMI+ISL, the `0xFF80–8F` **bus arbiter** (§4.1), slot decode (bits 15-12=slot, low byte=reg), console latch `0xFFE0` + indicator `0xFF64–6F`.
 - ✅ **i8253** PIT (ch0→ch1 cascade → tick/timeout).
 - ✅ **ROM** (16 KB, 2×27128 even/odd) at seg-0/phys-0; CRC self-test passes.
-- ✅ **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + framebuffer at phys `0xFF0000` (80×25, 2 B/cell) **with character attributes + L1 font**, plus the **keyboard** (VI, serial protocol, ANK scancodes → PS/2). See **[KDC.md](KDC.md)**. (6850 ACIA present but unused at boot — not modeled.)
+- ✅ **KDC video-keyboard board** (GO252, type `FE`) — `mc6845` + framebuffer at phys `0xFF0000` (80×25, 2 B/cell) **with character attributes + L1 font**, plus the **keyboard** (VI, serial protocol, ANK scancodes → PS/2). See **[KDC.md](KDC.md)**. The UC 6850 ACIA is modeled too: the resident keyboard byte stream overlays its receive path and UC3003 verifies polling, loopback and interrupt modes.
 
 ### M2 / M3 — IPL + floppy boot — ✅ done (boots DCOS 8.4 monitor)
 - ✅ **FDU governo (GO280)**: `upd765`(`0x1D/1F`) + `am9517` DMAC(`0x40-5E`,+`0xF6` hi) + `i8253`(`0x9x`) + control `0xE7` / int-status `0xF7` / readback `0xED` / ID+strobe `0xFF`.

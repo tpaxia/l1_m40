@@ -206,3 +206,9 @@ the monitor: LOAD → code → GO). Status of every suite attempted:
 Driving quirk worth knowing: the monitor GO keystroke ("4"+ENTER) leaks into the
 first prompt of the loaded program (e.g. 6030T6's slot number); plan the answer
 sequence accordingly.
+
+Driver-side trace anchors for the RAMVID march, UC3003 trap path, GO280 register/
+DMA events, diagnostic/error buffers and VRAM/CRTC writes are collected in
+[`MAME_DRIVER.md` §8](MAME_DRIVER.md#8-driver-side-trace-instrumentation). The
+reusable Lua/Python runner and timeline decoder remain in
+[`re/MAME_diagnostic_trace_harness.md`](re/MAME_diagnostic_trace_harness.md).

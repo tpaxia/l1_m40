@@ -29,11 +29,22 @@ side is:
 | `0x81` | R | status / monitor type + live-signal bit 3 (HARDWARE.md §5.1) |
 | `0xFF` | R | type-ID → **`0xFE`** (routes boot to the video self-test) **[ROM]** |
 
+TX-ready and RX-available are independent status bits and may be set together. The
+resident direct-send helper tests TX-ready before writing a command even when a key
+byte is queued; returning RX *instead of* TX+RX produces diagnostic error `0x8006`.
+Reading status with RX available arms the following data-register read. **[DISK]/[EMU]**
+
 The resident FE/KDC keyboard handler also uses the UC-side interface at **`0xFF20`**
 (status/control) and **`0xFF22`** (data) — now identified as the **UC EF68B50P ACIA**
 (the keyboard byte stream rides its RX; the UC3003 ACIA test exercises the same chip
 with a TXD→RXD loopback). Its VI vector comes from the UC latch `0xFFA0`. See
 HARDWARE.md §4.
+
+At the UC data port, queued keyboard bytes take priority over the real 6850 receive
+data; when the keyboard FIFO is empty, reads reach the ACIA loopback. Writes update
+the resident byte latch and the 6850 transmitter, but do not feed the byte back into
+the host-key FIFO. A queued byte overlays both 6850 RDRF (bit 0) and the resident
+handler's byte-ready trigger (bit 2) on the status port. **[DISK]/[EMU]**
 
 ---
 
@@ -48,6 +59,10 @@ FDU governo uses**. Two *independent* enables live in control register `0x01`:
   (command accepted / completion), so a send handshake can post its completion.
 
 On the CPU VI-ACK cycle the KDC supplies its **vector** (programmed via `0x20/0x21`).
+RX is edge-latched and acknowledged on the VI-ACK cycle. TX/completion is a level
+source: with the modeled transmitter empty it remains asserted until the resident
+driver clears control bit 5. The handler distinguishes them by reading status
+(bit 2 set → RX/data, clear → TX/completion). **[DISK]/[EMU]**
 
 **Two emulation lessons (both were bugs first):**
 
@@ -71,7 +86,14 @@ as the status + data registers above. **[DISK]/[MAN]**
   Modifier keys additionally send a *break* code on release (see §4).
 - **Read-ID command:** host writes **`0x02`** to the data path; the keyboard replies
   **`0xFB`** followed by a **configuration byte** encoding the layout + strap options.
-  Observed reply `0xF1` = **USA ASCII layout**. **[DISK]**
+  Low five bits are the layout (0=international, 10=Italy, 11=Japan/Kana,
+  17=USA ASCII); high three bits are straps. Reply `0xF1` therefore means
+  **USA ASCII layout 17, strap value 7 (D.P./KUSA02)**. KEYTE1 waits for `0xFB`
+  before dequeuing the configuration byte. **[DISK]/[EMU]**
+- **Observed initialization stream:** KEYTE1 sends `0x06`, `0x08`, `0x0A`, `0x0C`,
+  `0x10`, then `0x02`. Only the read-ID command is fully decoded. In the current
+  model command transmission completes immediately; if TX VI remains enabled during
+  a multi-byte command, it reasserts for the next byte. **[DISK]/[EMU]**
 - **Direct-send handshake:** control-reg bit 6 gates a direct host→keyboard byte.
 - The host translates positional scancodes → characters via a language table; the
   diagnostics compare raw scancodes directly.
@@ -99,9 +121,17 @@ byte on every ANK variant. Three confidence tiers:
 **ENTER = `61` and SKIP = `52`** — two distinct terminator keys by the keypad. Both
 end line input (which is why either boots and drives menus), but go/skip prompts
 distinguish them: the DCOS monitor (disk-A `seg03:0x1bf2`) decodes raw `61` as
-ENTER/go-on and `52` as SKIP/go-back. The alpha RETURN (`35`) is *also* accepted as
-a line terminator (boot + menu verified). The emulator maps PC-numpad-Enter → `61`,
-PC-Enter → `35`, PgDn → `52`.
+ENTER/go-on and `52` as SKIP/go-back. The alpha RETURN (`35`) is **not** a line
+terminator: posting it at the `HIT "ENTER"` boot prompt is read by the KDC and then
+ignored, and the machine sits there — verified by trace (`GO252 R reg=02 data=35`
+followed by no progress). Only the keypad terminators drive the boot prompt, the
+monitor menus and the go/skip prompts. **[EMU]/[DISK]**
+
+The emulator therefore keeps the *physical* mapping (PC-Enter → alpha RETURN `35`,
+numpad-Enter → `61`, PgDn → SKIP `52`) but declares the **natural-keyboard character
+13 on the keypad ENTER bit**, so scripted input and MAME's paste/type facilities
+reach the terminator the firmware actually reads. Driving the monitor by hand means
+using the **numeric-keypad Enter**, exactly as on the real machine.
 
 **Alpha block — VERIFIED** against KEYTE1's own expected-code grid
 (`re/SCANCODES_ALPHA.png`; scancode table `seg21:0x03c0` paired index-for-index with

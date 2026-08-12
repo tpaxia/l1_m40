@@ -123,12 +123,12 @@ echo):
 | `+;` / `*:` | `2F` / `34` | `;:` / `'"` |
 | `/` (left of Z) / `?` | `0A` / `29` | 102nd key (`\|` next to LShift) / `/?` |
 | `, .` SPACE | `23 2D 12` | same |
-| RETURN `↵` | `35` | Enter (accepted by the monitor as terminator) |
+| RETURN `↵` | `35` | Enter (a typing key only — **not** a line terminator; the boot prompt and monitor menus read the keypad ENTER `61`, so char 13 is declared there) |
 | KB MODE | `02` | F11 |
 | CLEAR | `49` | F9 |
 | SHIFT / CONTROL | `6E/76` / `70/78` | Shift / LCtrl (make/break emulated) |
 | keypad `7 8 9 / 4 5 6 / 1 2 3 / 0 . −` | `4F 50 4D 57 58 55 5F 60 5D 67 62 59` | numpad (digit chars live here — the monitor menus read the keypad) |
-| keypad ENTER / SKIP | `61` / `52` | numpad Enter / PgDn |
+| keypad ENTER / SKIP | `61` / `52` | numpad Enter (carries char 13) / PgDn |
 | F1–F8 (F9–F16 shifted) | `44 46 63 5B 53 4B 56 5A` | F1–F8 (Shift+Fn = F9–F16, matching Tab. 7-3's F11…F16 → SHIFT F1…F6) |
 | EXIT | `3D` | End |
 | REPEAT | none | unbound (PC auto-repeat; per L1WSE) |
