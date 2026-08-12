@@ -184,6 +184,13 @@ multi-byte command, the level TX VI reasserts for the next byte. Host keys enter
 small FIFO; reading either the GO252 data path or the UC ACIA overlay consumes the
 next queued byte and keeps RX pending while more bytes remain. **[EMU]**
 
+Host input is handled by a dedicated HLE ANK keyboard device using MAME's standard
+matrix-keyboard interface. Matrix make transitions produce the decoded positional
+scancodes; SHIFT and CONTROL break transitions produce their corresponding break
+codes. A callback delivers each byte to the GO252/KDC FIFO above. The scanner runs
+120 complete matrix passes per second to preserve the original driver behavior;
+this is an input-sampling choice, not a measured M40 keyboard timing. **[EMU]/[?]**
+
 ## 5. GO280 FDU
 
 The authoritative register map and manual evidence are in `HARDWARE.md` §6.3 and
@@ -208,17 +215,18 @@ motors while enabled. **[MAN]/[EMU]**
 
 FDC `DMARO` drives AM9517 channel 2. Channel 2 transfers the FDC bytes, but channel 1
 plus the `0xF6` high-address latch holds the memory word address. Firmware forms this
-address by shifting the physical byte address right by one. The running physical
-byte address is therefore:
+address by shifting the physical byte address right by one (`0x0F96`:
+`srll rr2,#1`). The running physical byte address is therefore:
 
 ```text
 ((0xF6 << 16) | channel_1_address) << 1 | byte_offset
 ```
 
-The channel-2 AM9517 address is not the system-memory destination; its count controls
-the transfer. Register `0x58` clears only the AM9517 first/second-byte flip-flop. A
-complete two-byte channel-1 address load resets the board transfer cursor. DMA
-bypasses the Z8010 and writes the big-endian RAM backing directly. **[MAN]/[ROM]/[EMU]**
+The channel-2 AM9517 address, observed as `0xFFFF`, is not the system-memory
+destination; its count controls the transfer. Register `0x58` clears only the
+AM9517 first/second-byte flip-flop. A complete two-byte channel-1 address load resets
+the board transfer cursor. DMA bypasses the Z8010 and writes the big-endian RAM
+backing directly. **[MAN]/[ROM]/[EMU]**
 
 When GO280 requests the system bus, the model immediately grants it and holds the
 CPU for the DMA cycle. AM9517 terminal count drives µPD765 TC and terminates the FDC
@@ -261,6 +269,7 @@ Blink is a field/frame-derived board function (approximately 1.5 Hz), not an MC6
 feature. Reverse swaps foreground/background. Edge attributes force pixels on the
 cell boundary; the bottom line uses the actual MC6845 R9 maximum raster value rather
 than a hard-coded scanline, otherwise boxed corners do not meet on the 17-line mode.
+The monitor's observed `0x50` attribute is therefore reverse video plus blink.
 **[DISK]/[EMU]**
 
 The real character generator is the undumped `GI 9428DS-2067`. The model derives an
@@ -328,7 +337,7 @@ The compiled PC-context anchors are:
 The reusable Lua/Python orchestration and trace-decoder workflow is documented in
 `re/MAME_diagnostic_trace_harness.md`. **[EMU]**
 
-## 9. Known approximations and source-comment caveats
+## 9. Known approximations
 
 - GO252 monitor type/config registers other than the implemented status paths return
   all ones; this is why CRTAN5's automatic video-type check remains open.
@@ -337,8 +346,4 @@ The reusable Lua/Python orchestration and trace-decoder workflow is documented i
 - MB15652 arbitration latency is chosen behaviorally, not from timing data.
 - GO280 models the proven paths needed by boot and the passing diagnostics; several
   minor control/readback bits remain incomplete.
-- A historical comment above the GO280 handlers says DMA and floppy boot are still
-  TODO. That comment predates the implemented AM9517 path and is obsolete: the
-  diagnostic disk boots and the verified 6030T6 subset passes.
 - M44 currently shares the M40 configuration and is not a faithful M44 model.
-
