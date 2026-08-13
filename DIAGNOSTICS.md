@@ -200,6 +200,10 @@ the monitor: LOAD → code → GO). Status of every suite attempted:
 | B-011 | **CRTAN5** — CRT/attribute test | runs; TEST1 video-type check and the char-ROM sweep remain open (video-type register + real char-gen glyphs) |
 | B-013 | **KEYTE1** — keyboard test | runs to its interactive tests; alpha/keypad scancodes verified |
 | D-007 | **6030T6** — XU6030 FDU running test | tests 1/2/3/5 (controller comms, timer, interrupt, compatibility) pass; tests 4/6-9 verify an **MFDU**-jumpered governo (NOM10=0) with a 5.25" drive — out of current scope |
+| D-003 | **7032E5** — FDU/MFDU error-rate program | starts and identifies GO280 logical slot 2 / PU 1, then correctly aborts with `TRACK 0 UNREADABLE! STD 17 NOT FOUND`; the manual requires a destructive Standard-17 scratch disk, not diagnostic disk D |
+| D-004 | **FDUMA2** — XU6030 alignment/eccentricity program | cannot be loaded completely from the surviving image: cylinder 26, head 1, sector 15 is IMD type 0 (unavailable), producing the monitor's `ERROR ON UNIT 3`; the program also requires DAT82/DF128 alignment media |
+| D-005 | **4301T4** — XU4301 MFDU running test | executes test 1 and rejects the fitted FDU controller as expected: physical name `E1` instead of the required MFDU name `E0` |
+| D-006 | **4305T6** — XU4305 MFDU running test | tests 1/2/3/4 (controller communication, timer, interrupt and DMA) pass; the DMA test confirms the `VERFN` read strobe, channel-1 request status and both AM9517 software-request paths; test 5 then times out on the FDU/MFDU compatibility exchange, while later media tests require a Standard-20 1 MB MFDU scratch disk |
 | A-023 | CESTE0 | S8000 **multiprocessor console** test — targets the 0xFF5x master/slave hardware, out of scope |
 | — | cache family (FJCAC1/WRCAC1/TCM801/CACH84/…), printers, graphics/colour, workstation, MULTxx | hardware not modeled — out of scope |
 
