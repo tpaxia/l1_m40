@@ -135,12 +135,15 @@ Ordered roughly by the sequence in which the ROM exercises them.
   `3963590` and the disk-D `6030T6` diagnostic.
 
 ### 3.7 HDU — hard-disk governo (installation target) — *in progress*
-- In the IPL search as types `E4` (direct disk-controller governo, handler
-  `0x1e58`) and `EF` (via GIPO/IEEE-488, handler `0x1a5e`). The **direct governo
-  `0x1e58`** (GO363, **NEC µPD7261** controller) is the M4 target.
-- The **µPD7261 device already exists in MAME** (`machine/upd7261.cpp`) and is reused
-  as the disk-I/O core; what remains is the **GO363 gate-array wrapper** (opcode/
-  parameter translation, board DMA, VI) — the open work for M4.
+- The ROM IPL search type `E4` and handler `0x1e58` belong to the older GO230
+  18 MB governo, not GO363.  GO363's hardware and HDC505 diagnostic ID is `65`.
+  GIPO/IEEE-488 remains type `EF`, handler `0x1a5e`.
+- The GO363 wrapper now exists and HDC505 tests 1 and 2 pass.  Its test-2 PRIN0,
+  PROINT, VI and acknowledge sequence is decoded and modelled.  CHS fields, a
+  word-addressed DMA counter, and an exploratory CHD read path are also present.
+  HDC505 tests 1–4 now pass, including uPD7261 programming, the private six-byte FIFO loopback, and the local 8253 timer/interrupt path. Test 4 established that the timer starts when its count is loaded, before the later private diagnostic command, and that `ff02` enables VI while `0002` selects polling. The same test proved that its delay/watchdog interrupt comes from the separate UC 8253. Remaining work includes local SRAM, refinement of the timer clock/divider, and
+  DMA interfaces, write/verify operations, and a bootable CHD.  Detailed
+  evidence is in `re/GO363_HDC5_diagnostics.md`.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
 - Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
@@ -162,7 +165,7 @@ Ordered roughly by the sequence in which the ROM exercises them.
 | **M1** | Resident autodiagnostic runs clean | CPU + MMU + RAM + 8253 + video pass; no diagnostic hang; reaches the IPL stage | ✅ done |
 | **M2** | IPL | ROM selects an IPL controller and loads the first stage per the priority order | ✅ done |
 | **M3** | Boot from floppy | FDU governo modeled well enough to load the OS/monitor image | ✅ done (DCOS 8.4 diagnostic monitor) |
-| **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it | 🔶 in progress (µPD7261 in MAME; GO363 wrapper pending) |
+| **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it | 🔶 in progress (GO363 enumerates and performs initial CHD reads; full transfer modes and install still pending) |
 
 IPL device priority (from the service manual, absent the ISL switch): HDU 5010 →
 HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).

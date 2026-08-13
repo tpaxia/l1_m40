@@ -45,8 +45,28 @@ When the MMU master-enable bit is clear, translation is transparent. **[DISK]/[E
 
 Special I/O is the Z8010 programming space. Standard I/O uses the L1 backplane
 decode: address bits 15–12 select a slot, bits 7–0 select a register, and bits 11–8
-are ignored. The current configuration places GO252 in slot 1, GO280 in slot 2 and
-the UC in slot 15. **[ROM]/[EMU]**
+are ignored. Electrical select and physical cage position are distinct. The current
+M40 configuration puts the UC, RAM, GO252 and GO280 in physical positions 1–4;
+their electrical selects are respectively `F`, `0`, `1` and `2`. The M40/M44 cage
+has 14 physical positions. **[MAN]/[ROM]/[EMU]**
+
+The bus separately records every physical connector, including empty ones. It
+validates the documented fixed locations (M30/M34: RAM position 1, CPU position 2;
+M40/M44: CPU position 1, RAM position 2) and rejects a governo installed beyond an
+empty connector in the outward priority-chain direction. Error messages use
+one-based physical cage positions, not electrical select numbers. **[MAN]/[EMU]**
+
+Governi can be moved or exchanged with ordinary MAME slot options. A trailing
+board can be removed with an empty option; removing a board between populated
+positions is rejected by the physical-layout check:
+
+```sh
+# Exchange the default video and floppy positions
+./m40 m40 -slot3 go280 -slot4 go252
+
+# Remove the trailing GO280
+./m40 m40 -slot4 ''
+```
 
 ### 2.2 Violation suppression (SUP)
 
@@ -89,6 +109,59 @@ Setting bit 6 for this fault makes the ROM follow its distinct power/BBU path an
 mis-size memory. DMA to an unpopulated/ROM address is ignored rather than generating
 a CPU READY fault. **[ROM]/[DISK]/[EMU]**
 
+### 2.4 RAM-card population and command line
+
+The manuals identify six physical RAM-board types; their capacities and DRAM
+technologies are listed in `HARDWARE.md` §1.1. MAME offers the three documented
+populations of the `ME027-32` plus all five `RA57` variants:
+
+| Slot option | Board | Installed capacity |
+|---|---|---:|
+| `me256k` | ME027-32 | 256 KB |
+| `me384k` | ME027-32 | 384 KB |
+| `me512k` | ME027-32 | 512 KB |
+| `ra57d` | RA57/D | 512 KB |
+| `ra57e` | RA57/E | 512 KB |
+| `ra57c` | RA57/C | 1 MB |
+| `ra57b` | RA57/B | 1.5 MB |
+| `ra57a` | RA57/A | 2 MB |
+
+The first M40 RAM position (`slot2`) defaults to the `auto` placeholder. With no
+explicit ME/RA57 card installed, `auto` supplies one contiguous RAM range whose
+size comes from MAME's normal `-ramsize` option. This preserves the convenient
+legacy invocation:
+
+```sh
+./m40 m40
+./m40 m40 -ramsize 1024K
+```
+
+Selecting any explicit ME/RA57 card anywhere in the cage disables the automatic
+population completely. Each explicit card then owns storage of its real capacity;
+`-ramsize` is ignored for the physical RAM map. Multiple installed cards are mapped
+contiguously from physical `0x010000` in increasing cage-position order. For
+example:
+
+```sh
+# One 512 KB RA57/E in the normal first RAM position
+./m40 m40 -slot2 ra57e
+
+# One 1 MB RA57/C
+./m40 m40 -slot2 ra57c
+
+# Two 256 KB ME027-32 populations; slots 3 and 4 contain GO252 and GO280
+./m40 m40 -slot2 me256k -slot5 me256k
+```
+
+The available card choices and current defaults can be inspected with:
+
+```sh
+./m40 m40 -listslots
+```
+
+The automatic device is an emulation convenience, not a documented Olivetti board.
+It contributes no memory whenever a physical board option is present. **[EMU]**
+
 ## 3. UC glue, ACIA and shared interrupts
 
 The UC register map is tabulated in `HARDWARE.md` §4. The implementation details
@@ -122,17 +195,22 @@ and tests its polling and interrupt modes. **[DISK]/[EMU]**
 
 ### 3.2 Shared VI arbitration
 
-GO280, GO252, the UC timer and the UC ACIA share VI. The driver's acknowledge order
-matches the diagnostic requirements:
+GO280, GO252, the UC timer and the UC ACIA share VI. Each source now enters the L1
+backplane resolver with an interrupt level and physical position:
 
-1. GO252 KDC if RX is pending/enabled or TX completion is enabled;
-2. GO280 FDU if its latched request and `EN100` are active;
-3. UC timer edge latch, gated by VIENO, using vector `0xFF01`;
-4. UC ACIA IRQ using vector `0xFFA0`.
+| Source | Level in the current profile | Position |
+|---|---|---|
+| UC ACIA | L1A | UC anchor |
+| GO252 KDC | L1B | card position |
+| UC timer | L2 | UC anchor |
+| GO280 FDU | L2 | card position |
 
-KDC/FDU sources therefore take priority over UC timer/ACIA sources. The timer request
-is edge-latched and cleared by acknowledge; the 6850 IRQ clears when its ISR services
-the ACIA status/data cause. **[DISK]/[EMU]**
+The resolver selects L1A before L1B before L2. Within L1A and L2, the board nearer
+the UC wins; L1B traverses in the opposite direction, so the board farther from the
+UC wins. The later compatible documentation describes the ACIA level as switchable
+between L1A and L1B; the current UC042 profile selects L1A, pending exact UC042
+jumper evidence. The timer request is edge-latched and cleared by acknowledge; the
+6850 IRQ clears when its ISR services the ACIA status/data cause. **[MAN]/[DISK]/[EMU]**
 
 ## 4. GO252 KDC and keyboard protocol
 
@@ -228,9 +306,10 @@ AM9517 first/second-byte flip-flop. A complete two-byte channel-1 address load r
 the board transfer cursor. DMA bypasses the Z8010 and writes the big-endian RAM
 backing directly. **[MAN]/[ROM]/[EMU]**
 
-When GO280 requests the system bus, the model immediately grants it and holds the
-CPU for the DMA cycle. AM9517 terminal count drives µPD765 TC and terminates the FDC
-transfer. **[EMU]**
+GO280 submits its AM9517 `HREQ` to the L1 bus and receives `HACK` only when the bus
+grants it. If multiple cards request simultaneously, the populated card physically
+nearest the UC wins; the CPU is held while any request remains active. AM9517
+terminal count drives µPD765 TC and terminates the FDC transfer. **[MAN]/[EMU]**
 
 ### 5.3 Interrupt and timer latches
 

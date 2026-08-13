@@ -64,11 +64,60 @@ Major devices read off the board:
 
 ## 1. System composition
 
-The machine is a **backplane of up to ~16 board slots** ("cassettiera") driven by a
-central-unit (UC) board. Boards ("governi") are memory-mapped and/or DMA devices on
-a shared bus. **[MAN]**
+The machine is a card-cage backplane ("cassettiera") driven by a central-unit (UC)
+board. Boards ("governi") are memory-mapped and/or DMA devices on a shared bus.
+The mechanically compatible successor systems document the two chassis layouts:
 
-Core boards relevant to reaching IPL:
+| Chassis family | Backplane | Positions | Numbering | CPU | First RAM |
+|----------------|-----------|-----------|-----------|-----|-----------|
+| **M30 / M34** | M30: `IN052` or `IN062`; M34: `IN062` | **9** | bottom to top | position **2** | position **1** |
+| **M40 / M44** | M40: `IN051/IN061` or `IN074`; M44: `IN074` | **14** | right to left, viewed from the front | position **1** | position **2** |
+
+The M34/M44 service manual says explicitly that M34 has at most nine board
+positions and M44 at most fourteen. It fixes the CPU and first-RAM positions shown
+above, says M34 position 1 is outside the priority chains and cannot hold a
+governo, and requires populated boards not to have vacant positions between them.
+Its compatibility table shows that `IN062` is shared by M30/M34 and `IN074` by
+M40/M44; M30/M40 can be upgraded to M34/M44 with the newer boards. Therefore the
+documented M34/M44 mechanical layouts apply to M30/M40 as well. **[MAN]**
+
+Source: *M34/M44 Manuale per l'assistenza*, publication `4105730 S (0)`,
+sections 1.1–1.3, especially printed pages 1-2 through 1-7 (PDF pages 10–15),
+figure 1-3 and the backplane compatibility table. The separate M30/M40 diagnostic
+manual confirms that the UC is always reported in logical configuration entry 15
+and that the lower-named controller is the one nearer the UC; those are logical
+selects, not physical position numbers. **[MAN]**
+
+### 1.1 RAM-board families
+
+The manuals identify **six RAM-board types** across the compatible
+M30/M40/M34/M44 family. One of them, `ME027-32`, has three population options:
+
+| Board(s) | Capacity | DRAM | Compatibility |
+|----------|----------|------|---------------|
+| `ME027-32` | 256, 384 or 512 KB | 64-Kbit | M30/M40 only |
+| `RA57/D` | 512 KB | 256-Kbit | compatible-family board |
+| `RA57/E` | 512 KB | 64-Kbit | M30/M40/M34/M44 |
+| `RA57/C` | 1 MB | 256-Kbit | M30/M40/M34/M44 |
+| `RA57/B` | 1.5 MB | 256-Kbit | M30/M40/M34/M44 |
+| `RA57/A` | 2 MB | 256-Kbit | M30/M40/M34/M44 |
+
+This gives eight capacity configurations across six board types. The documented
+capacities are **256 KB, 384 KB, 512 KB, 1 MB, 1.5 MB and 2 MB**. There are two
+electrically distinct 512 KB RA57 designs.
+
+`RA57/D` is explicit in the memory schematic index (*L1 M34-M44 Memorie — Raccolta
+Schemi*, publication `4105760 V`) and in the service manual's chapter-4 module
+list, although the chapter-1 compatibility table abbreviates the newer high-density
+row as `RA57/C-B-A`. The memory boards have DIP-switch-selectable physical address
+ranges; multiple cards therefore form explicitly addressed, normally contiguous
+RAM rather than an undifferentiated amount of memory. **[MAN]**
+
+MAME slot-option names, automatic `-ramsize` behavior and example invocations are
+recorded in `MAME_DRIVER.md` §2.4. The `auto` population described there is an
+emulation convenience and is not another physical RAM-board type.
+
+### 1.2 Core boards relevant to reaching IPL
 
 | Board | Role | Nome logico (type ID) |
 |-------|------|-----------------------|
@@ -76,14 +125,14 @@ Core boards relevant to reaching IPL:
 | Governo **video/tastiera** | CRTC display + keyboard | `FE` **[MAN]** |
 | Governo **linea** | serial/comm lines | `D1/D2/D3/D5/D7`, `CF`… **[MAN]** |
 | Governo **FDU / MFDU** | floppy | `E1 / E0` **[MAN]** |
-| Governo **HDU** | hard disk | `E4` **[MAN]** |
+| Governo **HDU** | hard disk | `E4` (GO230, 18 MB); `65` (GO363, ST506) **[MAN]+[DISK]** |
 | Governo **STC** | streaming tape | `E6` **[MAN]** |
 
 Full type-ID list: see the M34/M44 *nome logico* table (companion notes). The M40 is
 the segmented-CPU variant; RAM boards, video, and mass-storage governi plug into the
 backplane.
 
-### 1.1 Identified boards (from photos)  ⭐
+### 1.3 Identified boards (from photos)  ⭐
 
 Chipsets read off physical boards in the spares set:
 
@@ -484,7 +533,10 @@ records the machine's configuration into system RAM **[ROM]** (format & the
   The RAM start/end are also published to `<<1>>0x0220..0x022a`.
 
 **Nome-logico (type-ID) table** — the full set, from the *Manuale dei Collaudi* §1.
-The UC is always slot 15 (16th position). **[MAN]**
+The UC is always **logical configuration entry/electrical select 15 (`F`)**. It is
+physically in cage position 2 on M30/M34 and position 1 on M40/M44; “16th
+position” in the diagnostic manual refers to the displayed configuration-table
+entry, not a sixteenth physical connector. **[MAN]**
 
 | ID | Board | ID | Board |
 |----|-------|----|-------|
@@ -636,7 +688,8 @@ FDU configuration. **[MAN]+[DISK]+[EMU]**
 
 ### 6.4 HDU hard-disk governo — board **GO363** (µPD7261 / ST506)  ⭐
 
-The direct-HDU boot handler **`0x1e58`** (IPL type `E4`) is traced. It is called with
+The direct-HDU boot handler **`0x1e58`** (IPL type `E4`, the older GO230 rather
+than GO363) is traced. It is called with
 `rr2` → an 11-byte device parameter block (drive geometry + start LBA + destination),
 which it copies to `<<1>>0x0354`, identifies the drive (`0x21d4` → reads drive
 parameters to `<<1>>0x0318`, selects a geometry: 621 cyl/58 or 425 cyl/32),
@@ -650,13 +703,14 @@ slot window (`<<1>>0x0302` high byte); the low byte selects a register:
 | `0x82` | W word | DMA address counter, high word |
 | `0x83` | W | **DMA / command start strobe** (written with the command word to launch the transfer) |
 | `0x90` | R | **status** (polled; bit 0 = error / not-ready) |
-| `0xb0` | W word / R | **µPD7261 command + control latch** — high byte = opcode (`0x09` SEEK, `0x0a` READ, `0x02`/`03`/`08`/`0b` specify/recal/identify), low byte `0x10`/`0x18` control; bits 11 & 4 pulsed as strobes; read back for status |
+| `0xb0` | W word / R | **µPD7261/gate-array command + control latch** — confirmed ROM sequences include `0x02` active-low configuration queries, `0x09` seek, `0x0a` unit-probe/positioning operations, and `0x0d` buffered data transfer; low control/strobe bits select the operation phase |
 | `0xe0`,`0xe1` | W | drive + cylinder/head select (two bytes) |
 
-This matches the **disk-G** diagnostic test names (`PROGRAM 'NEC'` = µPD7261,
-`DMA & RAM & ADDRESS COUNTER` = the `0x80`/`0x82` counter, `8253 TIMER & DMA`), so
-the governo is the **GO363** (NEC µPD7261 HDC + 8253 + SRAM buffer). This handler is
-the path to **M4** (detect/boot the hard disk). **[ROM]** / register bit-detail **[?]**
+The register map above belongs to the ROM's older type-`E4` GO230 protocol.  It
+must not be attributed to GO363 merely because both are direct hard-disk
+governi.  Native GO363 evidence comes from board GO363 (ID `65`) and disk-G
+HDC5 diagnostics, whose private interface is primarily at `0x40..0x57` and is
+documented in `re/GO363_HDC5_diagnostics.md`. **[ROM]+[DISK]+[EMU]**
 
 **Completion signaling — HDU boot = interrupt-driven.** Unlike the FDU, the HDU path
 leaves **VI enabled**. The command executor (`0x2266`, sibling `0x1cbc`) sets a busy
@@ -670,7 +724,9 @@ governo **assert a backplane vectored interrupt** on command completion (via the
 > To model: a `upd7261`-class HDC behind a gate-array wrapper exposing the register
 > map above — a 32-bit word-granular DMA address counter (`0x80`/`0x82`), a start
 > strobe (`0x83`), a polled status (`0x90`), a command/control latch (`0xb0`), and a
-> drive/CHS select (`0xe0`/`0xe1`). Geometry and the exact strobe bits are still open.
+> drive/CHS select (`0xe0`/`0xe1`). The 40 MB logical geometry and the ROM discovery
+> protocol are now decoded; the remaining open area is full transfer-mode/timing
+> fidelity. See `re/GO363_HDC5_diagnostics.md`.
 
 ### 6.5 Interrupt / ISR model  ⭐
 
@@ -862,6 +918,12 @@ Device cores now in MAME: `z8001`, **`z8010`** (`machine/z8010.cpp`, written for
 project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`upd7261`**
 (`machine/upd7261.cpp`, pre-existing). Nothing on the M1–M3 path is still a to-write core.
 
+The console IPL selector is exposed in MAME under **Machine Configuration** as
+**Console IPL Switch**.  **ISL1 - Hard Disk** is the normal default; select
+**ISL2 - Floppy Disk** for installation and maintenance media.  This models the
+physical selector described by the installation procedure and avoids source-code
+changes when changing the boot device.
+
 ### M1 — resident autodiagnostic runs clean — ✅ done
 
 > **The factory diagnostic suite is green on every M40-applicable test.**
@@ -899,10 +961,10 @@ project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`
 - ✅ **Floppy image** plumbing (IMD; track0 = 26×128 FM, tracks 1+ = 26×256 MFM; 500 kbps).
 
 ### M4 — detect + boot the ST506 hard disk — 🔶 in progress
-- 🔶 **HDU governo (GO363)** — the **µPD7261 device already exists in MAME** and is the disk-I/O core; the remaining work is the **GO363 gate-array wrapper**: opcode/parameter translation (`0xB0` command word, `0xE0/E1` params, `0x00-03` results), board word-addressed DMA (`0x80/82`, start `0x83`), status `0x90`, and the VI. `[?]` `0xB0` strobe bits + geometry-select.
-- 🔶 **Interrupt vectoring** — completion is **VI-driven** (§6.5): governo asserts a backplane INT carrying its **vector** (governo reg `0xAA`); UC routes it to the Z8001 VI (RAM table `<<1>>0x01c0`). The KDC/FDU VI path is already built; the HDU one reuses it.
-- 🔶 **ST506 hard-disk image** (CHD) with the L1 256-byte-sector geometry.
-- ✅ IPL search selects `E4` (direct HDU) → handler `0x1e58` (traced).
+- 🔶 **HDU governo (GO363)** — wrapper exists with the verified `65` board ID. HDC505 tests 1–4 pass. Test 2 established `PRIN0` (`4b.5`), post-command status `28`, PROINT data `0003`, gated VI, and the handler's `xx02` acknowledge. Test 3 programs the uPD7261 through ports `01`/`10`/`11`, passes `HDC5.CONTRINIZ`, and verifies six-byte FIFO commands `45`/`44`. Test 4 established that loading the cascaded 8253 starts its count before the later `4000`/`4100` diagnostic command, and that `ff02` enables its VI while `0002` selects polled completion. The long case now acknowledges vector `30` at PC `210f76`, preserves `ffff` instead of the rejected `0f0f` sentinel, and advances to test 5. The test also exposed a separate UC-8253 VI-enable refresh bug, now fixed. Remaining: exact oscillator divider, local SRAM/DMA registers, timed bus-master DMA, write/verify modes, and tests 5 onward.
+- ✅ **Interrupt vectoring scaffold** — completion is **VI-driven** (§6.5): GO363 has a writable vector and asserts the backplane VI; acknowledge clears it. The diagnostic pending state is kept separate from the PROINT-controlled VI output.
+- ✅ **ST506 hard-disk image plumbing** — two CHD image slots; confirmed logical geometry is 425×12×32 with 256-byte sectors for the 40 MB class. A bootable/install-populated image is still needed.
+- ⚠️ IPL type `E4` → handler `0x1e58` is traced, but belongs to GO230, not GO363. A native GO363 (`65`) boot route has not yet been demonstrated.
 
 ### Not needed for this target
 GIPO governo (§6.6, IEEE-488 — out of scope), the S3000SV **cache** (`0xFFD0–DB`, optional board),
