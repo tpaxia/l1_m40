@@ -627,29 +627,71 @@ two disk formats, EOT `0x10`/`0x1a`).
 The **governo's own AM9517 DMAC** moves the sector data — the UC `0xFF80..0xFF8F`
 block is only the **system-bus arbitration** the governo requests (via `BAXXN`/`REQOO`;
 `0xFF84`/`0xFF8C` are the UC-side gate). The DMAC runs an "anomalous" **two-channel**
-scheme: **channel 1** sets up the memory address for the next cycle (no data),
-**channel 2** does the FDC↔memory byte transfer — and because the FDC bus is 8-bit,
-**2 channel-2 cycles per 16-bit word**. On write `SCRVO=1`; on read `SCRVO=0`
-(the manual says the channel-1 cycle is skipped on reads, but the firmware still
-programs the ch1 registers as the memory-address path).
+scheme: **channel 1** supplies the address for an OLIBUS memory-word transaction,
+while **channel 2** transfers bytes locally between the FDC and the board's two
+buffers — and because the FDC bus is 8-bit,
+**2 channel-2 cycles per 16-bit word**. The second byte re-enables the channel-1
+request, producing one channel-1 OLIBUS cycle and advancing its current-address
+register for the next word. The AM9517 sees this as a verify/address cycle with no
+peripheral byte transfer; the board logic performs the actual 16-bit memory read or
+write. On write `SCRVO=1`; on read `SCRVO=0`. The read path
+suppresses only the initial channel-1 cycle: subsequent channel-1 cycles still occur
+after every transferred word.
 
 **Physical DMA address = 24 bits (§3.3.4):** the low **16 bits come from the DMAC
-address registers** and the **high 8 bits (ADD16–23) from register `0xF6`**
-(board logic, auto-incremented across 64 KB blocks). The ROM and disk-D diagnostics
-show the programmed address is shifted right by one before being split across `0xF6`
-and the DMAC registers; this matches the 16-bit system bus / two-FDC-byte-per-word
-scheme. A **2 µs no-`READY` time-out** raises `FUMEO` ("fuori memoria").
+address registers** and the **high address bits from the counters loaded through
+register `0xF6`**. Board logic carries or borrows this high portion when the DMAC
+exhausts the addresses in a block; it is not merely a passive latch. The ROM and
+disk-D diagnostics show the programmed address is shifted right by one before being
+split across `0xF6` and the DMAC registers; this matches the 16-bit system bus /
+two-FDC-byte-per-word scheme. A **2 µs no-`READY` time-out** raises `FUMEO`
+("fuori memoria").
 
-In the implemented board cursor, the exact byte address is
-`(((0xF6 << 16) | ch1_address) << 1) + byte_offset`; channel 2 supplies the transfer
+The implemented byte address is
+`(((0xF6 << 16) | ch1_address) << 1) + byte_in_word`; channel 2 supplies the transfer
 count rather than the destination. Register `0x58` clears only the AM9517 byte-pointer
-flip-flop, and completing the two-byte channel-1 address load resets the byte cursor.
-DMA bypasses the MMU and maps directly onto big-endian physical RAM. **[ROM]+[EMU]**
+flip-flop. DMA bypasses the MMU and maps directly onto big-endian physical RAM.
+**[ROM]+[EMU]**
 
-`RDY10` is supplied by GO280 board logic rather than the drive actuator READY line.
-MAME's external READY input is inverted, so the working model drives it low; clearing
-DIAGN must not create a false ready transition/FDC interrupt. The governo itself runs
+This detail is architecturally visible: the disk driver reads the channel-1 current
+address after an FDC command and uses the advanced value for the next extent. An
+emulation that transfers bytes but leaves the AM9517 address unchanged causes the
+following extent to overwrite the preceding one. BCOS 3.3 exposed this when its
+second KER extent overwrote the first; JLD then read opcode `0xed06` at module offset
+`+0x0c` as an allocation size and stopped with blinking `OVF#SG2#`. With the
+per-word channel-1 cycles, the two extents land at `0x027d00` and `0x029000`,
+respectively, and the unmodified all-resident BCOS image proceeds to its system
+display. The MMU translation was correct throughout. **[MAN]+[DISK]+[EMU]**
+
+The physical board loops AM9517 `HRQ` back to `HACK`; the separate gate-array
+`REQ00/BAXXN` path arbitrates only the channel-1 OLIBUS transaction. MAME now follows
+that split: channel-2 byte cycles remain local and each channel-1 word access briefly
+owns the L1 bus. The modeled `0xF6` counter carries or borrows when the channel-1
+address wraps, including decrement mode. **[MAN]+[EMU]**
+
+The endpoint differs by direction. A read skips the initial channel-1 cycle and
+commits every byte pair, including the final buffered word. A write prefetches its
+first word through channel 1 and requests another only after non-final pairs, avoiding
+an extra fetch at terminal count. **[MAN]+[EMU]**
+
+FDC/timer edges are retained in the `RD1NT` cause latches, while `ENS00` controls
+their delivery into `INTP1`. Thus a cause captured while disabled is delivered once
+when enabled. After `E01NT` clears the cause latch, merely toggling enable while the
+raw FDC level remains high does not create a new cause. The 6030T6 interrupt test
+exposes this two-latch distinction directly. **[MAN]+[DISK]+[EMU]**
+
+In FDU mode RDY10 follows the drive; DIAGN forces ready through the board logic. The
+MFDU configuration instead uses the documented pulled-up ready path. The governo runs
 at fixed 500 kbit/s, with the µPD765 command's MF bit selecting FM or MFM. **[MAN]+[EMU]**
+
+**Index path (§3.4):** physical index clocks 8253 channel 2 only while the FDC's
+head-load output is active. Channel-2 output (`MASKO`) is ANDed with physical index,
+hiding the first two index pulses of a read/write command. `IDXC0` is the alternate
+source used with the board's G10 `1100` diagnostic-test jumper; it is not selected by
+the runtime `DIAGN` bit. The manual explicitly says `SCANO` is unused on GO280
+("60280" in that paragraph). MAME currently implements the gated PIT clock but leaves
+the FDC on direct physical index; directly connecting PIT OUT2 loses external
+gate-array phase and breaks IPL, so MASKO/IDXC0 remains open. **[MAN]+[EMU]**
 
 **Where the track lands (`0x85e`):** the driver programs the DMAC address registers
 plus `0xF6` so the transfer targets **logical segment 60** (physically = whatever

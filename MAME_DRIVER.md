@@ -282,19 +282,23 @@ double-density drives. The governo runs at a fixed 500 kbit/s; the command's MF 
 selects FM versus MFM. Leaving MAME's default 250 kbit/s rate halves the cell clock
 and prevents address-mark detection. **[MAN]/[EMU]**
 
-The board supplies `RDY10` in its own logic rather than relying on the drive's
-actuator-interface READY. In MAME the external READY input is inverted, so the model
-drives it low for ready. Clearing DIAGN must not manufacture a ready-to-not-ready
-transition and a false FDC interrupt. The governo control register also controls
-FDC reset, interrupt enable and motor outputs; the current model runs mounted-drive
-motors while enabled. **[MAN]/[EMU]**
+In the configured FDU mode the FDC sees the drive READY signal; DIAGN switches it to
+the board-forced ready path.  (The MFDU configuration instead has the documented
+pulled-up ready input.)  The governo control register also controls FDC reset and
+interrupt enable.  FDU spindle motors run continuously; MOTO1/MOTO2 are for MFDU
+configurations. **[MAN]/[EMU]**
 
 ### 5.2 Anomalous two-channel DMA
 
 FDC `DMARO` drives AM9517 channel 2. Channel 2 transfers the FDC bytes, but channel 1
-plus the `0xF6` high-address latch holds the memory word address. Firmware forms this
-address by shifting the physical byte address right by one (`0x0F96`:
-`srll rr2,#1`). The running physical byte address is therefore:
+plus the `0xF6` high-address counters hold the memory word address. Channel 2 is a
+local FDC↔buffer byte transfer and does not itself perform the system-memory cycle.
+After each pair of channel-2 byte cycles, the board requests one channel-1 cycle;
+the gate array turns its address into the actual 16-bit OLIBUS memory transaction.
+That cycle advances the AM9517 channel-1 current address to the next memory word.
+For reads, only the initial channel-1 cycle is suppressed; the per-word cycles still
+occur. Firmware forms the initial address by shifting the physical byte address
+right by one (`0x0F96`: `srll rr2,#1`). The running physical byte address is therefore:
 
 ```text
 ((0xF6 << 16) | channel_1_address) << 1 | byte_offset
@@ -306,10 +310,23 @@ AM9517 first/second-byte flip-flop. A complete two-byte channel-1 address load r
 the board transfer cursor. DMA bypasses the Z8010 and writes the big-endian RAM
 backing directly. **[MAN]/[ROM]/[EMU]**
 
-GO280 submits its AM9517 `HREQ` to the L1 bus and receives `HACK` only when the bus
-grants it. If multiple cards request simultaneously, the populated card physically
-nearest the UC wins; the CPU is held while any request remains active. AM9517
-terminal count drives µPD765 TC and terminates the FDC transfer. **[MAN]/[EMU]**
+At the AM9517 interface channel 1 is effectively a verify/address cycle: it does not
+exchange a peripheral byte, although the surrounding board performs the OLIBUS word
+read or write. The current-address advancement is visible to software when it reads
+the AM9517 channel-1 address registers. BCOS JLD uses that value as the destination of the next
+track-sized extent. Before the per-word channel-1 cycles were modeled, every extent
+started at the original address: the second KER extent overwrote its header and first
+code extent, and JLD subsequently interpreted opcode `0xed06` at offset `+0x0c` as an
+allocation size, producing the blinking `OVF#SG2#` stop. This was a GO280 sequencing
+error, not a Z8010 translation error or a damaged disk. **[MAN]/[DISK]/[EMU]**
+
+The AM9517 `HRQ` is looped back to `HACK`, as on the board. System-bus arbitration
+is requested separately by the gate-array `REQ00/BAXXN` path only for the channel-1
+OLIBUS word transaction; channel-2 FDC/buffer cycles remain local. If multiple cards
+request simultaneously, the populated card physically nearest the UC wins. Releasing
+the bus after the word transaction, rather than after the complete internal DACK1
+interval, is essential at terminal count. AM9517 terminal count drives µPD765 TC and
+terminates the FDC transfer. **[MAN]/[EMU]**
 
 ### 5.3 Interrupt and timer latches
 
@@ -322,7 +339,16 @@ interrupt and the source latches. `RD1NT` at `0xF7` reports the timer and FDC ca
 
 The on-board 8253 uses channel 0 as an approximately 10 ms time base cascaded into
 channel 1. Channel 1 provides the 500 ms motor spin-up, 2 s motor-off and 800 ms
-read/write timeout. Channel 2 masks/samples the FDC index signal. **[MAN]/[EMU]**
+read/write timeout. Channel 2 is clocked by physical index while the FDC head-load
+output is active. Its output is externally ANDed with index so the first two index
+pulses of a data command are hidden from the FDC. MAME supplies the gated channel-2
+clock, but does not yet put its output in the FDC index path: doing that directly
+loses the gate-array phase and breaks IPL. **[MAN]/[EMU]**
+
+`DIAGN` forces READY; it does not select the diagnostic index source. The manual's
+`IDXC0` is associated with the separate G10 `1100` diagnostic-test jumper setting.
+`SCANO` is explicitly unused on GO280 (called 60280 in that paragraph), so it must
+not be treated as a synthetic index output. **[MAN]**
 
 The ROM boot masks VI and polls completion, while loaded diagnostic/runtime code can
 use the programmed FDU vector. Tests 1/2/3/5 of 6030T6 verify controller
@@ -423,6 +449,8 @@ The reusable Lua/Python orchestration and trace-decoder workflow is documented i
 - The attribute low-four-bit ordering remains provisional, and the original
   character-generator ROM is missing.
 - MB15652 arbitration latency is chosen behaviorally, not from timing data.
-- GO280 models the proven paths needed by boot and the passing diagnostics; several
-  minor control/readback bits remain incomplete.
+- GO280 collapses the FUMEO no-READY timeout to an immediate missing-responder fault;
+  RAM parity/PERRO and the exact DAW02 diagnostic waveform are not modeled. The
+  external MASKO/IDXC0 index mux is also pending; channel 2 receives its documented
+  head-load-gated clock, but physical index currently reaches the FDC directly.
 - M44 currently shares the M40 configuration and is not a faithful M44 model.
