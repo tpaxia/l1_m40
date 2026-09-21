@@ -1,5 +1,8 @@
 # L1 MOS keyboard ↔ PC keyboard mapping
 
+For the current user-facing M40 diagrams, see the
+[M40 keyboard reference](docs/keyboard/README.md).
+
 Transcribed from **MOS Programmer Guide** (doc `4002570 L`), §7 *"Emulation of the
 L1 MOS keyboard"*, pages 7-14 … 7-16 (scan: `re/L1WSE_KEYS.pdf`). This is the
 **official Olivetti mapping** used by the L1WSE / WSELAN / OL1EMU emulators to
@@ -124,8 +127,9 @@ echo):
 | `/` (left of Z) / `?` | `0A` / `29` | 102nd key (`\|` next to LShift) / `/?` |
 | `, .` SPACE | `23 2D 12` | same |
 | RETURN `↵` | `35` | Enter (a typing key only — **not** a line terminator; the boot prompt and monitor menus read the keypad ENTER `61`, so char 13 is declared there) |
-| KB MODE | `02` | F11 |
-| CLEAR | `49` | F9 |
+| KB MODE | `02` | F9 |
+| red CLEAR | `37` | Alt+F9 |
+| CLEAR / keypad `*` | `49` | Alt+C |
 | SHIFT / CONTROL | `6E/76` / `70/78` | Shift / LCtrl (make/break emulated) |
 | keypad `7 8 9 / 4 5 6 / 1 2 3 / 0 . −` | `4F 50 4D 57 58 55 5F 60 5D 67 62 59` | numpad (digit chars live here — the monitor menus read the keypad) |
 | keypad ENTER / SKIP | `61` / `52` | numpad Enter (carries char 13) / PgDn |
