@@ -19,7 +19,7 @@ istruzioni.** Scaricare o copiare soltanto ciò che manca.
   procurarsi la ROM separatamente: non è inclusa né nei sorgenti dell'emulatore
   né in questo archivio di dischi.
 - **Dischi BCOS:** le immagini elencate sotto, nella cartella `flop` di MAME.
-  Scaricare quelle mancanti dalla [cartella BCOS di questo repository](https://github.com/tpaxia/mame_disks/tree/main/BCOS)
+  Scaricare quelle mancanti dalla [cartella `m40` del repository mame_disks](https://github.com/tpaxia/mame_disks/tree/main/m40)
   e copiarle lì. Creare `flop` se necessario. Le prime due servono per
   configurare un nuovo sistema; le altre due per avviare il sistema fornito.
 - **Una tastiera PC con tastierino numerico.**
@@ -132,7 +132,7 @@ sul PC. Il distinto tasto **RUN** dell'ANK1426 corrisponde ad **Alt+R**,
 non alla funzione RUN usata da BCOS in questa guida.
 
 Per tasti funzione, navigazione, punteggiatura e combinazioni Alt, consultare
-la [mappa completa della tastiera PC e le sequenze diagnostiche](https://github.com/tpaxia/mame_disks/blob/main/BCOS/M40_KEYBOARD.md)
+la [mappa completa della tastiera PC e le sequenze diagnostiche](https://github.com/tpaxia/mame_disks/blob/main/m40/M40_KEYBOARD.md)
 (in inglese).
 
 <details>
@@ -140,12 +140,12 @@ la [mappa completa della tastiera PC e le sequenze diagnostiche](https://github.
 
 ANK1426 — QWERTY, con tasti etichettati per BASIC:
 
-![ANK1426](https://raw.githubusercontent.com/tpaxia/mame_disks/main/BCOS/BCOS_GUIDE_IMAGES/ANK1426.jpg)
+![ANK1426](https://raw.githubusercontent.com/tpaxia/mame_disks/main/m40/BCOS_GUIDE_IMAGES/ANK1426.jpg)
 
 ANK1402 — usare la foto per identificare i comandi, non per riordinare
 le lettere sulla tastiera PC:
 
-![ANK1402](https://raw.githubusercontent.com/tpaxia/mame_disks/main/BCOS/BCOS_GUIDE_IMAGES/ANK1402.jpeg)
+![ANK1402](https://raw.githubusercontent.com/tpaxia/mame_disks/main/m40/BCOS_GUIDE_IMAGES/ANK1402.jpeg)
 
 </details>
 

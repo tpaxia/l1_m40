@@ -17,7 +17,7 @@ to the instructions below.** Download or copy only what is missing.
   under your MAME folder. If missing, obtain the M40 ROM separately; neither
   the emulator source nor this disk repository supplies it.
 - **BCOS disks:** the images listed below in your MAME folder's `flop`
-  directory. Download any missing images from [this repository's BCOS folder](https://github.com/tpaxia/mame_disks/tree/main/BCOS)
+  directory. Download any missing images from [the `m40` folder of the mame_disks repository](https://github.com/tpaxia/mame_disks/tree/main/m40)
   and copy them there. Create `flop` if necessary. The first two are for
   configuring a new system; the last two are for booting the supplied system.
 - **A PC keyboard with a numeric keypad.**
@@ -120,7 +120,7 @@ is PC **End**; it is not the error-clear key used here. The original
 **F8/F16** key is mapped to PC **F8**. The separate ANK1426 **RUN** key is
 **Alt+R**, not the RUN function used by BCOS in this guide.
 
-See the [complete PC keyboard map and diagnostic key sequences](https://github.com/tpaxia/mame_disks/blob/main/BCOS/M40_KEYBOARD.md)
+See the [complete PC keyboard map and diagnostic key sequences](https://github.com/tpaxia/mame_disks/blob/main/m40/M40_KEYBOARD.md)
 for function keys, navigation keys, punctuation and the Alt layer.
 
 <details>
@@ -128,11 +128,11 @@ for function keys, navigation keys, punctuation and the Alt layer.
 
 ANK1426 — QWERTY, with BASIC-labelled keys:
 
-![ANK1426](https://raw.githubusercontent.com/tpaxia/mame_disks/main/BCOS/BCOS_GUIDE_IMAGES/ANK1426.jpg)
+![ANK1426](https://raw.githubusercontent.com/tpaxia/mame_disks/main/m40/BCOS_GUIDE_IMAGES/ANK1426.jpg)
 
 ANK1402 — use this to identify the controls, not to rearrange your PC letters:
 
-![ANK1402](https://raw.githubusercontent.com/tpaxia/mame_disks/main/BCOS/BCOS_GUIDE_IMAGES/ANK1402.jpeg)
+![ANK1402](https://raw.githubusercontent.com/tpaxia/mame_disks/main/m40/BCOS_GUIDE_IMAGES/ANK1402.jpeg)
 
 </details>
 
