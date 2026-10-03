@@ -37,11 +37,11 @@ taught it.
 - Always work on disposable copies of disk images; never mount the source
   media writable.
 - Script the runs headless (`-video none -nothrottle -seconds_to_run`) with a
-  key-and-screenshot Lua script (`runs-archive/restore-hd-20260928/run_keys.lua`)
+  key-and-screenshot Lua script (`scripts/harness/run_keys.lua`)
   so a run can be repeated exactly.
 - Checkpoint long procedures: save the machine state and snapshot the disk
   images at each stage, so any stage can be resumed
-  (`runs-archive/mos-install-20261002/step.sh`). Save states depend on the
+  (`scripts/mos-install/step.sh`). Save states depend on the
   build's saved fields; after changing a device's state, expect old states
   not to load.
 - Compare screenshots by pixel data, not by file hash: MAME embeds its

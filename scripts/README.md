@@ -82,6 +82,42 @@ are now regular test helpers.
   (kept out of git: copy them in from the original archive),
   and the generated BCOS media and keyboard disk in
   `/Users/paxia/Projects/mame_latest/mame/flop/`.
-- The hard-disk runs (BCOS II and MOS from the GO363) are not here; their
-  harnesses are in the run archive, `runs-archive/restore-hd-20260928/` and
-  `runs-archive/mos-install-20261002/` (git-ignored, local only).
+- The hard-disk harnesses below use data that is still in the run archive
+  (git-ignored, local only); see the next two sections.
+
+## Hard-disk harness (`harness/`)
+
+The scripts used for the GO363 work: BCOS II and OSLEM on the hard disk, the
+MOS install, and the arbiter/DMA regression runs. Full reference in
+`tools/L1_DISK_FORMATS.md` section 9.
+
+| Script | Use |
+|---|---|
+| `launch.sh CHD [args]` | Headless MAME with GO363 in slot 5 (`OUT` run dir, `SCRIPT`, `ISL=floppy`, `DEBUG=1`, `ROMPATH`, `RUN_SECONDS`) |
+| `launchb.sh` | The same with a selectable binary (`BIN`), for before/after runs |
+| `run_keys.lua` | Key steps and periodic screenshots (`STEPS`, `SHOT_STEP`); used by nearly everything else |
+| `run_savestate.lua` | Save a state at `SAVE_T` as `SAVE_NAME`, then run `INNER` |
+| `state_run.sh`, `bcos_run.sh`, `cos_try.sh` | Resume BCOS II / OSLEM from saved states |
+| `reg.sh OUTDIR BIN ROMPATH CHD` | Hard-disk boot regression run with a given binary |
+| `diag.sh OUTDIR CODE [BIN]` | Load and run one DCOS diagnostic program from disk A (`DISK` selects another) |
+| `build_*.py`, `alias_pound.py` | Image surgery with `tools/l1disk.py`: write data sets onto a CHD, add modules and directory entries |
+| `run_*.lua` (others), `pcsample.lua` | Probes from the BCOS/OSLEM investigation: breakpoints, traces, segment dumps, PC histograms |
+
+The patched-ROM runs use `~/Projects/mame_disks/m40/roms/m40-hd65`. Saved
+states and work disks stay in `runs-archive/restore-hd-20260928/install/`.
+`build_k02743_fmd.py`, `build_allres_osg.py` and the `build_oslem7_*` scripts
+also read a K02743 boot image from `/private/tmp/k02743-probe/`, which no
+longer exists.
+
+## MOS install (`mos-install/`)
+
+| Script | Use |
+|---|---|
+| `step.sh NAME [FROM]` | One stage of the MOS install from the starter disk; saves a state and disk snapshot per stage (`STEPS`, `UNTIL`, `FLOP`) |
+| `hdrun.sh NAME [FROM]` | Boot or resume the installed MOS disk on the patched ROM |
+| `mksteps.py START 'cmd' …` | Turn typed commands into a `STEPS` string for `run_keys.lua` |
+
+The checkpoints, work disks and the formatted starting disk are in
+`runs-archive/mos-install-20261002/` and
+`runs-archive/hdc5f5-timeout-20260926/wren2-formatted-hdc5f5.chd`; the
+finished disk is `m40-mos-hd.chd` in `mame_disks`.

@@ -108,7 +108,8 @@ hard disk.
 
 ## Results (2026-10-02, change applied, uncommitted)
 
-Runs are in `runs-archive/arb-latency-20261002/`; "old" is the binary before the
+Runs are in `runs-archive/arb-latency-20261002/`, made with `scripts/harness/reg.sh`
+(hard-disk boots) and `scripts/harness/diag.sh` (DCOS diagnostics); "old" is the binary before the
 change (`m40.pre-arb`), "new" the binary with it. Screens were compared
 pixel by pixel at every periodic screenshot.
 

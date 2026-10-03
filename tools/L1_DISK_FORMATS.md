@@ -13,8 +13,8 @@ those images but not documented by Olivetti.
 | `tools/l1disk.py` | Sector-level IMD access: `L1Disk(path)`, `read(index, len)`, `write(index, data)`, `track0()`, `set_track0()`, `save(path)` (lossless round trip) |
 | `tools/imd.py` | Raw IMD parser used by `l1disk.py` |
 | `tools/z8kdisrom` | Z8000 disassembler: `z8kdisrom FILE START END` (hex offsets into FILE). Use on an extracted module or a runtime segment dump |
-| `runs-archive/restore-hd-20260928/*.lua` | MAME harness scripts (section 9) |
-| `runs-archive/restore-hd-20260928/build_*.py` | Examples of image surgery: `build_restore.py` (write data sets onto a WREN2 CHD), `build_allres_osg.py` (add modules + directory entries), `build_k02743_fmd.py` (redirect a directory entry) |
+| `scripts/harness/*.lua`, `*.sh` | MAME harness scripts (section 9) |
+| `scripts/harness/build_*.py` | Examples of image surgery: `build_restore.py` (write data sets onto a WREN2 CHD), `build_allres_osg.py` (add modules + directory entries), `build_k02743_fmd.py` (redirect a directory entry) |
 | `disk-analyse` (keirf Disk-Utilities, `/usr/local/bin`) | SCP flux → IMD conversion (IMD headers say "Created by https://github.com/keirf/Disk-Utilities") |
 
 Quick start:
@@ -303,7 +303,7 @@ Mechanisms traced:
   `0x1B0E`. INIT `E3#I` (`HDII+0x2F2`) builds the controller block and
   does not touch the unit table.
 
-## 9. MAME harness (`runs-archive/restore-hd-20260928/`)
+## 9. MAME harness (`scripts/harness/`)
 
 `launch.sh CHD [extra MAME args]` runs `mame_latest/mame/m40` headless with
 GO363 in slot 5; environment: `OUT` (run dir, required), `RUN_SECONDS`,
@@ -328,7 +328,7 @@ containing `go`). Screenshots go to `OUT/s_NNNN.png` every 5 s.
 | `run_st45.lua` | log FDC data-register reads returning ST0 `0x45` |
 | `run_att*.lua`, `run_modd*.lua`, `run_handler.lua` | attention-path probes |
 
-Saved states (`install/`): `base02/sta/m40/mount02.sta` (272 s, DKC£ FF at
+Saved states (`runs-archive/restore-hd-20260928/install/`): `base02/sta/m40/mount02.sta` (272 s, DKC£ FF at
 `MOUNT INPUT DISK NR. 02`), `base03/sta/m40/ffdone.sta` (325 s, FF copied,
 `END OF PROGRAM`; `^j` gives `0X - COMMAND :`). Loading takes ~8 s wall.
 

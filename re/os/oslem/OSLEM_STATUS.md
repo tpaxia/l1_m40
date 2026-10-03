@@ -435,7 +435,7 @@ sits at LBA 16 and TOC volume sector *n* at LBA 15 + *n*.
 
 #### Trial restore
 
-`runs-archive/restore-hd-20260928/build_restore.py` writes a copy of
+`scripts/harness/build_restore.py` writes a copy of
 `wren2-ldhsel.chd` (`chdman extracthd`, rebuilt with `-chs 1024,9,32 -ss 256`):
 
 - SSID (LBA 8, copy LBA 11): entry `1EX0000 ` with start `0x11`, size
@@ -455,7 +455,7 @@ assumptions.
 ### 1E: OSG£ attempts and the K02743 boot (2026-09-29)
 
 All runs are disposable copies in `runs-archive/restore-hd-20260928/` (with the
-restored CHD attached); harness scripts `run_keys.lua` (key steps),
+restored CHD attached); harness scripts (now in `scripts/harness/`) `run_keys.lua` (key steps),
 `run_bps.lua`, `run_trace.lua`, `run_ttrace.lua`, `run_st45.lua`,
 `run_units.lua`, `run_dumpseg.lua`, `run_findseg.lua`, `run_pcs.lua`.
 
@@ -618,7 +618,7 @@ Further `oslem7+` diagnostics (`oslem7-patch2`, `oslem7-patch3`):
   which the earlier ALL_RESIDENT + OSLEM7 RTS experiment (1B) stalled.
 
 **Working hack (2026-09-30): oslem7+ reaches OX with the GO363 volume.**
-`runs-archive/restore-hd-20260928/run_oslem7_hack.lua` (run `oslem7-hack`):
+`scripts/harness/run_oslem7_hack.lua` (run `oslem7-hack`):
 
 1. descriptor `00:CC30` byte 2 bit 4 set once the start-up task has built it
    (Lua poll from 73 s, `run_descpatch.lua`);
