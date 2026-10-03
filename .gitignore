@@ -5,6 +5,7 @@
 !/scripts/
 !/re/
 /re/*
+!/re/README.md
 !/re/disassembly/
 !/re/evidence/
 !/re/hardware/
