@@ -1,0 +1,28 @@
+disk: D
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  871127  special/catalog loader
+002   HDFDU7   84   0x106c          1    256  870331
+003   7032E5   84   0x122c          5   1280  870331  FDU/MFDU error-rate test.
+004   FDUMA2   80   0x12f8         49  12544  840810  FDU alignment/eccentricity test.
+005   4301T4   83   0x17aa         37   9472  851212  MFDU running-test variant.
+006   4305T6   84   0x1aca         51  13056  870331  MFDU running-test variant.
+007   6030T6   83   0x1ece         45  11520  861117  XU/XG6030 FDU running test; controller communication, timer, interrupt, DMA, format/read/write.
+008   SCT303   81   0x22ca         43  11008  850329
+009   STC404   84   0x26ac         37   9472  870331
+010   SCTER7   81   0x2abc          1    256  850329
+011   EPCOV3   81   0x2d82         33   8448  850329
+012   CPCOV1   84   0x308a          7   1792  870331
+013   STC5E2   83   0x3286         41  10496  861117
+014   STC5T3   84   0x35b2         19   4864  871127
+015   MTUER7   84   0x38da         41  10496  870331
+016   MTC304   81   0x3ca0         51  13056  850329
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

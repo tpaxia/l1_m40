@@ -1,0 +1,25 @@
+disk: G
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  870331  special/catalog loader
+002   HDFDU7   84   0x106c          1    256  870331
+003   HDC5F5   83   0x122c          5   1280  861117  GO363/HDC5 ST506 hard-disk controller diagnostic family.
+004   HDC5E9   84   0x12fa         49  12544  870331  GO363/HDC5 ST506 hard-disk controller diagnostic family.
+005   HDC5V6   83   0x17a2         39   9984  861117  GO363/HDC5 ST506 hard-disk controller diagnostic family.
+006   HDC505   84   0x1fa4         41  10496  870331  GO363/HDC5 ST506 hard-disk controller diagnostic family.
+007   HDC5X3   83   0x270e         45  11520  851212  GO363/HDC5 ST506 hard-disk controller diagnostic family.
+008   S24W16   83   0x2db0          3    768  851212  24-sector hard-disk media/seek/format/verify support test.
+009   S24W25   83   0x30d6         23   5888  851212  24-sector hard-disk media/seek/format/verify support test.
+010   S24M54   83   0x34d6         29   7424  851212  24-sector hard-disk media/seek/format/verify support test.
+011   S24X11   83   0x38d6         35   8960  860616  24-sector hard-disk media/seek/format/verify support test.
+012   S24WD0   83   0x3cd6         41  10496  860616  24-sector hard-disk media/seek/format/verify support test.
+013   S24MA1   83   0x40d6         47  12032  861117  24-sector hard-disk media/seek/format/verify support test.
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

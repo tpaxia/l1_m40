@@ -1,0 +1,35 @@
+disk: A
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  871127  special/catalog loader
+002   LDHSE2   82   0x106c          1    256  850612
+003   LDHMU7   84   0x1294          5   1280  871127
+004   SYSINB   84   0x14aa         49  12544  870331
+005   HDSCT9   84   0x18ac         11   2816  870331
+006   HDMTU7   84   0x1b64         27   6912  870331
+007   HDFDU7   84   0x1d6c         23   5888  870331
+008   UC3003   83   0x1f2c         27   6912  851212
+009   UCG304   83   0x2052         19   4864  851212
+010   UCV305   84   0x2156         49  12544  870331
+011   UCY805   84   0x2378         31   7936  880222  UCO.71 multiprocessor UC test; includes bus arbiter and master/slave coverage.
+012   FJCAC1   83   0x25f0         47  12032  860616
+013   WRCAC1   83   0x2a50         27   6912  860616
+014   MEM813   84   0x2c4a          3    768  871127
+015   CHY101   84   0x2d7e         25   6400  871127
+016   TCM801   84   0x2fba         47  12032  871127
+017   PRGEN2   84   0x333e         25   6400  880222
+018   PRT.UC   80   0x3402         35   8960  840810
+019   PRTWIN   80   0x3e26         29   7424  840810
+020   PRTELB   80   0x3f2a         15   3840  840810
+021   PINELB   80   0x4032          5   1280  840810
+022   SOVRA7   81   0x412c          3    768  850329
+023   CESTE0   83   0x41cc         47  12032  861117
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

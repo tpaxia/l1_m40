@@ -1,0 +1,136 @@
+diff --git a/src/devices/machine/upd7261.cpp b/src/devices/machine/upd7261.cpp
+--- a/src/devices/machine/upd7261.cpp
++++ b/src/devices/machine/upd7261.cpp
+@@ -37,6 +37,7 @@
+ 	EXECUTE_READ,
+ 	EXECUTE_WRITE,
+ 	EXECUTE_VERIFY,
++	EXECUTE_READ_ID,
+ 
+ 	SEEK_POLLED0,  // recalibrate/seek with polling
+ 	SEEK_POLLED1,  // recalibrate/seek with polling
+@@ -214,7 +215,8 @@
+ 		if (state)
+ 		{
+ 			m_status |= S_DRQ;
+-			m_buf_count = m_specify.dtl();
++			if (m_state != EXECUTE_READ_ID)
++				m_buf_count = m_specify.dtl();
+ 		}
+ 		else
+ 		{
+@@ -441,7 +443,26 @@
+ 			LOGMASKED(LOG_COMMAND, "verify id (not emulated)\n");
+ 			break;
+ 		case 0x9: // read id
+-			LOGMASKED(LOG_COMMAND, "read id (not emulated)\n");
++			if (m_specify.mode & SM_SSEC)
++			{
++				// Soft-sector READ ID starts at the first ID field after index.
++				// PHN and SCNT are supplied before the command; PSN is not used.
++				m_transfer.phn = m_buf[0];
++				m_transfer.scnt = m_buf[1];
++				m_transfer.lcnh = m_pcn[m_ua] >> 8;
++				m_transfer.lcnl = m_pcn[m_ua] & 0xff;
++				m_transfer.lhn = m_transfer.phn;
++				m_transfer.lsn = 0;
++
++				m_buf_index = 0;
++				m_buf_count = 0;
++
++				LOGMASKED(LOG_COMMAND, "read id head 0x%02x scnt 0x%02x\n",
++					m_transfer.phn, m_transfer.scnt);
++
++				m_state = EXECUTE_READ_ID;
++				m_state_timer->adjust(execute);
++			}
+ 			break;
+ 		case 0xa: // read diagnostic
+ 			LOGMASKED(LOG_COMMAND, "read diagnostic (not emulated)\n");
+@@ -623,6 +644,55 @@
+ 		}
+ 
+ 		set_dreq(m_state == EXECUTE_READ);
++		break;
++
++	case EXECUTE_READ_ID:
++		if (!m_drive[m_ua] || !m_drive[m_ua]->exists())
++			m_est |= EST_NR;
++
++		if (m_transfer.scnt && !m_est)
++		{
++			harddisk_image_device &hid(*m_drive[m_ua]);
++			hard_disk_file::info const &i = hid.get_info();
++
++			// Factory and diagnostic tracks may lie beyond the user cylinders
++			// represented by the mounted sector image.  READ ID reports the
++			// selected physical position without requiring a data-sector read.
++			if (m_transfer.lhn >= i.heads || m_transfer.lsn >= i.sectors || m_specify.dtl() < 4)
++			{
++				m_est = EST_ND;
++				m_state = RESULTS_789;
++				break;
++			}
++
++			// A soft-sector ID is four bytes (LCNH, LCNL, LHN, LSN).  Assert
++			// DREQ for one ID at a time so the host can DMA exactly four bytes.
++			m_buf_index = 0;
++			m_buf_count = 4;
++			m_buf[0] = m_transfer.lcnh;
++			m_buf[1] = m_transfer.lcnl;
++			m_buf[2] = m_transfer.lhn;
++			m_buf[3] = m_transfer.lsn;
++
++			m_transfer.scnt--;
++			if (m_transfer.lsn++ == m_specify.esn)
++			{
++				m_transfer.lsn = 0;
++				if (m_transfer.lhn++ == m_specify.etn)
++				{
++					m_transfer.lhn = 0;
++					m_transfer.lcnl++;
++					if (m_transfer.lcnl == 0)
++						m_transfer.lcnh++;
++				}
++			}
++
++			set_dreq(true);
++			delay = attotime::never;
++		}
++		else
++		{
++			m_state = RESULTS_789;
++			m_buf_index = 0;
++		}
+ 		break;
+ 
+ 	case EXECUTE_WRITE:
+diff --git a/src/devices/bus/olivetti_l1/go363.cpp b/src/devices/bus/olivetti_l1/go363.cpp
+--- a/src/devices/bus/olivetti_l1/go363.cpp
++++ b/src/devices/bus/olivetti_l1/go363.cpp
+@@ -490,7 +490,7 @@
+ 	// The controller's data phase goes through the GO363 DMA address counter.
+ 	// Service it outside the uPD7261 callback so its state timer can advance
+ 	// after the last byte of each sector.
+-	if (state && ((m_hdc_command & 0xf0) == 0xb0 || (m_hdc_command & 0xf0) == 0xe0 || (m_hdc_command & 0xf0) == 0xf0))
++	if (state && ((m_hdc_command & 0xf0) == 0x90 || (m_hdc_command & 0xf0) == 0xb0 || (m_hdc_command & 0xf0) == 0xe0 || (m_hdc_command & 0xf0) == 0xf0))
+ 		m_dma_timer->adjust(attotime::zero);
+ }
+ 
+@@ -500,11 +500,12 @@
+ 	if (!m_drive[unit] || !m_drive[unit]->exists())
+ 		return;
+ 
+-	u32 const sector_bytes = m_drive[unit]->get_info().sectorbytes;
+-	u32 const start = (m_hdc_dma_address << 1) & 0xffffff;
+-	bool const read = (m_hdc_command & 0xf0) == 0xb0;
++	bool const read_id = (m_hdc_command & 0xf0) == 0x90;
++	u32 const sector_bytes = read_id ? 4 : m_drive[unit]->get_info().sectorbytes;
++	u32 const start = (m_hdc_dma_address << 1) & 0xffffff;
++	bool const read = read_id || (m_hdc_command & 0xf0) == 0xb0;
+ 	LOGMASKED(LOG_TRANSFER, "uPD7261 %s DMA unit=%u bytes=%u address=%06x\n",
+-		read ? "read" : "write", unit, sector_bytes, (start + m_hdc_dma_offset) & 0xffffff);
++		read_id ? "read id" : read ? "read" : "write", unit, sector_bytes, (start + m_hdc_dma_offset) & 0xffffff);
+ 	for (u32 i = 0; i < sector_bytes; i++)
+ 	{
+ 		u32 const address = (start + m_hdc_dma_offset++) & 0xffffff;

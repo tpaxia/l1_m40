@@ -1,0 +1,162 @@
+
+re/disasm/line/003_GLAV2883851212.bin:     file format binary
+
+
+Disassembly of section .data:
+
+00000000 <.data>:
+   0:	414c 2044      	add	r12,0x20000044(r4)
+   4:	4941 474e      	xor	r1,0x4700004e(r4)
+   8:	4f53           	.word 4f53
+   a:	5449 4320      	ldl	rr9,0x43000020(r4)
+   e:	4c49           	.word 4c49
+  10:	4252 4152      	subb	rh2,0x41000052(r5)
+  14:	5920 4f4e      	mult	rr0,0x4f00004e(r2)
+  18:	2046           	ldb	rh6,@rr4
+  1a:	4c45 582d 4449 	ldb	0x5800002d(r4),#0x49
+  20:	534b 4046      	push	@rr4,0x40000046(r11)
+  24:	4c45 582d 4449 	ldb	0x5800002d(r4),#0x49
+  2a:	534b 2050      	push	@rr4,0x20000050(r11)
+  2e:	524f 4752      	subl	rr15,0x47000052(r4)
+  32:	414d 5320      	add	r13,0x53000020(r4)
+  36:	4c49           	.word 4c49
+  38:	5354 3a40      	push	@rr5,0x3a000040(r4)
+  3c:	302b 454e      	ldb	rl3,rr2(#0x454e)
+  40:	5445 5220      	ldl	rr5,0x52000020(r4)
+  44:	3d20           	in	r0,@r2
+  46:	434f 5059      	sub	r15,0x50000059(r4)
+  4a:	2020           	ldb	rh0,@rr2
+  4c:	2020           	ldb	rh0,@rr2
+  4e:	312b 454e      	ld	r11,rr2(#0x454e)
+  52:	5445 5220      	ldl	rr5,0x52000020(r4)
+  56:	3d20           	in	r0,@r2
+  58:	534b 4950      	push	@rr4,0x49000050(r11)
+  5c:	4000 0000      	addb	rh0,0x0
+  60:	2020           	ldb	rh0,@rr2
+  62:	2020           	ldb	rh0,@rr2
+  64:	3a3a           	.word 3a3a
+  66:	5858 3a3a      	multl	rq8,0x3a00003a(r5)
+  6a:	2020           	ldb	rh0,@rr2
+  6c:	7979           	.word 7979
+  6e:	7979           	.word 7979
+  70:	7979           	.word 7979
+  72:	7979           	.word 7979
+  74:	7979           	.word 7979
+  76:	7a7a           	.word 7a7a
+  78:	7a7a           	.word 7a7a
+  7a:	7a7a           	.word 7a7a
+  7c:	3a3a           	.word 3a3a
+  7e:	2020           	ldb	rh0,@rr2
+  80:	2020           	ldb	rh0,@rr2
+  82:	2020           	ldb	rh0,@rr2
+  84:	2020           	ldb	rh0,@rr2
+  86:	2020           	ldb	rh0,@rr2
+  88:	2020           	ldb	rh0,@rr2
+  8a:	2020           	ldb	rh0,@rr2
+  8c:	3a58           	.word 3a58
+  8e:	5858 3a20      	multl	rq8,0x3a000020(r5)
+  92:	2020           	ldb	rh0,@rr2
+  94:	5858 5858      	multl	rq8,0x58000058(r5)
+  98:	5858 2020      	multl	rq8,0x20000020(r5)
+  9c:	5252 2020      	subl	rr2,0x20000020(r5)
+  a0:	4444 4444      	orb	rh4,0x44000044(r4)
+  a4:	4444 2020      	orb	rh4,0x20000020(r4)
+  a8:	3a3a           	.word 3a3a
+  aa:	2020           	ldb	rh0,@rr2
+  ac:	2020           	ldb	rh0,@rr2
+  ae:	2020           	ldb	rh0,@rr2
+  b0:	2020           	ldb	rh0,@rr2
+  b2:	2020           	ldb	rh0,@rr2
+  b4:	2020           	ldb	rh0,@rr2
+  b6:	2020           	ldb	rh0,@rr2
+  b8:	2020           	ldb	rh0,@rr2
+  ba:	2020           	ldb	rh0,@rr2
+  bc:	2020           	ldb	rh0,@rr2
+  be:	2020           	ldb	rh0,@rr2
+  c0:	2020           	ldb	rh0,@rr2
+  c2:	2020           	ldb	rh0,@rr2
+  c4:	2020           	ldb	rh0,@rr2
+  c6:	2020           	ldb	rh0,@rr2
+  c8:	2020           	ldb	rh0,@rr2
+  ca:	2020           	ldb	rh0,@rr2
+  cc:	202a           	ldb	rl2,@rr2
+  ce:	2053           	ldb	rh3,@rr5
+  d0:	4b49 5050      	cp	r9,0x50000050(r4)
+  d4:	4544 202a      	or	r4,0x2000002a(r4)
+	...
+ 2fc:	0000 ffff      	addb	rh0,#0xff
+ 300:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 304:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 308:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 30c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 310:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 314:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 318:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 31c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 320:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 324:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 328:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 32c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 330:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 334:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 338:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 33c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 340:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 344:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 348:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 34c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 350:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 354:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 358:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 35c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 360:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 364:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 368:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 36c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 370:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 374:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 378:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 37c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 380:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 384:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 388:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 38c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 390:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 394:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 398:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 39c:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3a0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3a4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3a8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3ac:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3b0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3b4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3b8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3bc:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3c0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3c4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3c8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3cc:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3d0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3d4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3d8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3dc:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3e0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3e4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3e8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3ec:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3f0:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3f4:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3f8:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+ 3fc:	5a5a 5a5a      	divl	rq10,0x5a00005a(r5)
+	...
+ 408:	2020           	ldb	rh0,@rr2
+ 40a:	2020           	ldb	rh0,@rr2
+ 40c:	2020           	ldb	rh0,@rr2
+ 40e:	2020           	ldb	rh0,@rr2
+ 410:	2020           	ldb	rh0,@rr2
+	...
+ 452:	0000 aaa1      	addb	rh0,#0xa1
+	...
+ 466:	0001 0000      	addb	rh1,#0x0
+	...

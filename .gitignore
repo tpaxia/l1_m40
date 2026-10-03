@@ -2,3 +2,33 @@
 /*
 !/*.md
 !/.gitignore
+!/scripts/
+!/re/
+/re/*
+!/re/disassembly/
+!/re/evidence/
+!/re/hardware/
+!/re/os/
+!/re/mame/
+/re/disassembly/**/*.o
+/re/disassembly/**/*.coff
+/re/disassembly/**/*.rebuilt
+/re/disassembly/m40-rom/*.bin
+!/reference/
+!/keyboard/
+/reference/ArchiviOlivetti/
+/reference/Diablo/
+/reference/Disk Images/
+/reference/Disk Images (Stefano Marinelli + others)/
+/reference/Manuals/
+/reference/Manuals (Stefano Marinelli + Olivrea)/
+/reference/Pictures (M40 + spares)/
+/reference/zips/
+/reference/datasheets/Z8000_CPU_Technical_Manual_Jan83.pdf
+!/doc/
+!/installation/
+!/tools/
+/tools/__pycache__/
+/tools/diagnostic_tests/__pycache__/
+/tools/z8kdisrom
+!/screenshots/

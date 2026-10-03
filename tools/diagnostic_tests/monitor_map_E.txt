@@ -1,0 +1,27 @@
+disk: E
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  870331  special/catalog loader
+002   HDFDU7   84   0x106c          1    256  870331
+003   TS5016   81   0x122c          5   1280  841109
+004   S24I51   80   0x1202         49  12544  840810  24-sector hard-disk media/seek/format/verify support test.
+005   DI5011   80   0x1798         47  12032  840810
+006   ER50I3   80   0x1a98         43  11008  840810
+007   VC50I2   80   0x1d84         39   9984  840810
+008   50ITM1   81   0x20a8         15   3840  850329
+009   SASIT5   83   0x2374         27   6912  851212
+010   C50062   80   0x25a4         39   9984  840810
+011   5006F3   81   0x28b6         47  12032  841109
+012   ES3564   84   0x2cbe         21   5376  870331
+013   SAS243   80   0x309c          3    768  840810
+014   5006V1   81   0x337e          3    768  850329
+015   S24X62   83   0x35d8         25   6400  851212  24-sector hard-disk media/seek/format/verify support test.
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

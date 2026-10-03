@@ -1,0 +1,31 @@
+
+re/disasm/line/013_ERS20484870331.bin:     file format binary
+
+
+Disassembly of section .data:
+
+00000000 <.data>:
+	...
+ 114:	bd21           	ldk	r2,#0x1
+ 116:	5f00 8400 18c0 	call	0x40018c0
+ 11c:	1402 2020 2020 	ldl	rr2,#0x20202020
+ 122:	5f00 8400 1852 	call	0x4001852
+ 128:	7602 a100 0006 	lda	rr2,0x21000006
+ 12e:	5f00 8400 43ae 	call	0x40043ae
+ 134:	9e08           	ret	t
+ 136:	7602 a100 0006 	lda	rr2,0x21000006
+ 13c:	5f00 8400 43ae 	call	0x40043ae
+ 142:	95e2           	popl	rr2,@rr14
+ 144:	1de2           	ldl	@rr14,rr2
+ 146:	9e08           	ret	t
+	...
+ 208:	2020           	ldb	rh0,@rr2
+ 20a:	2020           	ldb	rh0,@rr2
+ 20c:	2020           	ldb	rh0,@rr2
+ 20e:	2020           	ldb	rh0,@rr2
+ 210:	2020           	ldb	rh0,@rr2
+	...
+ 252:	0000 aaa1      	addb	rh0,#0xa1
+	...
+ 266:	0001 0000      	addb	rh1,#0x0
+	...

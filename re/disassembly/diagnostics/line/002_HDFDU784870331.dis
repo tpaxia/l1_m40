@@ -1,0 +1,52 @@
+
+re/disasm/line/002_HDFDU784870331.bin:     file format binary
+
+
+Disassembly of section .data:
+
+00000000 <.data>:
+	...
+   8:	5858 5858      	multl	rq8,0x58000058(r5)
+   c:	4844 5546      	xorb	rh4,0x55000046(r4)
+  10:	4437 5959      	orb	rh7,0x59000059(r3)
+  14:	5959 4844      	mult	rr9,0x48000044(r5)
+  18:	5520 2d20      	popl	0x2d000020,@rr2
+  1c:	4644 5520      	andb	rh4,0x55000020(r4)
+  20:	5452 414e      	ldl	rr2,0x4100004e(r5)
+  24:	5346 4552      	push	@rr4,0x45000052(r6)
+  28:	2020           	ldb	rh0,@rr2
+  2a:	2d20           	ex	r0,@rr2
+  2c:	2052           	ldb	rh2,@rr5
+  2e:	3a31           	.word 3a31
+  30:	362e           	rsvd36	
+  32:	3033 2e31      	ldb	rh3,rr3(#0x2e31)
+  36:	3938           	.word 3938
+  38:	3720 0100      	ldl	rr2(#0x100),rr0
+  3c:	a100           	ld	r0,r0
+  3e:	4300 a100 4500 	sub	r0,0x21004500
+  44:	a100           	ld	r0,r0
+  46:	2800           	.word 2800
+  48:	a100           	ld	r0,r0
+  4a:	096a           	xor	r10,@rr6
+  4c:	a100           	ld	r0,r0
+  4e:	096c           	xor	r12,@rr6
+  50:	a100           	ld	r0,r0
+  52:	096e           	xor	r14,@rr6
+	...
+  74:	0101 0000      	add	r1,#0x0
+	...
+  c4:	5858 5858      	multl	rq8,0x58000058(r5)
+  c8:	2053           	ldb	rh3,@rr5
+  ca:	5441 4e44      	ldl	rr1,0x4e000044(r4)
+  ce:	4152 4420      	add	r2,0x44000020(r5)
+  d2:	4844 5520      	xorb	rh4,0x55000020(r4)
+  d6:	2d20           	ex	r0,@rr2
+  d8:	4644 5520      	andb	rh4,0x55000020(r4)
+  dc:	2044           	ldb	rh4,@rr4
+  de:	4943 4f53      	xor	r3,0x4f000053(r4)
+  e2:	2054           	ldb	rh4,@rr5
+  e4:	5241 4e53      	subl	rr1,0x4e000053(r4)
+  e8:	4645 5220      	andb	rh5,0x52000020(r4)
+  ec:	a100           	ld	r0,r0
+  ee:	0106 0000      	add	r6,#0x0
+	...

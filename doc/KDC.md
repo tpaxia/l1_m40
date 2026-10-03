@@ -1,0 +1,348 @@
+# KDC — GO252 video / keyboard governo (behavioral & emulation model)
+
+> 2026-09-15 correction: the legacy control-bit-4 workaround has been removed
+> after paired BCOS, KEYTE1 and Gardini regression tests. The bit-4 meanings
+> asserted in the historical model below are withdrawn, not hardware facts.
+> Receive VI is now gated by control bit 7; TX VI remains gated by bit 5.
+> See [the ablation and regression results](../re/hardware/go252/GO252_BIT4_ABLATION.md).
+
+> 2026-09-10 keyboard clarification: retain the diagnostic-derived KUSA/QWERTY
+> mapping. Photographed keycaps can be customized; ANK1402/ANK1426 photo legends
+> alone do not prove different protocols or fixed model-specific functions.
+> K02733 loads KITA02.1: code 49 translates to its error-reset event 609E,
+> whereas the current RES label at 51 does not. See keyboard/ANK1402_KEYMAP.md for the
+> evidence and withdrawn photo-driven mapping proposal.
+
+The **GO252** (nome logico **`FE`**) is the standard L1 alphanumeric video + keyboard
+board — the *KDC* (keyboard/display controller). [HARDWARE.md §5](HARDWARE.md) covers
+its physical inventory, CRTC register map, and screen geometry. **This document covers
+the behavioral model** reverse-engineered during MAME bring-up: the interrupt path, the
+keyboard serial protocol and scancodes, the two ANK keyboards, and the character-cell
+attribute encoding.
+
+Provenance tags as in HARDWARE.md: **[ROM]** boot ROM, **[KBDROM]** byte-exact
+8049 keyboard firmware disassembly, **[DISK]** disk diagnostic (KEYTE1 / CRTAN5),
+**[MAN]** manual, **[EMU]** emulation-model decision, **[PHOTO]**
+board/keyboard photo.
+
+---
+
+## 1. Register interface (behavioral view)
+
+Accessed at the board's slot I/O window (address bits 15-12 = slot, low byte =
+register). Video/geometry registers are in HARDWARE.md §5; the keyboard/interrupt
+side is:
+
+| Reg (low byte) | Dir | Function |
+|---|---|---|
+| `0x00/0x01` | R | **status** — in RX-interrupt mode: bit0 = RDRF, bit1 = TX ready, bit7 = receive IRQ; bit2 is a status-change/reset event, not ordinary data **[DISK]** |
+| `0x01` | W | **control** — bit4 = normal/BCOS RX IRQ enable, bit5 = TX/completion IRQ enable, bit6 = direct-send handshake, bit7 = diagnostic RX IRQ enable **[DISK]** |
+| `0x02/0x03` | R/W | **data** — keyboard byte in / command byte out **[DISK]** |
+| `0x20/0x21` | W | **interrupt vector** latch (value returned on VI-ACK) **[EMU]/[DISK]** |
+| `0x41/0x43` | W | MC6845 address / data (HARDWARE.md §5.1) |
+| `0x81` | R | status / monitor type + live-signal bit 3 (HARDWARE.md §5.1) |
+| `0xFF` | R | type-ID → **`0xFE`** (routes boot to the video self-test) **[ROM]** |
+
+TX-ready and RX-available are independent status bits and may be set together. The
+resident direct-send helper tests TX-ready before writing a command even when a key
+byte is queued; returning RX *instead of* TX+RX produces diagnostic error `0x8006`.
+Reading status with RX available arms the following data-register read. **[DISK]/[EMU]**
+
+2026-09-09 correction: control bit 7 is used by BCOS too, not just diagnostics.
+Pending normal input in that mode now reads as `83`. The earlier `06` made
+IKYB restart initialization on every byte; `03` completed initialization but
+made runtime 1KYB interpret received data as completion events. `83` permits
+the date prompt and keypad input. The bit-4-only legacy path remains modeled
+as before and is not a fully established hardware interpretation. **[DISK]/[EMU]**
+
+The resident FE/KDC keyboard handler also uses the UC-side interface at **`0xFF20`**
+(status/control) and **`0xFF22`** (data) — now identified as the **UC EF68B50P ACIA**
+(the keyboard byte stream rides its RX; the UC3003 ACIA test exercises the same chip
+with a TXD→RXD loopback). Its VI vector comes from the UC latch `0xFFA0`. See
+HARDWARE.md §4.
+
+At the UC data port, queued keyboard bytes take priority over the real 6850 receive
+data; when the keyboard FIFO is empty, reads reach the ACIA loopback. Writes update
+the resident byte latch and the 6850 transmitter, but do not feed the byte back into
+the host-key FIFO. A queued byte overlays both 6850 RDRF (bit 0) and the resident
+handler's byte-ready trigger (bit 2) on the status port. **[DISK]/[EMU]**
+
+---
+
+## 2. Interrupt model — vectored interrupt (VI)
+
+The KDC drives the Z8001 **VI** line (vectored interrupt, line 1) — the **same line the
+FDU governo uses**. Three interrupt enables have now been observed in control register
+`0x01`:
+
+- **bit 4 = normal/BCOS RX interrupt enable** → BCOS writes control `0x16`; a queued
+  key then raises VI, status reports `0x06`, and the handler reads the key from data.
+  Without bit 4, BCOS remains in its valid scheduler idle loop and never consumes host
+  keys. **[DISK]/[EMU]**
+- **bit 5 = TX / completion interrupt enable** → raise VI when the transmitter is empty
+  (command accepted / completion), so a send handshake can post its completion.
+- **bit 7 = RX interrupt enable** → BCOS and diagnostic services use controls
+  such as `0x96`/`0xB6`; a queued byte reports RDRF and IRQ, not status bit 2.
+
+On the CPU VI-ACK cycle the KDC supplies its **vector** (programmed via `0x20/0x21`).
+RX is edge-latched and acknowledged on the VI-ACK cycle. TX/completion is a level
+source: with the modeled transmitter empty it remains asserted until the resident
+driver clears control bit 5. The handler distinguishes them by reading status
+(bit 2 set → status event; otherwise bit 0 with receive enabled → RX/data;
+otherwise → TX/completion). **[DISK]/[EMU]**
+
+**Two emulation lessons (both were bugs first):**
+
+1. **The interrupt must be gated on the hardware enable bits**, not on a software flag.
+   An early model armed the KDC IRQ from the *vector write*; that is wrong — real
+   hardware raises an interrupt purely from register state / a bus side-effect. The
+   correct gates observed so far are `control(0x01).bit4` (normal RX), `.bit7`
+   (diagnostic RX), or `.bit5` (TX). **[EMU]**
+2. **KDC and FDU share the VI line**, so the VI-ACK handler must return the KDC vector
+   **only when a KDC source is enabled *and* pending**, otherwise fall through to the
+   FDU. A missing check let the KDC hijack the FDU's vector and stall the floppy path.
+   **[EMU]**
+
+---
+
+## Source warning: the alleged local GO252 manual
+
+`reference/ArchiviOlivetti/M30-M40_KDC.pdf` is **not** a GO252 hardware manual. It is a
+four-page printout of the Archivio Storico Olivetti catalogue web page for archive
+item 769, “M30-M40” (February 1982). It contains catalogue metadata only: no register
+description, schematics, or board logic. Consequently, the control-bit meanings above
+are derived from ROM/disk execution and diagnostics, not from that PDF. **[DISK]/[EMU]**
+
+---
+
+## 3. Keyboard MCU and serial protocol
+
+The keyboard contains an Intel 8049 with a 2 KiB mask ROM.  The recovered image
+`80491402.MCU` and its annotated, byte-identical disassembly are described in
+[`keyboard/M40_8049_KEYBOARD.md`](../keyboard/M40_8049_KEYBOARD.md).  The MCU uses
+an asynchronous start + 8 data + stop-bit link, LSB first, with one-byte TX and RX
+storage (no keyboard-side FIFO).  GO252 presents that link to the CPU as the status
+and data registers above. **[KBDROM]/[DISK]/[MAN]**
+
+- **Make/break:** the keyboard MCU sends a **1-byte positional scancode** on key *make*.
+  Modifier keys additionally send a *break* code on release (see §4).
+- **Power-up:** after its ROM checksum, the MCU reports `0xFC` repeatedly until it
+  receives command `0x00`.  Command `0x01` reports the checksum result: `0xFA` for
+  pass or `0xF9` for failure. **[KBDROM]**
+- **Read-ID command:** host command **`0x02`** sets an internal request bit.  The
+  foreground scanner then replies **`0xFB`** followed by the raw P2 configuration
+  sample captured with the row selector released.  The diagnostic interprets that
+  byte as layout + strap options.
+  Low five bits are the layout (0=international, 10=Italy, 11=Japan/Kana,
+  17=USA ASCII); high three bits are straps. Reply `0xF1` therefore means
+  **USA ASCII layout 17, strap value 7 (D.P./KUSA02)**. KEYTE1 waits for `0xFB`
+  before dequeuing the configuration byte. `0xF1` is an emulated strap choice, not
+  a constant stored in the keyboard ROM. **[KBDROM]/[DISK]/[EMU]**
+- **Observed initialization stream:** KEYTE1 sends `0x06`, `0x08`, `0x0A`, `0x0C`,
+  `0x10`, then `0x02`. The firmware now decodes all commands `0x00` through `0x10`;
+  larger bytes are rejected. `0x03/0x04` clear/set matrix scanning, `0x05` through
+  `0x0C` and `0x0F/0x10` control five P1 outputs matching the five indicators, and
+  `0x0D` starts a self-timed beeper pulse (`0x0E` is a no-op). Individual P1-to-lamp
+  assignments remain unverified. **[KBDROM]/[DISK]/[PHOTO]**
+- **Direct-send handshake:** control-reg bit 6 gates a direct host→keyboard byte.
+- The host translates positional scancodes → characters via a language table; the
+  diagnostics compare raw scancodes directly.
+
+---
+
+## 4. Scancodes (positional)
+
+Scancodes are **positional, not glyph-based** — a given physical key emits the same
+byte on every ANK variant. Three confidence tiers:
+
+- **Firmware/table-verified** — the 8049 proves normal keys use raw 1-based positions
+  in `0x01`–`0x68`; the populated key-to-position values come from diagnostic tables
+  (MAME has 101 unique ordinary codes; raw positions `32`, `33`, `45` are absent);
+  the **keypad** char mapping is verified against a parallel scancode→ASCII table.
+- **Geometry-grounded** — letter/digit → key from the on-screen diagram position table
+  overlaid on the physical keyboard (a QWERTY board). Solid, not echo-tested.
+- **Inferred** — row-tail punctuation and special keys (labelled by eye; verify before
+  trusting).
+
+**Numeric keypad (verified):**
+
+| 7 `4F` | 8 `50` | 9 `4D` | | 4 `57` | 5 `58` | 6 `55` |
+|--------|--------|--------|-|--------|--------|--------|
+| **1 `5F`** | **2 `60`** | **3 `5D`** | | **0 `67`** | **. `62`** | **− `59`** |
+
+**ENTER = `61` and SKIP = `52`** — two distinct terminator keys by the keypad. Both
+end line input (which is why either boots and drives menus), but go/skip prompts
+distinguish them: the DCOS monitor (disk-A `seg03:0x1bf2`) decodes raw `61` as
+ENTER/go-on and `52` as SKIP/go-back. Alpha RETURN (`35`) is **not accepted by
+that DCOS prompt**: posting it at `HIT "ENTER"` is read by the KDC and then
+ignored, and the machine sits there — verified by trace (`GO252 R reg=02 data=35`
+followed by no progress). Only the keypad terminators drive the boot prompt, the
+monitor menus and the go/skip prompts. This is not a universal BCOS restriction:
+native, alias-free K02733 test `wZKNQe` accepts 35 to complete its date field.
+**[EMU]/[DISK]**
+
+The emulator therefore keeps the *physical* mapping (PC-Enter → alpha RETURN `35`,
+numpad-Enter → `61`, PgDn → SKIP `52`) but declares the **natural-keyboard character
+13 on the keypad ENTER bit**, so scripted input and MAME's paste/type facilities
+reach the terminator the firmware actually reads. Driving the monitor by hand means
+using the **numeric-keypad Enter**, exactly as on the real machine.
+
+**Alpha block — VERIFIED** against KEYTE1's own expected-code grid
+(`keyboard/photos/SCANCODES_ALPHA.png`; scancode table `seg21:0x03c0` paired index-for-index with
+the cell table `seg21:0x2b40`): **[DISK]**
+
+```
+row 0:  DEL 06   1 01  2 04  3 07  4 17  5 1D  6 1E  7 13  8 21  9 24  0 2E
+        -= 2C    ~^ 2B    BS 31
+row 1:  TAB 05   Q 03  W 0C  E 08  R 1F  T 11  Y 14  U 19  I 25  O 26  P 30
+        @' 2A    [{ 36    CLEAR 37 (the red key)
+row 2:  KB-MODE 02   A 09  S 0F  D 0D  F 18  G 15  H 1B  J 1A  K 28  L 22
+        ;+ 2F    *: 34    ]} 38    RETURN 35
+row 3:  SHIFT    \ 0A (left of Z)   Z 0B  X 0E  C 10  V 20  B 1C  N 16  M 27
+        , 23     . 2D     ? 29
+row 4:  CONTROL   SPACE 12   REPEAT (no distinct make code in the diagnostic grid)
+```
+
+Earlier releases of this document listed the letter row shifted by one cell
+(`A 02 … S 09 …`); that was a geometry error, corrected here from the live grid.
+
+**Auxiliary/special inputs:** after the 104-key matrix the firmware scans eight more
+inputs, suppresses position `0x69`, and reports the other seven as `0x6A`–`0x70` on
+make and `0x72`–`0x78` on break. The manual/KEYTE1 assignments include SHIFT
+`6E/76`, LOCK `6F/77`, and CONTROL `70/78`; `0xFE` is the multiple-transition/
+rollover exception. This proves the edge encoding, but not the remaining physical
+assignments: the PCB photo also shows six microswitches beside the three rotary
+controls, so codes `6A`–`6D` and the relationship between those switches and the
+special-key names still need continuity testing. LOCK exists only on keyboards that
+carry it (no ANK 1426 diagnostic cell emits `6F`). **[KBDROM]/[DISK]/[MAN]/[PHOTO]**
+
+**Repeat:** a held normal-matrix key first repeats its original code and subsequently
+emits the token `0x80`; the initial counter is 70 scan passes and the repeat counter
+is 10 passes. The exact host interpretation of `0x80` and real scan frequency remain
+to be confirmed. The current MAME HLE does not yet reproduce this. **[KBDROM]/[EMU]**
+
+**Function / keypad block — VERIFIED** (`keyboard/photos/SCANCODES_NUMERIC.png`, KEYTE1 TEST 2;
+tables `seg21:0x2e5a` + `0x2df8`): **[DISK]**
+
+```
+F9/F1..F16/F8 = 44 46 63 5B 53 4B 56 5A     top-right key 39
+row 2:  \ 42   E^ 43   ( 41   ) 47   ERASE 48   EXIT 3D   LIST 54
+        FETCH 5C   DEL LINE 3B
+keypad: * 49 / − 59 / . 62 / 0 67 · 00 68 · 000 65 · digits as above
+        tall keys: SKIP 52 (upper), ENTER 61 (lower)
+right block:  RES 51   |← 4C   →| 3A        AUTO# 5E   ↑ 4E   ↓ 3C
+              OLD 66   ← 4A    → 3E         RUN 64     DRAW 40   PR ALL/NO PR 3F
+```
+
+**EXIT / abort key = `3D`** — every diagnostic test loop aborts on this code; its cell
+is function row 2, position 6. **[DISK]**
+
+> **Critical for driving diagnostics:** the boot prompt (`HIT "ENTER"`) and the monitor
+> menu (`HIT 1..4 + ENTER`) read the **numeric-keypad** scancodes
+> (`1..0 = 5F 60 5D 57 58 55 4F 50 4D 67`, ENTER `61`, SKIP `52`) — **not** the main
+> number row (`01 04 …`) or the alpha RETURN (`38`). A PC keyboard must send keypad
+> codes for those keys or menu/boot input does nothing. **[EMU]**
+
+---
+
+## 5. The ANK keyboards
+
+Both are single-board **Olivetti L1** units sharing one physical matrix (hence the same
+positional scancodes); they differ only in legends and the present-key subset. **[PHOTO]**
+
+| Model | Keys | Notes |
+|---|---|---|
+| **ANK 1426** | 105 | LED lights (POWER-ON/READY/L1/L2), no lock keys; **BASIC-keyword** function legends (RUN/DRAW/OLD/LIST/RES/FETCH/AUTO#/ERASE/SAVE/DEL LINE, F9/F1…F16/F8) and BASIC keywords on the alpha key *fronts* (REM/IF/THEN/GOTO/PRINT…). The layout the driver reports (KEYTE1 layout-select option 3; the US unit identifies as `KUSA02`). Photographs: deskthority thread t=14649. **[PHOTO]** |
+| **ANK 1427** | 99 | **Spanish** legends (`¿Ç`, `Ñ`, `¡`, `£`, `§`); terminal/editing function block (F1-F6, S2-S5, RUN, INQ, DEL CHAR, INS CHAR, HARD COPY, cursor arrows). Front LEDs POWER-ON/READY/L1/L2. Identical positional matrix → same scancodes; the emulator mapping covers it as a strict subset. |
+
+The MAME driver maps a standard PC keyboard onto this matrix 1:1 by character and
+position wherever the PC has the key, per the **official L1 MOS PC-keyboard table**
+(MOS Programmer Guide 4002570 L, §7 pp. 7-14…7-16 — the mapping L1WSE itself uses;
+Note 1 of that table makes unlisted keys 1:1). Full transcription and the complete
+per-key binding list are in **[keyboard/KEYMAP.md](../keyboard/KEYMAP.md)**. Highlights: **PC top row →
+the M40 main number row**, **PC numpad → the M40 keypad** (the two digit groups stay
+distinct, as on the real machine), **EXIT on End** (`3D`), **SKIP on PgDn** (`52`;
+officially Shift+Tab, which a single matrix key can't express), DEL on Delete (`06`)
+and BS on Backspace (`31`), **F1–F8 giving F9–F16 under Shift** exactly as the manual
+specifies, since that is the M40's own shift level. The digit *characters* are
+declared on the numpad bits so natural-keyboard (automated) typing lands on the
+keypad the monitor menus actually read.
+
+On macOS, set `uimodekey F12` — MAME's default UI-mode key there is Delete, which
+would otherwise swallow the M40 DEL key. The layout uses every key of a 104-key
+board, so the UI toggle must orphan one M40 key; F12 (`(`, `41`) is the cheapest
+donor because `(` is also Shift+8. **[EMU]**
+
+---
+
+## 6. Character-cell attributes (video)
+
+Each screen cell in the seg-61 framebuffer is **2 bytes: even = attribute, odd =
+character** (HARDWARE.md §5.3). The attribute effects are decoded by the board's
+**`MB15651` gate array**, *not* the MC6845 — the CRTC only does addressing / timing /
+cursor. **Blinking is a field-rate (VSYNC-gated) board function**, not a CRTC feature
+and not in the character ROM.
+
+CRTAN5's attribute test names the effects: **HIGH/LOW/LEFT/RIGHT LINE, BLINKING,
+HIGH LIGHT, REVERSE VIDEO** (+ combinations). **[DISK]**
+
+**Attribute bit map — PROVISIONAL** (from the CRTAN5 effect order + the resident
+monitor's observed attribute writes `00/20/40/50`; the line-bit order is a guess
+pending the CRTAN5 attribute-fill disassembly): **[EMU]/[DISK]**
+
+| bit | mask | effect |
+|-----|------|--------|
+| 0 | `0x01` | HIGH LINE (top edge) |
+| 1 | `0x02` | LOW LINE (bottom edge) |
+| 2 | `0x04` | LEFT LINE |
+| 3 | `0x08` | RIGHT LINE |
+| 4 | `0x10` | BLINKING (field-rate) |
+| 5 | `0x20` | HIGH LIGHT (full-intensity pen) |
+| 6 | `0x40` | REVERSE VIDEO |
+
+The MAME renderer implements all seven, with a 3-level palette (off / normal / high
+light) and a frame-counter blink phase. The **LOW LINE** attribute must be drawn on
+the cell's *true* last scanline, taken from **MC6845 R9** (the firmware programs
+`R9 = 0x10`, i.e. 17-line cells) — a hardcoded line 15 leaves the bottom edge one
+scanline high, where it no longer meets the LEFT/RIGHT verticals at the corners.
+Visible on any boxed diagnostic screen. **[EMU]** The **character generator `GI 9428DS-2067`** is
+a mask ROM, **not yet dumped**; the emulator currently renders text with the **Olivetti
+M20/L1 house font** (a 5×7 dot-matrix set, ASCII `0x20`–`0x7E`). The M20 is the same L1
+product line, and a photo of a live **L1/ESE** console shows the same font — matching
+slashed zero (`Ø`) and glyph shapes — so this is very likely the GO252 char set, pending
+a ROM dump or a CRTAN5 CRT-ROM-pattern capture to confirm glyph-exact. Codes outside
+`0x20`–`0x7E` (graphics/special) still render blank. **[EMU]/[PHOTO]**
+
+---
+
+## 7. Diagnostics that exercise the KDC (disk B)
+
+| Program | Code | What it tests |
+|---|---|---|
+| **KEYTE1** | — | keyboard-MCU scancode correspondence, LEDs, modifier make/break, layout select |
+| **CRTAN5** | **011** | video type/geometry (TEST1 "VIDEO FEATURES"), CRT-ROM character pattern, attribute matrix (TEST4) |
+| **RAMVID** | 010 (disk B) | video-RAM march test — **passes** (`ERR 00000`); marches the 4 KB bank via logical seg `0x1B` → phys `0xFF0000` |
+
+**CRTAN5 TEST1 shows `UNIDENTIFIED ERROR` even on operator-OK:** the `IF OK THEN ENTER`
+prompt is a visual confirm, but `UNIDENTIFIED ERROR` is a *separate* automatic
+video-type check. The emulator returns monitor type 0 from `0x81` but `0xFF` for other
+video-config registers, so the type CRTAN5 validates is unrecognised → error regardless
+of the keypress. Fixing it needs the exact type register + value from CRTAN5's code.
+**[EMU]/[DISK]**
+
+---
+
+## 8. Emulation status
+
+**Implemented:** type-ID `0xFE`; MC6845 text video; keyboard VI (gated on control
+bits 4/5/7) + serial status/data protocol + read-ID response; positional scancode matrix
+with PS/2 mapping (Esc = EXIT); character-attribute rendering (reverse / high light /
+blink / four lines) with a 3-level palette; the M20/L1 house font as the char generator. **Open:** confirm
+the attribute bit map and the CRTAN5 video-type register against the seg-0x21
+disassembly; verify the font glyph-exact (CRTAN5 CRT-ROM pattern) or dump the
+`GI 9428DS` mask ROM; add the graphics/special glyphs above `0x7E`; replace the
+remaining keyboard HLE omissions with firmware-derived behavior (scan modes,
+beeper timing and `0x80` repeat). Startup/identification commands and five
+host-commanded LED outputs are implemented. BCOS TEST is verified as left
+Ctrl+F8, sending09/0A for L2 and allowing BASIC entry when enabled. See
+[TEST/LED evidence](../keyboard/BCOS_TEST_mode_and_keyboard_LEDs.md).

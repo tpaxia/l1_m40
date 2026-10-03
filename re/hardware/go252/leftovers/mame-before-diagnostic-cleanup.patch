@@ -1,0 +1,686 @@
+diff --git a/src/devices/bus/olivetti_l1/go252.cpp b/src/devices/bus/olivetti_l1/go252.cpp
+index 6a7f181048d..26fd2714314 100644
+--- a/src/devices/bus/olivetti_l1/go252.cpp
++++ b/src/devices/bus/olivetti_l1/go252.cpp
+@@ -142,6 +142,7 @@ void olivetti_l1_go252_device::device_add_mconfig(machine_config &config)
+ 
+ void olivetti_l1_go252_device::device_start()
+ {
++	m_kbd_boot_timer = timer_alloc(FUNC(olivetti_l1_go252_device::kbd_boot_announce), this);
+ 	m_vram = std::make_unique<u8[]>(0x1000);
+ 	save_pointer(NAME(m_vram), 0x1000);
+ 	save_item(NAME(m_crtc_index));
+@@ -155,9 +156,9 @@ void olivetti_l1_go252_device::device_start()
+ 	save_item(NAME(m_kbd_head));
+ 	save_item(NAME(m_kbd_tail));
+ 	save_item(NAME(m_kbd_count));
+-	save_item(NAME(m_kbd_init_step));
+-	save_item(NAME(m_kbd_probe_step));
+ 	save_item(NAME(m_kbd_irq_mode));
++	save_item(NAME(m_kbd_ident_reply));
++	save_item(NAME(m_kbd_poll_status));
+ }
+ 
+ 
+@@ -173,15 +174,36 @@ void olivetti_l1_go252_device::device_reset()
+ 	m_kbd_head = 0;
+ 	m_kbd_tail = 0;
+ 	m_kbd_count = 0;
+-	m_kbd_init_step = 0;
+-	m_kbd_probe_step = 0;
+ 	m_kbd_irq_mode = false;
++	m_kbd_ident_reply = false;
++	m_kbd_poll_status = false;
+ 	std::fill(std::begin(m_kbd_fifo), std::end(m_kbd_fifo), 0);
++	// The recovered 8049 firmware announces completion of its power-on ROM/RAM
++	// test with FC and repeats it until command 00 starts the foreground scanner.
++	m_kbd_fifo[0] = 0xfc;
++	m_kbd_head = 1;
++	m_kbd_count = 1;
++	m_kbd_boot_timer->adjust(attotime::from_msec(20), 0, attotime::from_msec(20));
+ 	update_vi();
+ }
+ 
+ 
++TIMER_CALLBACK_MEMBER(olivetti_l1_go252_device::kbd_boot_announce)
++{
++	// The hardware has a one-byte transmit holding register rather than a FIFO:
++	// retain at most one unconsumed announcement in the HLE queue.
++	if (!m_kbd_irq_mode && !m_kbd_count)
++		kdc_queue_internal(0xfc, true);
++}
++
++
+ void olivetti_l1_go252_device::kdc_queue(u8 data)
++{
++	kdc_queue_internal(data, true);
++}
++
++
++void olivetti_l1_go252_device::kdc_queue_internal(u8 data, bool interrupt)
+ {
+ 	if (m_kbd_count == std::size(m_kbd_fifo))
+ 		return;
+@@ -192,7 +214,7 @@ void olivetti_l1_go252_device::kdc_queue(u8 data)
+ 	// The BCOS mode written by the resident driver (0x16) uses bit 4 for
+ 	// keyboard receive; later diagnostic services use the explicit bit-7
+ 	// receive enable.
+-	m_kdc_pending = BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode;
++	m_kdc_pending = interrupt && (BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode);
+ 	update_vi();
+ }
+ 
+@@ -205,7 +227,9 @@ u8 olivetti_l1_go252_device::keyboard_data_r()
+ 		m_kbd_tail = (m_kbd_tail + 1) & 0x0f;
+ 		m_kbd_count--;
+ 	}
+-	m_kdc_pending = (BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode) && (m_kbd_count != 0);
++	m_kdc_pending = !m_kbd_ident_reply && (BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode) && (m_kbd_count != 0);
++	if (!m_kbd_count)
++		m_kbd_ident_reply = false;
+ 	update_vi();
+ 	return m_kdc_data;
+ }
+@@ -218,7 +242,7 @@ u8 olivetti_l1_go252_device::io_r(offs_t offset)
+ 	case 0x00:
+ 		if (m_kbd_count)
+ 			m_kdc_data_armed = true;
+-		return 0x02 | (m_kbd_count ? ((BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode) ? 0x04 : 0x01) : 0x00);
++		return 0x02 | (m_kbd_count ? (m_kbd_poll_status ? 0x01 : ((BIT(m_kdc_ctrl, 4) || m_kbd_irq_mode) ? 0x04 : 0x01)) : 0x00);
+ 
+ 	case 0x02:
+ 		if (m_kdc_data_armed && m_kbd_count)
+@@ -252,6 +276,10 @@ void olivetti_l1_go252_device::io_w(offs_t offset, u8 data)
+ 	case 0x00:
+ 		m_kdc_ctrl = data;
+ 		m_kdc_data_armed = false;
++		// Data can have been queued while receive interrupts were disabled (most
++		// notably the firmware's startup FC).  Enabling RX must expose it now.
++		if (!m_kbd_ident_reply && m_kbd_count && (BIT(m_kdc_ctrl, 4) || BIT(m_kdc_ctrl, 7) || m_kbd_irq_mode))
++			m_kdc_pending = true;
+ 		update_vi();
+ 		break;
+ 
+@@ -259,38 +287,32 @@ void olivetti_l1_go252_device::io_w(offs_t offset, u8 data)
+ 	{
+ 		m_kdc_data = data;
+ 		m_kdc_data_armed = false;
+-		// The diagnostic environment selects the interrupting keyboard path with
+-		// 00 01 02.  KEYTE1 later repeats identification after its longer
+-		// initialization sequence.  Older software uses 01 02 and polls status
+-		// bit 0; it does not expect identification bytes or a keyboard VI.
+-		static constexpr u8 init_sequence[] = { 0x06, 0x08, 0x0a, 0x0c, 0x10 };
+-		bool identify = false;
+-		if (m_kbd_probe_step == 2 && data == 0x02)
+-		{
+-			identify = true;
+-			m_kbd_probe_step = 0;
+-		}
+-		else if ((m_kbd_probe_step == 0 && data == 0x00) || (m_kbd_probe_step == 1 && data == 0x01))
+-			m_kbd_probe_step++;
+-		else
+-			m_kbd_probe_step = (data == 0x00) ? 1 : 0;
+-
+-		if (m_kbd_init_step == std::size(init_sequence))
++		// The recovered 8049 firmware accepts independent commands 00-10.
++		// Command 00 completes its startup handshake, 01 reports the ROM/RAM
++		// self-test result, and 02 reports FB followed by the sampled keyboard
++		// configuration.  The remaining commands only affect MCU-local scan,
++		// indicator and beeper state, none of which changes the byte-level HLE.
++		//
++		// Gardini talks to the keyboard before command 00 and polls status bit 0;
++		// the diagnostic and resident drivers issue 00 and use keyboard VI.
++		if (data == 0x00)
+ 		{
+-			if (data == 0x02)
+-				identify = true;
+-			m_kbd_init_step = (data == init_sequence[0]) ? 1 : 0;
++			m_kbd_irq_mode = true;
++			m_kbd_poll_status = false;
++			m_kbd_boot_timer->adjust(attotime::never);
+ 		}
+-		else if (data == init_sequence[m_kbd_init_step])
+-			m_kbd_init_step++;
+-		else
+-			m_kbd_init_step = (data == init_sequence[0]) ? 1 : 0;
+-
+-		if (identify)
++		else if (data == 0x01 || data == 0x02)
+ 		{
+-			m_kbd_irq_mode = true;
+-			kdc_queue(0xfb);
+-			kdc_queue(0xf1);
++			bool const polled = !m_kbd_irq_mode;
++			m_kbd_ident_reply = polled;
++			m_kbd_poll_status = polled;
++			if (data == 0x01)
++				kdc_queue_internal(0xfa, !polled);
++			else
++			{
++				kdc_queue_internal(0xfb, !polled);
++				kdc_queue_internal(0xf1, !polled);
++			}
+ 		}
+ 		update_vi();
+ 		break;
+diff --git a/src/devices/bus/olivetti_l1/go252.h b/src/devices/bus/olivetti_l1/go252.h
+index 4cae8a45a3a..4c4c1e634ff 100644
+--- a/src/devices/bus/olivetti_l1/go252.h
++++ b/src/devices/bus/olivetti_l1/go252.h
+@@ -42,7 +42,9 @@ protected:
+ 	virtual void device_reset() override ATTR_COLD;
+ 
+ private:
++	TIMER_CALLBACK_MEMBER(kbd_boot_announce);
+ 	void kdc_queue(u8 data);
++	void kdc_queue_internal(u8 data, bool interrupt);
+ 	void update_vi();
+ 	void palette_init(palette_device &palette) ATTR_COLD;
+ 	MC6845_UPDATE_ROW(crtc_update_row);
+@@ -51,8 +53,8 @@ private:
+ 	required_device<palette_device> m_palette;
+ 	required_device<screen_device> m_screen;
+ 	required_device<olivetti_l1_keyboard_device> m_keyboard;
+-
+ 	devcb_write8 m_crtc_write_cb;
++	emu_timer *m_kbd_boot_timer = nullptr;
+ 
+ 	std::unique_ptr<u8[]> m_vram;
+ 	u8 m_crtc_index = 0;
+@@ -66,9 +68,9 @@ private:
+ 	u8 m_kbd_head = 0;
+ 	u8 m_kbd_tail = 0;
+ 	u8 m_kbd_count = 0;
+-	u8 m_kbd_init_step = 0;
+-	u8 m_kbd_probe_step = 0;
+ 	bool m_kbd_irq_mode = false;
++	bool m_kbd_ident_reply = false;
++	bool m_kbd_poll_status = false;
+ };
+ 
+ DECLARE_DEVICE_TYPE(OLIVETTI_L1_GO252, olivetti_l1_go252_device)
+diff --git a/src/devices/bus/olivetti_l1/go280.cpp b/src/devices/bus/olivetti_l1/go280.cpp
+index d5467d7775f..ab3098010ad 100644
+--- a/src/devices/bus/olivetti_l1/go280.cpp
++++ b/src/devices/bus/olivetti_l1/go280.cpp
+@@ -198,6 +198,12 @@ u8 olivetti_l1_go280_device::io_r(offs_t offset)
+ 	}
+ 	else switch (reg)
+ 	{
++	case 0x00:
++		// The resident block-transfer helper polls the low nibble here and
++		// proceeds when it reads 8.  This board-ready handshake is visible in
++		// ROM at 7F:1CA6 even though the functional register table starts at 1D.
++		data = 0x08;
++		break;
+ 	case 0x1d: data = m_fdc->msr_r(); break;
+ 	case 0x1f: data = m_fdc->fifo_r(); break;
+ 	case 0xe7:
+@@ -269,19 +275,20 @@ void olivetti_l1_go280_device::io_w(offs_t offset, u8 data)
+ 		m_control = data;
+ 		m_interrupt_enable = BIT(data, 0);
+ 		downcast<go280_upd765a_device &>(*m_fdc).reset_w(BIT(data, 1) ? 0 : 1);
+-		bool const diagnostic = BIT(data, 4);
+ 		if (!BIT(data, 1))
+ 			m_fdc_head_load = false;
+-		m_fdc->set_ready_line_connected(!diagnostic);
+-		if (diagnostic)
+-			m_fdc->ready_w(false);
++		// Normal FDU wiring (G10=0111) reads READY from the selected drive.
++		// CONTR bit 4 is also used by normal software: treating it as a
++		// global READY override invents attention interrupts for absent units.
++		// The board diagnostic-test wiring/DIAG0 override is not modelled.
+ 		m_timer->write_clk2(m_fdc_index && m_fdc_head_load);
+ 		for (auto &connector : m_floppy)
+ 			if (floppy_image_device *const floppy = connector->get_device())
+ 				// GO280 is configured for 1 MB FDU drives; their spindle motors
+ 				// run continuously, unlike the MOTO1/MOTO2-controlled MFDU case.
+ 				floppy->mon_w(0);
+-		if (!was_enabled && m_interrupt_enable && (m_fdc_latched || m_timer_latched || m_fumeo || m_perro))
++		// Do not replay source pulses that have already ended and been drained.
++		if (!was_enabled && m_interrupt_enable && (m_fdc_interrupt || m_timer_interrupt || m_fumeo || m_perro))
+ 			m_pending = true;
+ 		update_vi();
+ 		break;
+diff --git a/src/devices/bus/olivetti_l1/l1.cpp b/src/devices/bus/olivetti_l1/l1.cpp
+index 187b5dcbda9..ce4cabfff85 100644
+--- a/src/devices/bus/olivetti_l1/l1.cpp
++++ b/src/devices/bus/olivetti_l1/l1.cpp
+@@ -2,6 +2,8 @@
+ // copyright-holders: Salvatore Paxia
+ 
+ #include "emu.h"
++
++#include "emuopts.h"
+ #include "l1.h"
+ 
+ olivetti_l1_slot_device::olivetti_l1_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, u32 clock)
+@@ -40,35 +42,99 @@ void olivetti_l1_bus_device::device_start()
+ 
+ 	validate_layout();
+ 
+-	u32 base = 0x010000;
+-	u32 backing_offset = 0;
+-	unsigned ram_cards = 0;
+-	bool const explicit_ram = std::any_of(m_chain.begin(), m_chain.end(),
+-		[](device_olivetti_l1_card_interface const *card) { return card->is_ram() && card->ram_capacity(); });
++	struct automatic_board
++	{
++		u32 capacity;
++		char const *name;
++	};
++	std::array<automatic_board, 2> population =
++	{{
++		{ 0, nullptr },
++		{ 0, nullptr }
++	}};
++	switch (m_ram->size())
++	{
++	case  256 * 1024: population[0] = {  256 * 1024, "ME027-32 256 KB" }; break;
++	case  384 * 1024: population[0] = {  384 * 1024, "ME027-32 384 KB" }; break;
++	case  512 * 1024: population[0] = {  512 * 1024, "ME027-32 512 KB" }; break;
++	case  640 * 1024: population = {{ { 384 * 1024, "ME027-32 384 KB" }, { 256 * 1024, "ME027-32 256 KB" } }}; break;
++	case  768 * 1024: population = {{ { 512 * 1024, "ME027-32 512 KB" }, { 256 * 1024, "ME027-32 256 KB" } }}; break;
++	case  896 * 1024: population = {{ { 512 * 1024, "ME027-32 512 KB" }, { 384 * 1024, "ME027-32 384 KB" } }}; break;
++	case 1024 * 1024: population[0] = { 1024 * 1024, "RA57/C 1 MB" }; break;
++	case 1536 * 1024: population[0] = { 1536 * 1024, "RA57/B 1.5 MB" }; break;
++	case 2048 * 1024: population[0] = { 2048 * 1024, "RA57/A 2 MB" }; break;
++	default:
++		throw emu_fatalerror("M40 RAM size %u KB cannot be built from supported ME027-32/RA57 card populations",
++			m_ram->size() / 1024);
++	}
+ 
+-	for (device_olivetti_l1_card_interface *const card : m_chain)
+-		if (card->is_ram() && (!explicit_ram || card->ram_capacity()))
+-			ram_cards++;
++	std::vector<device_olivetti_l1_card_interface *> automatic_cards;
++	std::vector<device_olivetti_l1_card_interface *> real_cards;
++	bool explicit_ram_card = false;
++	auto const ram_option = machine().options().get_entry(OPTION_RAMSIZE);
++	bool const ram_size_supplied = ram_option && ram_option->priority() > OPTION_PRIORITY_DEFAULT
++		&& machine().options().ram_size() && machine().options().ram_size()[0];
+ 
+ 	for (device_olivetti_l1_card_interface *const card : m_chain)
+ 	{
+ 		if (!card->is_ram())
+ 			continue;
+ 		u32 const capacity = card->ram_capacity();
+-		if (explicit_ram && !capacity)
++		if (!capacity)
+ 		{
+-			card->configure_ram(base, backing_offset, 0);
++			automatic_cards.push_back(card);
+ 			continue;
+ 		}
+-		u32 const size = capacity ? capacity : m_ram->size();
+-		if (size > 0x01000000 - base)
+-			throw emu_fatalerror("Olivetti L1 RAM population exceeds the 24-bit physical address space at position %u", card->position() + 1);
+-		card->configure_ram(base, backing_offset, size);
+-		base += size;
+-		backing_offset += size;
++
++		real_cards.push_back(card);
++		device_t const *const owner = card->device().owner();
++		if (owner)
++		{
++			char const *tag = owner->tag();
++			if (tag[0] == ':')
++				tag++;
++			auto const slot_option = machine().options().get_entry(tag);
++			explicit_ram_card |= slot_option && slot_option->priority() > OPTION_PRIORITY_DEFAULT;
++		}
++	}
++	if (ram_size_supplied && explicit_ram_card)
++		throw emu_fatalerror("-ramsize cannot be combined with explicit ME027-32/RA57 slot selections");
++
++	u32 base = 0x010000;
++	if (explicit_ram_card)
++	{
++		u8 const first_ram_position = (m_chassis == chassis::m30_m34) ? 0 : 1;
++		if (real_cards.empty() || real_cards.front()->position() != first_ram_position)
++			throw emu_fatalerror("Explicit RAM population must begin in physical position %u", first_ram_position + 1);
++		for (device_olivetti_l1_card_interface *const card : real_cards)
++		{
++			u32 const capacity = card->ram_capacity();
++			if (capacity > 0x01000000 - base)
++				throw emu_fatalerror("Olivetti L1 RAM population exceeds the 24-bit physical address space at position %u", card->position() + 1);
++			card->configure_ram(base, 0, capacity);
++			osd_printf_verbose("Olivetti L1 RAM: position %u, %s, physical %06X-%06X\n",
++				card->position() + 1, card->device().name(), base, base + capacity - 1);
++			base += capacity;
++		}
++	}
++	else
++	{
++		if (automatic_cards.size() < (population[1].capacity ? 2U : 1U))
++			throw emu_fatalerror("Olivetti L1 chassis lacks slots for the automatic RAM-card population");
++		u32 backing_offset = 0;
++		for (unsigned index = 0; index < automatic_cards.size(); index++)
++		{
++			u32 const capacity = (index < population.size()) ? population[index].capacity : 0;
++			automatic_cards[index]->configure_ram(base, backing_offset, capacity);
++			if (capacity)
++			{
++				osd_printf_verbose("Olivetti L1 RAM: position %u, automatic %s, physical %06X-%06X\n",
++					automatic_cards[index]->position() + 1, population[index].name, base, base + capacity - 1);
++				base += capacity;
++				backing_offset += capacity;
++			}
++		}
+ 	}
+-	if (!ram_cards)
+-		throw emu_fatalerror("Olivetti L1 chassis has no RAM board");
+ 
+ 	save_item(NAME(m_vi_state));
+ 	save_item(NAME(m_busreq_state));
+diff --git a/src/devices/bus/olivetti_l1/uc.cpp b/src/devices/bus/olivetti_l1/uc.cpp
+index a46c7468989..7f6cff2a639 100644
+--- a/src/devices/bus/olivetti_l1/uc.cpp
++++ b/src/devices/bus/olivetti_l1/uc.cpp
+@@ -81,9 +81,26 @@ void olivetti_l1_uc042_device::device_start()
+ 		m_fdu_trace = std::fopen(path, "w");
+ 	if (char const *const path = std::getenv("M40_CPU_TRACE"); path && path[0])
+ 		m_cpu_trace = std::fopen(path, "w");
++	if (char const *const path = std::getenv("M40_CPU_DUMP"); path && path[0])
++		m_cpu_dump_path = path;
++	if (char const *const base = std::getenv("M40_CPU_DUMP_BASE"); base && base[0])
++		m_cpu_dump_base = std::strtoul(base, nullptr, 16) & 0xff0000;
++	if (char const *const size = std::getenv("M40_CPU_DUMP_SIZE"); size && size[0])
++		m_cpu_dump_size = std::clamp<u32>(std::strtoul(size, nullptr, 16), 1, 0x1000000);
+ 	if (char const *const start = std::getenv("M40_CPU_TRACE_START"); start && start[0])
+ 		m_cpu_trace_start = std::strtoul(start, nullptr, 16);
++	if (char const *const after = std::getenv("M40_CPU_TRACE_START_AFTER"); after && after[0])
++		m_cpu_trace_start_after = std::strtoul(after, nullptr, 0);
++	if (char const *const prev = std::getenv("M40_CPU_TRACE_PREV"); prev && prev[0])
++		m_cpu_trace_prev_filter = std::strtoul(prev, nullptr, 16);
++	if (char const *const first = std::getenv("M40_CPU_TRACE_EXCLUDE_FIRST"); first && first[0])
++		m_cpu_trace_exclude_first = std::strtoul(first, nullptr, 16);
++	if (char const *const last = std::getenv("M40_CPU_TRACE_EXCLUDE_LAST"); last && last[0])
++		m_cpu_trace_exclude_last = std::strtoul(last, nullptr, 16);
+ 	m_cpu_trace_bad_segment_zero = std::getenv("M40_CPU_TRACE_BAD_SEG0") != nullptr;
++	m_cpu_trace_vi = std::getenv("M40_CPU_TRACE_VI") != nullptr;
++	if (char const *const after = std::getenv("M40_CPU_TRACE_VI_AFTER"); after && after[0])
++		m_cpu_trace_vi_after = std::strtoul(after, nullptr, 0);
+ 
+ 	for (int const spacenum : { int(AS_PROGRAM), int(AS_DATA), int(z8001_device::AS_STACK) })
+ 	{
+@@ -124,8 +141,10 @@ void olivetti_l1_uc042_device::device_reset()
+ 	m_suppress_enabled = true;
+ 	m_timer_pending = false;
+ 	m_cpu_trace_armed = false;
++	m_cpu_dumped = false;
+ 	m_cpu_trace_count = 0;
+ 	m_cpu_trace_prev_pc = 0xffffffff;
++	m_cpu_trace_vi_pending = false;
+ 	m_timer_out1 = false;
+ 	m_viol_pc = 0xffffffff;
+ 	m_arb_req = 0;
+@@ -234,7 +253,12 @@ bool olivetti_l1_uc042_device::xlate(int spacenum, bool write, offs_t &address)
+ 
+ 	if (!(m_mmu_mode & 0x80))
+ 		return true;
+-	address &= 0x3fffff;
++	// Preserve SN6.  The Z8001 presents a 23-bit logical address (segments
++	// 0x00-0x7f); the Z8010 uses SN6 together with URS to decide whether it
++	// qualifies for the cycle.  Masking to 22 bits aliases upper segments onto
++	// 0x00-0x3f and can turn a harmless probe of an absent upper-range MMU into
++	// a violation against an unrelated lower-range descriptor.
++	address &= 0x7fffff;
+ 	bool const system = BIT(m_cpu->state_int(Z8000_FCW), 14);
+ 	return m_mmu->translate(address, write, system, false, status);
+ }
+@@ -248,6 +272,12 @@ u16 olivetti_l1_uc042_device::mem_r(address_space &space, offs_t offset, u16 mem
+ 	// the end of the instruction.  A first-word fetch releases it in xlate().
+ 	if (!xlate(space.spacenum(), false, address))
+ 	{
++		if (m_cpu_trace && m_cpu_trace_armed)
++		{
++			std::fprintf(m_cpu_trace, "XLATER pc=%08X space=%d log=%06X xlate=%06X mask=%04X\n",
++				unsigned(m_cpu->pc()), space.spacenum(), unsigned(logical), unsigned(address), mem_mask);
++			std::fflush(m_cpu_trace);
++		}
+ 		debug_cpu_trace(ifetch1, false, logical, address, 0x8d07);
+ 		if (m_suppress_enabled)
+ 			m_viol_pc = m_cpu->pc();
+@@ -293,6 +323,18 @@ u16 olivetti_l1_uc042_device::mem_r(address_space &space, offs_t offset, u16 mem
+ 	}
+ 	u16 const data = physical_word_r(address, mem_mask);
+ 	debug_cpu_trace(ifetch1, true, logical, address, data);
++	if (m_cpu_trace && m_cpu_trace_armed && space.spacenum() == z8001_device::AS_STACK)
++	{
++		std::fprintf(m_cpu_trace, "STACKR pc=%08X log=%06X phys=%06X data=%04X mask=%04X\n",
++			unsigned(m_cpu->pc()), unsigned(logical), unsigned(address), data, mem_mask);
++		std::fflush(m_cpu_trace);
++	}
++	if (m_cpu_trace && space.spacenum() != AS_PROGRAM
++		&& m_cpu->pc() >= 0x003b0ee8 && m_cpu->pc() <= 0x003b0f1a)
++	{
++		std::fprintf(m_cpu_trace, "CALLDATA pc=%08X space=%d log=%06X phys=%06X data=%04X mask=%04X\n",
++			unsigned(m_cpu->pc()), space.spacenum(), unsigned(logical), unsigned(address), data, mem_mask);
++	}
+ 	if (m_cpu_trace && m_cpu->pc() >= 0x003c07a0 && m_cpu->pc() <= 0x003c07a4)
+ 	{
+ 		std::fprintf(m_cpu_trace, "ORIGIN pc=%08X space=%d log=%06X phys=%06X data=%04X mask=%04X\n",
+@@ -329,6 +371,12 @@ void olivetti_l1_uc042_device::mem_w(address_space &space, offs_t offset, u16 da
+ 	if (valid)
+ 	{
+ 		debug_diag_w(logical, address, data, mem_mask);
++		if (m_cpu_trace && m_cpu_trace_armed && space.spacenum() == z8001_device::AS_STACK)
++		{
++			std::fprintf(m_cpu_trace, "STACKW pc=%08X log=%06X phys=%06X data=%04X mask=%04X\n",
++				unsigned(m_cpu->pc()), unsigned(logical), unsigned(address), data, mem_mask);
++			std::fflush(m_cpu_trace);
++		}
+ 		if (m_fdu_trace && address >= 0x071ff4 && address < 0x072014)
+ 		{
+ 			std::fprintf(m_fdu_trace, "SRCW pc=%08X space=%d log=%06X phys=%06X data=%04X mask=%04X\n",
+@@ -387,7 +435,7 @@ u16 olivetti_l1_uc042_device::l1_io_r(offs_t offset, u16 mem_mask)
+ {
+ 	u16 const data = bus().io_r(offset, mem_mask);
+ 	if (m_fdu_trace && BIT(offset << 1, 12, 4) == 1)
+-		std::fprintf(m_fdu_trace, "GO252 R pc=%08X reg=%02X data=%04X mask=%04X\n", unsigned(m_cpu->pc()),
++		std::fprintf(m_fdu_trace, "GO252 R t=%.6f pc=%08X reg=%02X data=%04X mask=%04X\n", machine().time().as_double(), unsigned(m_cpu->pc()),
+ 			unsigned((offset << 1) & 0xff), data, mem_mask);
+ 	return data;
+ }
+@@ -395,7 +443,7 @@ u16 olivetti_l1_uc042_device::l1_io_r(offs_t offset, u16 mem_mask)
+ void olivetti_l1_uc042_device::l1_io_w(offs_t offset, u16 data, u16 mem_mask)
+ {
+ 	if (m_fdu_trace && BIT(offset << 1, 12, 4) == 1)
+-		std::fprintf(m_fdu_trace, "GO252 W pc=%08X reg=%02X data=%04X mask=%04X\n", unsigned(m_cpu->pc()),
++		std::fprintf(m_fdu_trace, "GO252 W t=%.6f pc=%08X reg=%02X data=%04X mask=%04X\n", machine().time().as_double(), unsigned(m_cpu->pc()),
+ 			unsigned((offset << 1) & 0xff), data, mem_mask);
+ 	bus().io_w(offset, data, mem_mask);
+ }
+@@ -435,7 +483,7 @@ u8 olivetti_l1_uc042_device::keyboard_status_r()
+ 	olivetti_l1_go252_device *const video = video_card();
+ 	u8 const data = m_acia->status_r() | ((video && video->keyboard_data_available()) ? 0x05 : 0x00);
+ 	if (m_fdu_trace)
+-		std::fprintf(m_fdu_trace, "KDC STATUS R pc=%08X data=%02X fifo=%d acia_irq=%d\n", unsigned(m_cpu->pc()), data,
++		std::fprintf(m_fdu_trace, "KDC STATUS R t=%.6f pc=%08X data=%02X fifo=%d acia_irq=%d\n", machine().time().as_double(), unsigned(m_cpu->pc()), data,
+ 			video && video->keyboard_data_available(), m_acia_irq);
+ 	return data;
+ }
+@@ -444,7 +492,7 @@ void olivetti_l1_uc042_device::keyboard_status_w(u8 data)
+ {
+ 	m_kdc_status = data;
+ 	if (m_fdu_trace)
+-		std::fprintf(m_fdu_trace, "KDC STATUS W pc=%08X data=%02X\n", unsigned(m_cpu->pc()), data);
++		std::fprintf(m_fdu_trace, "KDC STATUS W t=%.6f pc=%08X data=%02X\n", machine().time().as_double(), unsigned(m_cpu->pc()), data);
+ 	m_acia->control_w(data);
+ }
+ 
+@@ -455,7 +503,7 @@ u8 olivetti_l1_uc042_device::keyboard_data_r()
+ 	olivetti_l1_go252_device *const video = video_card();
+ 	u8 const data = (video && video->keyboard_data_available()) ? video->keyboard_data_r() : m_acia->data_r();
+ 	if (m_fdu_trace)
+-		std::fprintf(m_fdu_trace, "KDC DATA R pc=%08X data=%02X fifo=%d\n", unsigned(m_cpu->pc()), data,
++		std::fprintf(m_fdu_trace, "KDC DATA R t=%.6f pc=%08X data=%02X fifo=%d\n", machine().time().as_double(), unsigned(m_cpu->pc()), data,
+ 			video && video->keyboard_data_available());
+ 	return data;
+ }
+@@ -467,7 +515,7 @@ void olivetti_l1_uc042_device::keyboard_data_w(u8 data)
+ 	if (olivetti_l1_go252_device *const video = video_card())
+ 		video->keyboard_data_w(data);
+ 	if (m_fdu_trace)
+-		std::fprintf(m_fdu_trace, "KDC DATA W pc=%08X data=%02X\n", unsigned(m_cpu->pc()), data);
++		std::fprintf(m_fdu_trace, "KDC DATA W t=%.6f pc=%08X data=%02X\n", machine().time().as_double(), unsigned(m_cpu->pc()), data);
+ 	m_acia->data_w(data);
+ }
+ 
+@@ -560,7 +608,11 @@ u16 olivetti_l1_uc042_device::local_viack_r(olivetti_l1_bus_device::interrupt_le
+ 
+ u16 olivetti_l1_uc042_device::vi_ack_r()
+ {
+-	return bus().viack_r();
++	u16 const vector = bus().viack_r();
++	if (m_cpu_trace_vi && (m_cpu->pc() >> 16)
++		&& machine().time() >= attotime::from_seconds(m_cpu_trace_vi_after))
++		m_cpu_trace_vi_pending = true;
++	return vector;
+ }
+ 
+ u8 olivetti_l1_uc042_device::arb_r(offs_t offset)
+@@ -591,9 +643,10 @@ void olivetti_l1_uc042_device::arb_w(offs_t offset, u8 data)
+ 	u8 const reg = offset & 0x0f;
+ 	if (reg <= 0x3)
+ 	{
++		// Acknowledging a request drops that channel's request/grant only.  The
++		// release level is a programmed latch; BCOS relies on it remaining set
++		// when it issues the next dispatcher request while the arbiter is idle.
+ 		m_arb_req &= ~(1 << reg);
+-		if (!m_arb_req)
+-			m_arb_rel = 0;
+ 	}
+ 	else if (reg >= 0x8 && reg <= 0xb)
+ 	{
+@@ -654,8 +707,8 @@ void olivetti_l1_uc042_device::debug_fdu(char const *event, u8 reg, u8 data)
+ 	if (m_fdu_trace && floppy)
+ 	{
+ 		std::fprintf(m_fdu_trace,
+-			"FDU %s pc=%08X reg=%02X data=%02X pending=%d ien=%d intmo_lat=%d timer=%d intoo_lat=%d fdc=%d vec=%02X dma_hi=%02X dma_ch1=%04X dma_byte=%06X\n",
+-			event, unsigned(m_cpu->pc()), reg, data, floppy->pending(), floppy->interrupt_enabled(),
++			"FDU %s t=%.6f pc=%08X reg=%02X data=%02X pending=%d ien=%d intmo_lat=%d timer=%d intoo_lat=%d fdc=%d vec=%02X dma_hi=%02X dma_ch1=%04X dma_byte=%06X\n",
++			event, machine().time().as_double(), unsigned(m_cpu->pc()), reg, data, floppy->pending(), floppy->interrupt_enabled(),
+ 			floppy->timer_latched(), floppy->timer_interrupt(), floppy->fdc_latched(), floppy->fdc_interrupt(),
+ 			floppy->vector(), floppy->dma_high(), floppy->dma_channel1(), unsigned(floppy->dma_byte()));
+ 		std::fflush(m_fdu_trace);
+@@ -699,21 +752,45 @@ void olivetti_l1_uc042_device::debug_cpu_trace(bool ifetch1, bool translated, of
+ 		bool const bad_segment_zero = (!(pc >> 16) && (pc & 0xffff) >= 0x4000)
+ 			|| (m_cpu->state_int(Z8000_R0) == 0xa000 && m_cpu->state_int(Z8000_R12) == 0x0004
+ 				&& m_cpu->state_int(Z8000_R13) == 0xa718);
+-		if (pc != m_cpu_trace_start && !(m_cpu_trace_bad_segment_zero && bad_segment_zero))
++		bool const start_match = (pc == m_cpu_trace_start
++			&& machine().time() >= attotime::from_seconds(m_cpu_trace_start_after)
++			&& (m_cpu_trace_prev_filter == 0xffffffff || m_cpu_trace_prev_pc == m_cpu_trace_prev_filter))
++			|| m_cpu_trace_vi_pending;
++		if (!start_match && !(m_cpu_trace_bad_segment_zero && bad_segment_zero))
+ 		{
+ 			m_cpu_trace_prev_pc = pc;
+ 			return;
+ 		}
+ 		m_cpu_trace_armed = true;
++		m_cpu_trace_vi_pending = false;
+ 		std::fprintf(m_cpu_trace, "ARM pc=%08X prev=%08X\n", pc, m_cpu_trace_prev_pc);
++		if (m_cpu_dump_path && !m_cpu_dumped)
++		{
++			u32 const base = (m_cpu_dump_base != 0xffffffff) ? m_cpu_dump_base : (physical & 0xff0000);
++			if (std::FILE *const dump = std::fopen(m_cpu_dump_path, "wb"))
++			{
++				for (u32 address = base; address < base + m_cpu_dump_size; address++)
++				{
++					u8 data = 0xff;
++					bus().memory_r(address, data);
++					std::fwrite(&data, sizeof(data), 1, dump);
++				}
++				std::fclose(dump);
++				std::fprintf(m_cpu_trace, "DUMP base=%06X size=%06X path=%s\n", base, m_cpu_dump_size, m_cpu_dump_path);
++			}
++			m_cpu_dumped = true;
++		}
+ 	}
+ 	m_cpu_trace_prev_pc = pc;
++	if (pc >= m_cpu_trace_exclude_first && pc <= m_cpu_trace_exclude_last)
++		return;
+ 
+ 	if (m_cpu_trace_count++ >= 50000)
+ 		return;
+ 
+-	std::fprintf(m_cpu_trace, "I %06u pc=%08X op=%04X fcw=%04X x=%c log=%06X phys=%06X",
+-		m_cpu_trace_count, pc, opcode, unsigned(m_cpu->state_int(Z8000_FCW)), translated ? 'Y' : 'N',
++	std::fprintf(m_cpu_trace, "I %06u pc=%08X op=%04X fcw=%04X psap=%04X:%04X x=%c log=%06X phys=%06X",
++		m_cpu_trace_count, pc, opcode, unsigned(m_cpu->state_int(Z8000_FCW)),
++		unsigned(m_cpu->state_int(Z8000_PSAPSEG)), unsigned(m_cpu->state_int(Z8000_PSAPOFF)), translated ? 'Y' : 'N',
+ 		unsigned(logical), unsigned(physical));
+ 	for (int reg = 0; reg < 16; reg++)
+ 		std::fprintf(m_cpu_trace, " r%d=%04X", reg, unsigned(m_cpu->state_int(Z8000_R0 + reg)));
+diff --git a/src/devices/bus/olivetti_l1/uc.h b/src/devices/bus/olivetti_l1/uc.h
+index beb50b5cdab..8bfc0451689 100644
+--- a/src/devices/bus/olivetti_l1/uc.h
++++ b/src/devices/bus/olivetti_l1/uc.h
+@@ -137,11 +137,22 @@ private:
+ 	std::FILE *m_vram_trace = nullptr;
+ 	std::FILE *m_fdu_trace = nullptr;
+ 	std::FILE *m_cpu_trace = nullptr;
++	char const *m_cpu_dump_path = nullptr;
++	u32 m_cpu_dump_base = 0xffffffff;
++	u32 m_cpu_dump_size = 0x10000;
++	bool m_cpu_dumped = false;
+ 	bool m_cpu_trace_armed = false;
+ 	u32 m_cpu_trace_count = 0;
+ 	u32 m_cpu_trace_start = 0x003c0ce0;
++	u32 m_cpu_trace_start_after = 0;
++	u32 m_cpu_trace_prev_filter = 0xffffffff;
++	u32 m_cpu_trace_exclude_first = 1;
++	u32 m_cpu_trace_exclude_last = 0;
+ 	u32 m_cpu_trace_prev_pc = 0xffffffff;
+ 	bool m_cpu_trace_bad_segment_zero = false;
++	bool m_cpu_trace_vi = false;
++	bool m_cpu_trace_vi_pending = false;
++	u32 m_cpu_trace_vi_after = 0;
+ };
+ 
+ DECLARE_DEVICE_TYPE(OLIVETTI_L1_UC042, olivetti_l1_uc042_device)
+diff --git a/src/mame/olivetti/m40.cpp b/src/mame/olivetti/m40.cpp
+index f888b706ddf..d3030eef9c5 100644
+--- a/src/mame/olivetti/m40.cpp
++++ b/src/mame/olivetti/m40.cpp
+@@ -38,7 +38,7 @@ void l1_ram_cards(device_slot_interface &device)
+ 
+ void l1_first_ram_cards(device_slot_interface &device)
+ {
+-	device.option_add("auto", OLIVETTI_L1_RAM);
++	device.option_add_internal("auto", OLIVETTI_L1_RAM);
+ 	l1_ram_cards(device);
+ }
+ 
+@@ -47,6 +47,7 @@ void m40_l1_cards(device_slot_interface &device)
+ 	device.option_add("go252", OLIVETTI_L1_GO252);
+ 	device.option_add("go280", OLIVETTI_L1_GO280);
+ 	device.option_add("go363", OLIVETTI_L1_GO363);
++	device.option_add_internal("auto", OLIVETTI_L1_RAM);
+ 	l1_ram_cards(device);
+ }
+ 
+@@ -131,7 +132,11 @@ void m40_state::l1_backplane(machine_config &config, olivetti_l1_bus_device::cha
+ 			continue;
+ 		}
+ 
+-		char const *const default_card = (select == 0) ? "auto" : (select == 1) ? "go252" : (select == 2) ? "go280" : nullptr;
++		char const *const default_card = (select == 0) ? "auto"
++			: (select == 1) ? "go252"
++			: (select == 2) ? "go280"
++			: (select == 3) ? "auto"
++			: nullptr;
+ 		auto const options = (select == 0) ? l1_first_ram_cards : m40_l1_cards;
+ 		olivetti_l1_slot_device &slot(OLIVETTI_L1_SLOT(config, slot_tags[position], m_l1bus, position, select, options, default_card));
+ 		configure_slot(slot, select != 0);
+@@ -141,7 +146,7 @@ void m40_state::l1_backplane(machine_config &config, olivetti_l1_bus_device::cha
+ 	// MAME's root RAM device supplies the -ramsize option and backing allocation;
+ 	// only the RAM card responds to its physical address range on the L1 bus.
+ 	RAM(config, RAM_TAG).set_default_size("512K").set_default_value(0)
+-		.set_extra_options("128K,256K,384K,640K,768K,896K,1024K");
++		.set_extra_options("256K,384K,640K,768K,896K,1024K,1536K,2048K");
+ }
+ 
+ void m40_state::m40(machine_config &config)

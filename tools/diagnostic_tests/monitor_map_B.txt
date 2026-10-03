@@ -1,0 +1,35 @@
+disk: B
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  870331  special/catalog loader
+002   HDFDU7   84   0x106c          1    256  870331
+003   UCM805   84   0x122c          5   1280  870331
+004   CACH84   81   0x12c6         49  12544  850329
+005   TCB805   81   0x165c         39   9984  850329
+006   MEM813   84   0x1842         27   6912  871127
+007   MREDA3   83   0x197e         41  10496  851212
+008   CAC603   83   0x1c92         11   2816  851212
+009   CAC123   83   0x1f82          1    256  851212
+010   RAMVID   80   0x2182         27   6912  840810  Video RAM test for the GO252/KDC framebuffer.
+011   CRTAN5   81   0x2408          1    256  841109  Alphanumeric CRT controller test.
+012   CRTGR2   81   0x2410          9   2304  841109  Black-and-white graphics CRT test.
+013   KEYTE1   83   0x2412         25   6400  851212  Keyboard test; interrupt/vector, alpha/numeric/KANA/LED/buzzer paths.
+014   GRAPH3   81   0x2438         43  11008  850329  Video graphics colour / 7220-family graphics test.
+015   T31103   81   0x2582         47  12032  850329
+016   TKEY04   83   0x2896         21   5376  851212
+017   MULT13   83   0x2b9a         15   3840  860616
+018   MULT22   83   0x2efe         13   3328  851212
+019   WSVID6   84   0x33f2          7   1792  880222
+020   WSKEY6   84   0x3790         41  10496  880222
+021   WSPCR3   84   0x3ac6         29   7424  871127
+022   WSLIN3   84   0x3e9e         19   4864  880222
+023   PRMUX0   83   0x415c         21   5376  860616
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

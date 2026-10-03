@@ -1,0 +1,1986 @@
+
+re/disasm/line/007_LIONV481850329.bin:     file format binary
+
+
+Disassembly of section .data:
+
+00000000 <.data>:
+	...
+     100:	ce01           	ldb	rl6,#0x1
+     102:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+     108:	800c           	addb	rl4,rh0
+     10a:	4c08 800d 2102 	clrb	0x2102
+     110:	0042           	addb	rh2,@rr4
+     112:	3403 01bd      	ldar	rr3,0x2d3
+     116:	8d48           	clr	r4
+     118:	723c 0200      	ldb	rr3(r2),rl4
+     11c:	f283           	djnz	r2,0x118
+     11e:	7c00           	di	vi,nvi
+     120:	2108 8800      	ld	r8,#0x8800
+     124:	7d8d           	ldctl	psapoff,r8
+     126:	2102 4000      	ld	r2,#0x4000
+     12a:	3382 001c      	ld	rr8(#0x1c),r2
+     12e:	a182           	ld	r2,r8
+     130:	0102 001e      	add	r2,#0x1e
+     134:	3404 02ce      	ldar	rr4,0x406
+     138:	2f24           	ld	@rr2,r4
+     13a:	a123           	ld	r3,r2
+     13c:	a931           	inc	r3,#0x2
+     13e:	2104 00ff      	ld	r4,#0xff
+     142:	bb21 0430      	ldir	@rr3,@rr2,r4
+     146:	3407 01ec      	ldar	rr7,0x336
+     14a:	3387 001e      	ld	rr8(#0x1e),r7
+     14e:	3407 02a2      	ldar	rr7,0x3f4
+     152:	3387 0022      	ld	rr8(#0x22),r7
+     156:	3407 021e      	ldar	rr7,0x378
+     15a:	3387 0026      	ld	rr8(#0x26),r7
+     15e:	3407 025c      	ldar	rr7,0x3be
+     162:	3387 002a      	ld	rr8(#0x2a),r7
+     166:	3407 01ac      	ldar	rr7,0x316
+     16a:	3387 002e      	ld	rr8(#0x2e),r7
+     16e:	3407 0270      	ldar	rr7,0x3e2
+     172:	3387 0032      	ld	rr8(#0x32),r7
+     176:	3407 01dc      	ldar	rr7,0x356
+     17a:	3387 0036      	ld	rr8(#0x36),r7
+     17e:	3407 0218      	ldar	rr7,0x39a
+     182:	3387 003a      	ld	rr8(#0x3a),r7
+     186:	340c 028a      	ldar	rr12,0x414
+     18a:	de4d           	calr	0x4f2
+     18c:	3aa4 6031      	inb	rl2,#0x6031
+     190:	3aa4 6011      	inb	rl2,#0x6011
+     194:	3402 013c      	ldar	rr2,0x2d4
+     198:	2103 6023      	ld	r3,#0x6023
+     19c:	3404 00f6      	ldar	rr4,0x296
+     1a0:	2105 6021      	ld	r5,#0x6021
+     1a4:	340a 014d      	ldar	rr10,0x2f5
+     1a8:	210b 6003      	ld	r11,#0x6003
+     1ac:	340c 0105      	ldar	rr12,0x2b5
+     1b0:	210d 6001      	ld	r13,#0x6001
+     1b4:	cf09           	ldb	rl7,#0x9
+     1b6:	3af6 6013      	outb	#0x6013,rl7
+     1ba:	8d78           	clr	r7
+     1bc:	3307 00ce      	ldr	0x28e,r7
+     1c0:	3307 00cc      	ldr	0x290,r7
+     1c4:	2107 0200      	ld	r7,#0x200
+     1c8:	3307 00c8      	ldr	0x294,r7
+     1cc:	3307 00c2      	ldr	0x292,r7
+     1d0:	2048           	ldb	rl0,@rr4
+     1d2:	3a86 6031      	outb	#0x6031,rl0
+     1d6:	a940           	inc	r4,#0x1
+     1d8:	20c8           	ldb	rl0,@rr12
+     1da:	3a86 6011      	outb	#0x6011,rl0
+     1de:	a9c0           	inc	r12,#0x1
+     1e0:	c8c0           	ldb	rl0,#0xc0
+     1e2:	3a86 6021      	outb	#0x6021,rl0
+     1e6:	3a86 6001      	outb	#0x6001,rl0
+     1ea:	7c05           	ei	vi
+     1ec:	2109 8000      	ld	r9,#0x8000
+     1f0:	3009 009e      	ldrb	rl1,0x292
+     1f4:	8c94           	testb	rl1
+     1f6:	ee04           	jr	ne,0x200
+     1f8:	3009 0098      	ldrb	rl1,0x294
+     1fc:	8c94           	testb	rl1
+     1fe:	e60e           	jr	eq,0x21c
+     200:	f989           	djnz	r9,0x1f0
+     202:	3009 008c      	ldrb	rl1,0x292
+     206:	8c94           	testb	rl1
+     208:	e602           	jr	eq,0x20e
+     20a:	6e09 800c 3009 	ldb	0x3009,rl1
+     210:	0082           	addb	rh2,@rr8
+     212:	8c94           	testb	rl1
+     214:	e61a           	jr	eq,0x24a
+     216:	6e09 800d e817 	ldb	0xe817,rl1
+     21c:	7c00           	di	vi,nvi
+     21e:	3402 0074      	ldar	rr2,0x296
+     222:	3403 00ae      	ldar	rr3,0x2d4
+     226:	2104 001e      	ld	r4,#0x1e
+     22a:	ba36 042e      	cpsirb	@rr2,@rr3,r4,ne
+     22e:	ee02           	jr	ne,0x234
+     230:	6407 800c 3402 	setb	0x3402,#0x7
+     236:	007d           	addb	rl5,@rr7
+     238:	3403 00b9      	ldar	rr3,0x2f5
+     23c:	2104 001e      	ld	r4,#0x1e
+     240:	ba36 042e      	cpsirb	@rr2,@rr3,r4,ne
+     244:	ee02           	jr	ne,0x24a
+     246:	6407 800d 7c00 	setb	0x7c00,#0x7
+     24c:	3009 003e      	ldrb	rl1,0x28e
+     250:	8c94           	testb	rl1
+     252:	ee02           	jr	ne,0x258
+     254:	6402 800c 3009 	setb	0x3009,#0x2
+     25a:	0034           	addb	rh4,@rr3
+     25c:	8c94           	testb	rl1
+     25e:	ee02           	jr	ne,0x264
+     260:	6402 800d 6009 	setb	0x6009,#0x2
+     266:	800c           	addb	rl4,rh0
+     268:	3001 0027      	ldrb	rh1,0x293
+     26c:	0601 7070      	andb	rh1,#0x70
+     270:	8419           	orb	rl1,rh1
+     272:	6e09 800c 6009 	ldb	0x6009,rl1
+     278:	800d           	addb	rl5,rh0
+     27a:	3001 0017      	ldrb	rh1,0x295
+     27e:	0601 7070      	andb	rh1,#0x70
+     282:	8419           	orb	rl1,rh1
+     284:	6e09 800d 4c08 	ldb	0x4c08,rl1
+     28a:	8012           	addb	rh2,rh1
+     28c:	9e08           	ret	t
+	...
+     296:	4142 4344      	add	r2,0x43000044(r4)
+     29a:	4546 4c4d      	or	r6,0x4c00004d(r4)
+     29e:	4e4f           	.word 4e4f
+     2a0:	5031 3233      	cpl	rr1,0x32000033(r3)
+     2a4:	3400 fe55      	ldar	rr0,0xfd
+     2a8:	aa01           	decb	rh0,#0x2
+     2aa:	0307 0f1f      	sub	r7,#0xf1f
+     2ae:	3f7f           	out	@r7,r15
+     2b0:	000a 0f0b      	addb	rl2,#0xb
+     2b4:	ff00           	dbjnz	rl7,0x2b6
+     2b6:	fe55           	dbjnz	rl6,0x20e
+     2b8:	aa01           	decb	rh0,#0x2
+     2ba:	0307 0f1f      	sub	r7,#0xf1f
+     2be:	3f7f           	out	@r7,r15
+     2c0:	000a 0f0b      	addb	rl2,#0xb
+     2c4:	6162 6364      	ld	r2,0x63000064(r6)
+     2c8:	6566 6c6d      	set	0x6c00006d(r6),#0x6
+     2cc:	6e6f 7031      	ldb	0x70000031(r6),rl7
+     2d0:	3233 34ff      	ldb	rr3(#0x34ff),rh3
+	...
+     314:	0000 2048      	addb	rh0,#0x48
+     318:	0a08 ffff      	cpb	rl0,#0xff
+     31c:	ee06           	jr	ne,0x32a
+     31e:	2100 0128      	ld	r0,#0x128
+     322:	3e58           	outb	@r5,rl0
+     324:	3200 ff66      	ldrb	0x28e,rh0
+     328:	e803           	jr	t,0x330
+     32a:	a940           	inc	r4,#0x1
+     32c:	3a86 6031      	outb	#0x6031,rl0
+     330:	c838           	ldb	rl0,#0x38
+     332:	3e58           	outb	@r5,rl0
+     334:	7b00           	iret	
+     336:	20c8           	ldb	rl0,@rr12
+     338:	0a08 ffff      	cpb	rl0,#0xff
+     33c:	ee06           	jr	ne,0x34a
+     33e:	2100 0128      	ld	r0,#0x128
+     342:	3ed8           	outb	@r13,rl0
+     344:	3200 ff48      	ldrb	0x290,rh0
+     348:	e803           	jr	t,0x350
+     34a:	a9c0           	inc	r12,#0x1
+     34c:	3a86 6011      	outb	#0x6011,rl0
+     350:	c838           	ldb	rl0,#0x38
+     352:	3ed8           	outb	@r13,rl0
+     354:	7b00           	iret	
+     356:	3a84 6031      	inb	rl0,#0x6031
+     35a:	2e28           	ldb	@rr2,rl0
+     35c:	a920           	inc	r2,#0x1
+     35e:	3408 ff92      	ldar	rr8,0x2f4
+     362:	8b82           	cp	r2,r8
+     364:	e505           	jr	mi,0x370
+     366:	2100 0001      	ld	r0,#0x1
+     36a:	3e30           	outb	@r3,rh0
+     36c:	3208 ff22      	ldrb	0x292,rl0
+     370:	2100 0038      	ld	r0,#0x38
+     374:	3e58           	outb	@r5,rl0
+     376:	7b00           	iret	
+     378:	3a84 6011      	inb	rl0,#0x6011
+     37c:	2ea8           	ldb	@rr10,rl0
+     37e:	a9a0           	inc	r10,#0x1
+     380:	3408 ff91      	ldar	rr8,0x315
+     384:	8b8a           	cp	r10,r8
+     386:	e505           	jr	mi,0x392
+     388:	2100 0001      	ld	r0,#0x1
+     38c:	3eb0           	outb	@r11,rh0
+     38e:	3208 ff02      	ldrb	0x294,rl0
+     392:	2100 0038      	ld	r0,#0x38
+     396:	3ed8           	outb	@r13,rl0
+     398:	7b00           	iret	
+     39a:	3c38           	inb	rl0,@r3
+     39c:	a687           	bitb	rl0,#0x7
+     39e:	e605           	jr	eq,0x3aa
+     3a0:	8d08           	clr	r0
+     3a2:	3e30           	outb	@r3,rh0
+     3a4:	3208 feea      	ldrb	0x292,rl0
+     3a8:	e807           	jr	t,0x3b8
+     3aa:	3000 fee5      	ldrb	rh0,0x293
+     3ae:	8480           	orb	rh0,rl0
+     3b0:	3200 fedf      	ldrb	0x293,rh0
+     3b4:	c830           	ldb	rl0,#0x30
+     3b6:	3e58           	outb	@r5,rl0
+     3b8:	c838           	ldb	rl0,#0x38
+     3ba:	3e58           	outb	@r5,rl0
+     3bc:	7b00           	iret	
+     3be:	3cb8           	inb	rl0,@r11
+     3c0:	a687           	bitb	rl0,#0x7
+     3c2:	e605           	jr	eq,0x3ce
+     3c4:	8d08           	clr	r0
+     3c6:	3eb0           	outb	@r11,rh0
+     3c8:	3208 fec8      	ldrb	0x294,rl0
+     3cc:	e807           	jr	t,0x3dc
+     3ce:	3000 fec3      	ldrb	rh0,0x295
+     3d2:	8480           	orb	rh0,rl0
+     3d4:	3200 febd      	ldrb	0x295,rh0
+     3d8:	c830           	ldb	rl0,#0x30
+     3da:	3ed8           	outb	@r13,rl0
+     3dc:	c838           	ldb	rl0,#0x38
+     3de:	3ed8           	outb	@r13,rl0
+     3e0:	7b00           	iret	
+     3e2:	2100 3810      	ld	r0,#0x3810
+     3e6:	3e58           	outb	@r5,rl0
+     3e8:	3e50           	outb	@r5,rh0
+     3ea:	3a86 602d      	outb	#0x602d,rl0
+     3ee:	3402 fee2      	ldar	rr2,0x2d4
+     3f2:	7b00           	iret	
+     3f4:	2100 3810      	ld	r0,#0x3810
+     3f8:	3ed8           	outb	@r13,rl0
+     3fa:	3ed0           	outb	@r13,rh0
+     3fc:	3a86 600d      	outb	#0x600d,rl0
+     400:	340a fef1      	ldar	rr10,0x2f5
+     404:	7b00           	iret	
+     406:	c803           	ldb	rl0,#0x3
+     408:	3208 fe86      	ldrb	0x292,rl0
+     40c:	3208 fe84      	ldrb	0x294,rl0
+     410:	a9f3           	inc	r15,#0x4
+     412:	9e08           	ret	t
+     414:	6013 00c0      	ldb	rh3,0xc0(r1)
+     418:	6029 0023      	ldb	rl1,0x23(r2)
+     41c:	602f 007e      	ldb	rl7,0x7e(r2)
+     420:	6035 00a0      	ldb	rh5,0xa0(r3)
+     424:	6037 0050      	ldb	rh7,0x50(r3)
+     428:	6039 00be      	ldb	rl1,0xbe(r3)
+     42c:	603b 0000      	ldb	rl3,0x0(r3)
+     430:	603d 0063      	ldb	rl5,0x63(r3)
+     434:	6025 0000      	ldb	rh5,0x0(r2)
+     438:	6027 00d9      	ldb	rh7,0xd9(r2)
+     43c:	602b 00eb      	ldb	rl3,0xeb(r2)
+     440:	6023 0013      	ldb	rh3,0x13(r2)
+     444:	603f 0080      	ldb	rl7,0x80(r3)
+     448:	6009 0023      	ldb	rl1,0x23
+     44c:	600f 007e      	ldb	rl7,0x7e
+     450:	6015 00a0      	ldb	rh5,0xa0(r1)
+     454:	6017 0050      	ldb	rh7,0x50(r1)
+     458:	6019 00be      	ldb	rl1,0xbe(r1)
+     45c:	601b 0000      	ldb	rl3,0x0(r1)
+     460:	601d 0063      	ldb	rl5,0x63(r1)
+     464:	6005 0000      	ldb	rh5,0x0
+     468:	6007 00d9      	ldb	rh7,0xd9
+     46c:	600b 00eb      	ldb	rl3,0xeb
+     470:	6003 0013      	ldb	rh3,0x13
+     474:	601f 0080      	ldb	rl7,0x80(r1)
+     478:	c001           	ldb	rh0,#0x1
+     47a:	0001 c001      	addb	rh1,#0x1
+     47e:	0000 c045      	addb	rh0,#0x45
+     482:	0000 c055      	addb	rh0,#0x55
+     486:	0000 c00a      	addb	rh0,#0xa
+     48a:	0000 c047      	addb	rh0,#0x47
+     48e:	00ff           	addb	rl7,@rr15
+     490:	c057           	ldb	rh0,#0x57
+     492:	00fc           	addb	rl4,@rr15
+     494:	c00d           	ldb	rh0,#0xd
+     496:	000f c003      	addb	rl7,#0x3
+     49a:	00d4           	addb	rh4,@rr13
+     49c:	c01d           	ldb	rh0,#0x1d
+     49e:	00ff           	addb	rl7,@rr15
+     4a0:	a001           	ldb	rh1,rh0
+     4a2:	0001 a001      	addb	rh1,#0x1
+     4a6:	0000 a045      	addb	rh0,#0x45
+     4aa:	0000 a055      	addb	rh0,#0x55
+     4ae:	0000 a00a      	addb	rh0,#0xa
+     4b2:	0000 a047      	addb	rh0,#0x47
+     4b6:	00ff           	addb	rl7,@rr15
+     4b8:	a057           	ldb	rh7,rh5
+     4ba:	00fc           	addb	rl4,@rr15
+     4bc:	a00d           	ldb	rl5,rh0
+     4be:	000f a003      	addb	rl7,#0x3
+     4c2:	00d4           	addb	rh4,@rr13
+     4c4:	a01d           	ldb	rl5,rh1
+     4c6:	00ff           	addb	rl7,@rr15
+     4c8:	6021 0080      	ldb	rh1,0x80(r2)
+     4cc:	6021 0040      	ldb	rh1,0x40(r2)
+     4d0:	6021 0010      	ldb	rh1,0x10(r2)
+     4d4:	6021 0028      	ldb	rh1,0x28(r2)
+     4d8:	6021 0038      	ldb	rh1,0x38(r2)
+     4dc:	6001 0080      	ldb	rh1,0x80
+     4e0:	6001 0040      	ldb	rh1,0x40
+     4e4:	6001 0010      	ldb	rh1,0x10
+     4e8:	6001 0028      	ldb	rh1,0x28
+     4ec:	6001 0038      	ldb	rh1,0x38
+     4f0:	ffff           	djnz	r15,0x3f4
+     4f2:	21ca           	ld	r10,@rr12
+     4f4:	a9c1           	inc	r12,#0x2
+     4f6:	0b0a ffff      	cp	r10,#0xffff
+     4fa:	9e06           	ret	eq
+     4fc:	21c7           	ld	r7,@rr12
+     4fe:	a9c1           	inc	r12,#0x2
+     500:	3eaf           	outb	@r10,rl7
+     502:	e8f7           	jr	t,0x4f2
+     504:	ce01           	ldb	rl6,#0x1
+     506:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+     50c:	800c           	addb	rl4,rh0
+     50e:	2102 c001      	ld	r2,#0xc001
+     512:	cb01           	ldb	rl3,#0x1
+     514:	3e2b           	outb	@r2,rl3
+     516:	3c23           	inb	rh3,@r2
+     518:	8ab3           	cpb	rh3,rl3
+     51a:	e603           	jr	eq,0x522
+     51c:	c207           	ldb	rh2,#0x7
+     51e:	6e02 800c 2102 	ldb	0x2102,rh2
+     524:	a001           	ldb	rh1,rh0
+     526:	3e2b           	outb	@r2,rl3
+     528:	3c23           	inb	rh3,@r2
+     52a:	8ab3           	cpb	rh3,rl3
+     52c:	e609           	jr	eq,0x540
+     52e:	6002 800c 0002 	ldb	rh2,0x2
+     534:	3838           	rsvd38	
+     536:	6e02 800c 0a02 	ldb	0xa02,rh2
+     53c:	3f3f           	out	@r3,r15
+     53e:	e66f           	jr	eq,0x61e
+     540:	2102 c003      	ld	r2,#0xc003
+     544:	2103 002f      	ld	r3,#0x2f
+     548:	c607           	ldb	rh6,#0x7
+     54a:	df6c           	calr	0x674
+     54c:	2102 a003      	ld	r2,#0xa003
+     550:	2103 002f      	ld	r3,#0x2f
+     554:	c638           	ldb	rh6,#0x38
+     556:	df72           	calr	0x674
+     558:	6002 800c 0a02 	ldb	rh2,0xa02
+     55e:	3f3f           	out	@r3,r15
+     560:	e65e           	jr	eq,0x61e
+     562:	8cb8           	clrb	rl3
+     564:	3ab6 c001      	outb	#0xc001,rl3
+     568:	3ab6 a001      	outb	#0xa001,rl3
+     56c:	cb70           	ldb	rl3,#0x70
+     56e:	3ab6 c003      	outb	#0xc003,rl3
+     572:	3ab6 a003      	outb	#0xa003,rl3
+     576:	3400 00b4      	ldar	rr0,0x62e
+     57a:	3401 00bc      	ldar	rr1,0x63a
+     57e:	210c 0700      	ld	r12,#0x700
+     582:	df8e           	calr	0x668
+     584:	a116           	ld	r6,r1
+     586:	cb07           	ldb	rl3,#0x7
+     588:	df80           	calr	0x68a
+     58a:	210d 0300      	ld	r13,#0x300
+     58e:	bdec           	ldk	r14,#0xc
+     590:	df66           	calr	0x6c6
+     592:	210c 0140      	ld	r12,#0x140
+     596:	210d 0230      	ld	r13,#0x230
+     59a:	dee5           	calr	0x7d2
+     59c:	ee40           	jr	ne,0x61e
+     59e:	210c 0500      	ld	r12,#0x500
+     5a2:	df9e           	calr	0x668
+     5a4:	a116           	ld	r6,r1
+     5a6:	cb07           	ldb	rl3,#0x7
+     5a8:	df90           	calr	0x68a
+     5aa:	210d 0150      	ld	r13,#0x150
+     5ae:	8de8           	clr	r14
+     5b0:	df76           	calr	0x6c6
+     5b2:	210c 0090      	ld	r12,#0x90
+     5b6:	210d 01d0      	ld	r13,#0x1d0
+     5ba:	def5           	calr	0x7d2
+     5bc:	ee30           	jr	ne,0x61e
+     5be:	210c 0500      	ld	r12,#0x500
+     5c2:	ca87           	ldb	rl2,#0x87
+     5c4:	1404 0000 1000 	ldl	rr4,#0x1000
+     5ca:	df1b           	calr	0x796
+     5cc:	210c 0500      	ld	r12,#0x500
+     5d0:	ca84           	ldb	rl2,#0x84
+     5d2:	1404 0000 8000 	ldl	rr4,#0x8000
+     5d8:	df22           	calr	0x796
+     5da:	600a 800c 320a 	ldb	rl2,0x320a
+     5e0:	0064           	addb	rh4,@rr6
+     5e2:	4c08 800c 210c 	clrb	0x210c
+     5e8:	0500 ca85      	or	r0,#0xca85
+     5ec:	1404 0000 8000 	ldl	rr4,#0x8000
+     5f2:	df2f           	calr	0x796
+     5f4:	340c 004e      	ldar	rr12,0x646
+     5f8:	600a 800c a0a2 	ldb	rl2,0xa0a2
+     5fe:	8ca0           	comb	rl2
+     600:	060a 1212      	andb	rl2,#0x12
+     604:	04ca           	orb	rl2,@rr12
+     606:	0602 eded      	andb	rh2,#0xed
+     60a:	842a           	orb	rl2,rh2
+     60c:	6e0a 800c 210c 	ldb	0x210c,rl2
+     612:	0500 ca86      	or	r0,#0xca86
+     616:	1404 0000 8000 	ldl	rr4,#0x8000
+     61c:	df44           	calr	0x796
+     61e:	cbff           	ldb	rl3,#0xff
+     620:	3ab6 a01b      	outb	#0xa01b,rl3
+     624:	3ab6 c01b      	outb	#0xc01b,rl3
+     628:	4c08 8012 9e08 	clrb	0x9e08
+	...
+     646:	0000 3e2b      	addb	rh0,#0x2b
+     64a:	a921           	inc	r2,#0x2
+     64c:	f483           	djnz	r4,0x648
+     64e:	9e08           	ret	t
+     650:	3c3d           	inb	rl5,@r3
+     652:	2e2d           	ldb	@rr2,rl5
+     654:	a931           	inc	r3,#0x2
+     656:	a920           	inc	r2,#0x1
+     658:	f485           	djnz	r4,0x650
+     65a:	9e08           	ret	t
+     65c:	202d           	ldb	rl5,@rr2
+     65e:	3e3d           	outb	@r3,rl5
+     660:	a931           	inc	r3,#0x2
+     662:	a920           	inc	r2,#0x1
+     664:	f485           	djnz	r4,0x65c
+     666:	9e08           	ret	t
+     668:	bd26           	ldk	r2,#0x6
+     66a:	a113           	ld	r3,r1
+     66c:	2f3c           	ld	@rr3,r12
+     66e:	a931           	inc	r3,#0x2
+     670:	f283           	djnz	r2,0x66c
+     672:	9e08           	ret	t
+     674:	3c2d           	inb	rl5,@r2
+     676:	a921           	inc	r2,#0x2
+     678:	8cd4           	testb	rl5
+     67a:	e605           	jr	eq,0x686
+     67c:	600e 800c 846e 	ldb	rl6,0x846e
+     682:	6e0e 800c f38a 	ldb	0xf38a,rl6
+     688:	9e08           	ret	t
+     68a:	2108 0003      	ld	r8,#0x3
+     68e:	2102 c039      	ld	r2,#0xc039
+     692:	a184           	ld	r4,r8
+     694:	d027           	calr	0x648
+     696:	2102 a039      	ld	r2,#0xa039
+     69a:	a184           	ld	r4,r8
+     69c:	d02b           	calr	0x648
+     69e:	2103 c02d      	ld	r3,#0xc02d
+     6a2:	2104 0006      	ld	r4,#0x6
+     6a6:	a162           	ld	r2,r6
+     6a8:	d027           	calr	0x65c
+     6aa:	2103 a02d      	ld	r3,#0xa02d
+     6ae:	2104 0006      	ld	r4,#0x6
+     6b2:	d02c           	calr	0x65c
+     6b4:	cb06           	ldb	rl3,#0x6
+     6b6:	2102 c015      	ld	r2,#0xc015
+     6ba:	a184           	ld	r4,r8
+     6bc:	d03b           	calr	0x648
+     6be:	2102 a015      	ld	r2,#0xa015
+     6c2:	a184           	ld	r4,r8
+     6c4:	e8c1           	jr	t,0x648
+     6c6:	2106 c015      	ld	r6,#0xc015
+     6ca:	2107 a015      	ld	r7,#0xa015
+     6ce:	bd83           	ldk	r8,#0x3
+     6d0:	bd96           	ldk	r9,#0x6
+     6d2:	a112           	ld	r2,r1
+     6d4:	a103           	ld	r3,r0
+     6d6:	2104 000c      	ld	r4,#0xc
+     6da:	ba21 0430      	ldirb	@rr3,@rr2,r4
+     6de:	a1e3           	ld	r3,r14
+     6e0:	a162           	ld	r2,r6
+     6e2:	a184           	ld	r4,r8
+     6e4:	d04f           	calr	0x648
+     6e6:	a172           	ld	r2,r7
+     6e8:	a184           	ld	r4,r8
+     6ea:	d052           	calr	0x648
+     6ec:	a112           	ld	r2,r1
+     6ee:	2103 c021      	ld	r3,#0xc021
+     6f2:	a194           	ld	r4,r9
+     6f4:	d053           	calr	0x650
+     6f6:	2103 a021      	ld	r3,#0xa021
+     6fa:	a194           	ld	r4,r9
+     6fc:	d057           	calr	0x650
+     6fe:	cb04           	ldb	rl3,#0x4
+     700:	a162           	ld	r2,r6
+     702:	a184           	ld	r4,r8
+     704:	d05f           	calr	0x648
+     706:	a172           	ld	r2,r7
+     708:	a184           	ld	r4,r8
+     70a:	d062           	calr	0x648
+     70c:	8d58           	clr	r5
+     70e:	9402           	ldl	rr2,rr0
+     710:	a929           	inc	r2,#0xa
+     712:	a939           	inc	r3,#0xa
+     714:	a194           	ld	r4,r9
+     716:	bb2e 043f      	cpsdr	@rr3,@rr2,r4,nc/uge
+     71a:	e603           	jr	eq,0x722
+     71c:	2604 0d00      	bitb	rl5,r4
+     720:	e803           	jr	t,0x728
+     722:	2404 0d00      	setb	rl5,r4
+     726:	e800           	jr	t,0x728
+     728:	8d44           	test	r4
+     72a:	eef5           	jr	ne,0x716
+     72c:	6005 800c 84d5 	ldb	rh5,0x84d5
+     732:	6e05 800c 83dc 	ldb	0x83dc,rh5
+     738:	8dc4           	test	r12
+     73a:	9e03           	ret	ule
+     73c:	e8ca           	jr	t,0x6d2
+     73e:	bd41           	ldk	r4,#0x1
+     740:	2102 c015      	ld	r2,#0xc015
+     744:	bd73           	ldk	r7,#0x3
+     746:	8d88           	clr	r8
+     748:	3c2b           	inb	rl3,@r2
+     74a:	a6b0           	bitb	rl3,#0x0
+     74c:	ee08           	jr	ne,0x75e
+     74e:	8d54           	test	r5
+     750:	e60d           	jr	eq,0x76c
+     752:	600e 800c 84ce 	ldb	rl6,0x84ce
+     758:	6e0e 800c e807 	ldb	0xe807,rl6
+     75e:	8d54           	test	r5
+     760:	ee05           	jr	ne,0x76c
+     762:	600e 800c 84ce 	ldb	rl6,0x84ce
+     768:	6e0e 800c b349 	ldb	0xb349,rl6
+     76e:	0001 a921      	addb	rh1,#0x21
+     772:	f796           	djnz	r7,0x748
+     774:	8d84           	test	r8
+     776:	9e0e           	ret	ne
+     778:	2102 a015      	ld	r2,#0xa015
+     77c:	2107 0003      	ld	r7,#0x3
+     780:	a980           	inc	r8,#0x1
+     782:	e8e2           	jr	t,0x748
+     784:	1202 0000 0001 	subl	rr2,#0x1
+     78a:	9c28           	testl	rr2
+     78c:	9e06           	ret	eq
+     78e:	e8fa           	jr	t,0x784
+     790:	0000 0000      	addb	rh0,#0x0
+     794:	0000 320a      	addb	rh0,#0xa
+     798:	fff6           	djnz	r15,0x6ae
+     79a:	3704 fff4      	ldrl	0x792,rr4
+     79e:	8d58           	clr	r5
+     7a0:	d032           	calr	0x73e
+     7a2:	d09e           	calr	0x668
+     7a4:	a116           	ld	r6,r1
+     7a6:	300b ffe6      	ldrb	rl3,0x790
+     7aa:	d091           	calr	0x68a
+     7ac:	3502 ffe2      	ldrl	rr2,0x792
+     7b0:	d017           	calr	0x784
+     7b2:	bd51           	ldk	r5,#0x1
+     7b4:	d03c           	calr	0x73e
+     7b6:	2102 c001      	ld	r2,#0xc001
+     7ba:	bd31           	ldk	r3,#0x1
+     7bc:	3e2b           	outb	@r2,rl3
+     7be:	3e23           	outb	@r2,rh3
+     7c0:	c2a0           	ldb	rh2,#0xa0
+     7c2:	3e2b           	outb	@r2,rl3
+     7c4:	3e23           	outb	@r2,rh3
+     7c6:	cb73           	ldb	rl3,#0x73
+     7c8:	3ab6 c003      	outb	#0xc003,rl3
+     7cc:	3ab6 a003      	outb	#0xa003,rl3
+     7d0:	9e08           	ret	t
+     7d2:	4c04 800c 9e0e 	testb	0x9e0e
+     7d8:	a112           	ld	r2,r1
+     7da:	bd36           	ldk	r3,#0x6
+     7dc:	0b2c           	cp	r12,@rr2
+     7de:	e105           	jr	lt,0x7ea
+     7e0:	6406 800c 6606 	setb	0x6606,#0x6
+     7e6:	800c           	addb	rl4,rh0
+     7e8:	9e08           	ret	t
+     7ea:	a921           	inc	r2,#0x2
+     7ec:	f389           	djnz	r3,0x7dc
+     7ee:	a112           	ld	r2,r1
+     7f0:	bd36           	ldk	r3,#0x6
+     7f2:	0b2d           	cp	r13,@rr2
+     7f4:	e2f5           	jr	le,0x7e0
+     7f6:	a921           	inc	r2,#0x2
+     7f8:	f384           	djnz	r3,0x7f2
+     7fa:	6606 800c 9e08 	bitb	0x9e08,#0x6
+     800:	ce01           	ldb	rl6,#0x1
+     802:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+     808:	800c           	addb	rl4,rh0
+     80a:	c4ff           	ldb	rh4,#0xff
+     80c:	cb01           	ldb	rl3,#0x1
+     80e:	2102 c001      	ld	r2,#0xc001
+     812:	df90           	calr	0x8f4
+     814:	2102 a001      	ld	r2,#0xa001
+     818:	df93           	calr	0x8f4
+     81a:	8d78           	clr	r7
+     81c:	8c98           	clrb	rl1
+     81e:	2105 002f      	ld	r5,#0x2f
+     822:	2102 c003      	ld	r2,#0xc003
+     826:	df97           	calr	0x8fa
+     828:	a921           	inc	r2,#0x2
+     82a:	f583           	djnz	r5,0x826
+     82c:	8d74           	test	r7
+     82e:	ee06           	jr	ne,0x83c
+     830:	a970           	inc	r7,#0x1
+     832:	2102 a003      	ld	r2,#0xa003
+     836:	2105 002f      	ld	r5,#0x2f
+     83a:	e8f5           	jr	t,0x826
+     83c:	600b 800c 0a0b 	ldb	rl3,0xa0b
+     842:	0303 ee08      	sub	r3,#0xee08
+     846:	cbff           	ldb	rl3,#0xff
+     848:	3ab6 c01b      	outb	#0xc01b,rl3
+     84c:	3ab6 a01b      	outb	#0xa01b,rl3
+     850:	4c08 8012 9e08 	clrb	0x9e08
+     856:	8cb8           	clrb	rl3
+     858:	2102 c001      	ld	r2,#0xc001
+     85c:	dfb5           	calr	0x8f4
+     85e:	2102 a001      	ld	r2,#0xa001
+     862:	dfb8           	calr	0x8f4
+     864:	cb30           	ldb	rl3,#0x30
+     866:	2102 c057      	ld	r2,#0xc057
+     86a:	dfbc           	calr	0x8f4
+     86c:	cb0f           	ldb	rl3,#0xf
+     86e:	2102 c047      	ld	r2,#0xc047
+     872:	dfc0           	calr	0x8f4
+     874:	cb07           	ldb	rl3,#0x7
+     876:	2102 a047      	ld	r2,#0xa047
+     87a:	dfc4           	calr	0x8f4
+     87c:	cb00           	ldb	rl3,#0x0
+     87e:	2102 a057      	ld	r2,#0xa057
+     882:	dfc8           	calr	0x8f4
+     884:	cb02           	ldb	rl3,#0x2
+     886:	3ab6 c00d      	outb	#0xc00d,rl3
+     88a:	3ab6 a00d      	outb	#0xa00d,rl3
+     88e:	cb94           	ldb	rl3,#0x94
+     890:	2102 c003      	ld	r2,#0xc003
+     894:	dfd1           	calr	0x8f4
+     896:	2102 a003      	ld	r2,#0xa003
+     89a:	dfd4           	calr	0x8f4
+     89c:	cb01           	ldb	rl3,#0x1
+     89e:	dfbb           	calr	0x92a
+     8a0:	8cb4           	testb	rl3
+     8a2:	e603           	jr	eq,0x8aa
+     8a4:	b2b9 0001      	slab	rl3,#0x1
+     8a8:	e8fa           	jr	t,0x89e
+     8aa:	cbfe           	ldb	rl3,#0xfe
+     8ac:	dfc2           	calr	0x92a
+     8ae:	0a0b ffff      	cpb	rl3,#0xff
+     8b2:	e604           	jr	eq,0x8bc
+     8b4:	b2b9 0001      	slab	rl3,#0x1
+     8b8:	a4b0           	setb	rl3,#0x0
+     8ba:	e8f8           	jr	t,0x8ac
+     8bc:	cb01           	ldb	rl3,#0x1
+     8be:	2102 c01f      	ld	r2,#0xc01f
+     8c2:	dfd6           	calr	0x918
+     8c4:	c2a0           	ldb	rh2,#0xa0
+     8c6:	dfd8           	calr	0x918
+     8c8:	0a0b 1010      	cpb	rl3,#0x10
+     8cc:	e603           	jr	eq,0x8d4
+     8ce:	b2b9 0001      	slab	rl3,#0x1
+     8d2:	e8f5           	jr	t,0x8be
+     8d4:	cb0e           	ldb	rl3,#0xe
+     8d6:	2102 c01f      	ld	r2,#0xc01f
+     8da:	dfe2           	calr	0x918
+     8dc:	c2a0           	ldb	rh2,#0xa0
+     8de:	dfe4           	calr	0x918
+     8e0:	0a0b efef      	cpb	rl3,#0xef
+     8e4:	e604           	jr	eq,0x8ee
+     8e6:	b2b9 0001      	slab	rl3,#0x1
+     8ea:	a4b0           	setb	rl3,#0x0
+     8ec:	e8f4           	jr	t,0x8d6
+     8ee:	4c08 8012 9e08 	clrb	0x9e08
+     8f4:	a0b9           	ldb	rl1,rl3
+     8f6:	8649           	andb	rl1,rh4
+     8f8:	3e29           	outb	@r2,rl1
+     8fa:	3c23           	inb	rh3,@r2
+     8fc:	8643           	andb	rh3,rh4
+     8fe:	8a93           	cpb	rh3,rl1
+     900:	9e06           	ret	eq
+     902:	600c 800c 0a02 	ldb	rl4,0xa02
+     908:	c0c0           	ldb	rh0,#0xc0
+     90a:	ee04           	jr	ne,0x914
+     90c:	a4c0           	setb	rl4,#0x0
+     90e:	6e0c 800c 9e08 	ldb	0x9e08,rl4
+     914:	a4c1           	setb	rl4,#0x1
+     916:	e8fb           	jr	t,0x90e
+     918:	a0bc           	ldb	rl4,rl3
+     91a:	060c 0d0d      	andb	rl4,#0xd
+     91e:	3e2c           	outb	@r2,rl4
+     920:	3c23           	inb	rh3,@r2
+     922:	0603 0d0d      	andb	rh3,#0xd
+     926:	8a3c           	cpb	rl4,rh3
+     928:	e8eb           	jr	t,0x900
+     92a:	2102 c01b      	ld	r2,#0xc01b
+     92e:	c4f0           	ldb	rh4,#0xf0
+     930:	d01f           	calr	0x8f4
+     932:	a921           	inc	r2,#0x2
+     934:	c4cf           	ldb	rh4,#0xcf
+     936:	d022           	calr	0x8f4
+     938:	c2a0           	ldb	rh2,#0xa0
+     93a:	c4ff           	ldb	rh4,#0xff
+     93c:	d025           	calr	0x8f4
+     93e:	ab21           	dec	r2,#0x2
+     940:	c4f8           	ldb	rh4,#0xf8
+     942:	e8d8           	jr	t,0x8f4
+     944:	ce01           	ldb	rl6,#0x1
+     946:	6e0e 8012 2106 	ldb	0x2106,rl6
+     94c:	0160           	add	r0,@rr6
+     94e:	f681           	djnz	r6,0x94e
+     950:	4c08 800c 600e 	clrb	0x600e
+     956:	800a           	addb	rl2,rh0
+     958:	3ae6 f000      	outb	#0xf000,rl6
+     95c:	6400 800c 4c08 	setb	0x4c08,#0x0
+     962:	8012           	addb	rh2,rh1
+     964:	9e08           	ret	t
+     966:	ce01           	ldb	rl6,#0x1
+     968:	6e0e 8012 9200 	ldb	0x9200,rl6
+     96e:	9244           	subl	rr4,rr4
+     970:	8366           	sub	r6,r6
+     972:	2102 0000      	ld	r2,#0x0
+     976:	2103 3ffe      	ld	r3,#0x3ffe
+     97a:	202c           	ldb	rl4,@rr2
+     97c:	88ac           	xorb	rl4,rl2
+     97e:	a920           	inc	r2,#0x1
+     980:	202d           	ldb	rl5,@rr2
+     982:	88ad           	xorb	rl5,rl2
+     984:	a920           	inc	r2,#0x1
+     986:	8141           	add	r1,r4
+     988:	b561           	adc	r1,r6
+     98a:	8150           	add	r0,r5
+     98c:	b560           	adc	r0,r6
+     98e:	f38b           	djnz	r3,0x97a
+     990:	1424           	ldl	rr4,@rr2
+     992:	acd4           	exb	rh4,rl5
+     994:	4c08 800c 8b40 	clrb	0x8b40
+     99a:	e604           	jr	eq,0x9a4
+     99c:	6400 800c 6401 	setb	0x6401,#0x0
+     9a2:	800c           	addb	rl4,rh0
+     9a4:	8b51           	cp	r1,r5
+     9a6:	e604           	jr	eq,0x9b0
+     9a8:	6400 800c 6402 	setb	0x6402,#0x0
+     9ae:	800c           	addb	rl4,rh0
+     9b0:	4c08 8012 9e08 	clrb	0x9e08
+     9b6:	e804           	jr	t,0x9c0
+	...
+     9c0:	4c05 8012 0101 	ldb	0x101,#0x8
+     9c6:	4c08 
+     9c8:	800c           	addb	rl4,rh0
+     9ca:	a1fe           	ld	r14,r15
+     9cc:	97fb           	pop	r11,@rr15
+     9ce:	6102 8018 6105 	ld	r2,0x6105
+     9d4:	801a           	addb	rl2,rh1
+     9d6:	0b05 c000      	cp	r5,#0xc000
+     9da:	ee06           	jr	ne,0x9e8
+     9dc:	a153           	ld	r3,r5
+     9de:	8323           	sub	r3,r2
+     9e0:	b331 ffff      	srl	r3,#0x1
+     9e4:	8123           	add	r3,r2
+     9e6:	e802           	jr	t,0x9ec
+     9e8:	2103 c000      	ld	r3,#0xc000
+     9ec:	a134           	ld	r4,r3
+     9ee:	3702 ffc6      	ldrl	0x9b8,rr2
+     9f2:	3704 ffc6      	ldrl	0x9bc,rr4
+     9f6:	3102 ffc2      	ldr	r2,0x9bc
+     9fa:	3403 ffb8      	ldar	rr3,0x9b6
+     9fe:	8b32           	cp	r2,r3
+     a00:	ea08           	jr	gt,0xa12
+     a02:	3502 ffb2      	ldrl	rr2,0x9b8
+     a06:	3504 ffb2      	ldrl	rr4,0x9bc
+     a0a:	3704 ffaa      	ldrl	0x9b8,rr4
+     a0e:	3702 ffaa      	ldrl	0x9bc,rr2
+     a12:	3502 ffa6      	ldrl	rr2,0x9bc
+     a16:	340f ffdc      	ldar	rr15,0x9f6
+     a1a:	dfd1           	calr	0xa7a
+     a1c:	0b02 c000      	cp	r2,#0xc000
+     a20:	e106           	jr	lt,0xa2e
+     a22:	6002 800c b221 	ldb	rh2,0xb221
+     a28:	0002 6e02      	addb	rh2,#0x2
+     a2c:	800c           	addb	rl4,rh0
+     a2e:	4c04 800c ee1d 	testb	0xee1d
+     a34:	3102 ff84      	ldr	r2,0x9bc
+     a38:	3403 ff7a      	ldar	rr3,0x9b6
+     a3c:	2104 00e1      	ld	r4,#0xe1
+     a40:	bb31 0420      	ldir	@rr2,@rr3,r4
+     a44:	3102 ff74      	ldr	r2,0x9bc
+     a48:	2103 009a      	ld	r3,#0x9a
+     a4c:	8132           	add	r2,r3
+     a4e:	1e28           	jp	t,@rr2
+     a50:	3502 ff64      	ldrl	rr2,0x9b8
+     a54:	340f ff9e      	ldar	rr15,0x9f6
+     a58:	dff0           	calr	0xa7a
+     a5a:	0b02 c000      	cp	r2,#0xc000
+     a5e:	e106           	jr	lt,0xa6c
+     a60:	6002 800c b221 	ldb	rh2,0xb221
+     a66:	0002 6e02      	addb	rh2,#0x2
+     a6a:	800c           	addb	rl4,rh0
+     a6c:	e802           	jr	t,0xa72
+     a6e:	6400 800c a1ef 	setb	0xa1ef,#0x0
+     a74:	4c08 8012 1eb8 	clrb	0x1eb8
+     a7a:	8d08           	clr	r0
+     a7c:	a720           	bit	r2,#0x0
+     a7e:	e601           	jr	eq,0xa82
+     a80:	a920           	inc	r2,#0x1
+     a82:	a721           	bit	r2,#0x1
+     a84:	e601           	jr	eq,0xa88
+     a86:	a921           	inc	r2,#0x2
+     a88:	a330           	res	r3,#0x0
+     a8a:	a331           	res	r3,#0x1
+     a8c:	a134           	ld	r4,r3
+     a8e:	8324           	sub	r4,r2
+     a90:	b341 ffff      	srl	r4,#0x1
+     a94:	8124           	add	r4,r2
+     a96:	a135           	ld	r5,r3
+     a98:	1406 ffff ffff 	ldl	rr6,#0xffffffff
+     a9e:	dfba           	calr	0xb2c
+     aa0:	dfa5           	calr	0xb58
+     aa2:	e643           	jr	eq,0xb2a
+     aa4:	a135           	ld	r5,r3
+     aa6:	9266           	subl	rr6,rr6
+     aa8:	dfbf           	calr	0xb2c
+     aaa:	dfaa           	calr	0xb58
+     aac:	e63e           	jr	eq,0xb2a
+     aae:	8d68           	clr	r6
+     ab0:	a135           	ld	r5,r3
+     ab2:	b369 0001      	sla	r6,#0x1
+     ab6:	a560           	set	r6,#0x0
+     ab8:	dfbb           	calr	0xb44
+     aba:	dfb2           	calr	0xb58
+     abc:	e636           	jr	eq,0xb2a
+     abe:	0b06 ffff      	cp	r6,#0xffff
+     ac2:	ee01           	jr	ne,0xac6
+     ac4:	e801           	jr	t,0xac8
+     ac6:	e8f4           	jr	t,0xab0
+     ac8:	a135           	ld	r5,r3
+     aca:	b369 0001      	sla	r6,#0x1
+     ace:	dfc6           	calr	0xb44
+     ad0:	dfbd           	calr	0xb58
+     ad2:	e62b           	jr	eq,0xb2a
+     ad4:	8d64           	test	r6
+     ad6:	ee01           	jr	ne,0xada
+     ad8:	e801           	jr	t,0xadc
+     ada:	e8f6           	jr	t,0xac8
+     adc:	1408 0000 ffff 	ldl	rr8,#0xffff
+     ae2:	bda4           	ldk	r10,#0x4
+     ae4:	a7a1           	bit	r10,#0x1
+     ae6:	ee03           	jr	ne,0xaee
+     ae8:	a145           	ld	r5,r4
+     aea:	9426           	ldl	rr6,rr2
+     aec:	e803           	jr	t,0xaf4
+     aee:	a135           	ld	r5,r3
+     af0:	a146           	ld	r6,r4
+     af2:	a167           	ld	r7,r6
+     af4:	ab71           	dec	r7,#0x2
+     af6:	2171           	ld	r1,@rr7
+     af8:	8981           	xor	r1,r8
+     afa:	8510           	or	r0,r1
+     afc:	2161           	ld	r1,@rr6
+     afe:	8981           	xor	r1,r8
+     b00:	8510           	or	r0,r1
+     b02:	2f79           	ld	@rr7,r9
+     b04:	2171           	ld	r1,@rr7
+     b06:	8991           	xor	r1,r9
+     b08:	8510           	or	r0,r1
+     b0a:	2f69           	ld	@rr6,r9
+     b0c:	2161           	ld	r1,@rr6
+     b0e:	8991           	xor	r1,r9
+     b10:	8510           	or	r0,r1
+     b12:	a961           	inc	r6,#0x2
+     b14:	8b56           	cp	r6,r5
+     b16:	e101           	jr	lt,0xb1a
+     b18:	e801           	jr	t,0xb1c
+     b1a:	e8ec           	jr	t,0xaf4
+     b1c:	dfe3           	calr	0xb58
+     b1e:	e605           	jr	eq,0xb2a
+     b20:	ad98           	ex	r8,r9
+     b22:	aba0           	dec	r10,#0x1
+     b24:	ee01           	jr	ne,0xb28
+     b26:	e801           	jr	t,0xb2a
+     b28:	e8dd           	jr	t,0xae4
+     b2a:	9e08           	ret	t
+     b2c:	ab53           	dec	r5,#0x4
+     b2e:	1d56           	ldl	@rr5,rr6
+     b30:	1458           	ldl	rr8,@rr5
+     b32:	8968           	xor	r8,r6
+     b34:	8979           	xor	r9,r7
+     b36:	8580           	or	r0,r8
+     b38:	8590           	or	r0,r9
+     b3a:	8b52           	cp	r2,r5
+     b3c:	e101           	jr	lt,0xb40
+     b3e:	e801           	jr	t,0xb42
+     b40:	e8f5           	jr	t,0xb2c
+     b42:	9e08           	ret	t
+     b44:	ab51           	dec	r5,#0x2
+     b46:	2f56           	ld	@rr5,r6
+     b48:	2151           	ld	r1,@rr5
+     b4a:	8961           	xor	r1,r6
+     b4c:	8510           	or	r0,r1
+     b4e:	8b52           	cp	r2,r5
+     b50:	e101           	jr	lt,0xb54
+     b52:	e801           	jr	t,0xb56
+     b54:	e8f7           	jr	t,0xb44
+     b56:	9e08           	ret	t
+     b58:	8c84           	testb	rl0
+     b5a:	e602           	jr	eq,0xb60
+     b5c:	6401 800c 8c04 	setb	0x8c04,#0x1
+     b62:	e602           	jr	eq,0xb68
+     b64:	6402 800c 8d08 	setb	0x8d08,#0x2
+     b6a:	6009 800c 0609 	ldb	rl1,0x609
+     b70:	0606 0809      	andb	rh6,#0x9
+     b74:	0606 9e08      	andb	rh6,#0x8
+     b78:	8d07           	nop	
+     b7a:	ce01           	ldb	rl6,#0x1
+     b7c:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+     b82:	800c           	addb	rl4,rh0
+     b84:	df5f           	calr	0xcc8
+     b86:	6004 801e a642 	ldb	rh4,0xa642
+     b8c:	ee06           	jr	ne,0xb9a
+     b8e:	cc13           	ldb	rl4,#0x13
+     b90:	3ac6 601d      	outb	#0x601d,rl4
+     b94:	3ac6 603d      	outb	#0x603d,rl4
+     b98:	df49           	calr	0xd08
+     b9a:	6004 801e a643 	ldb	rh4,0xa643
+     ba0:	ee14           	jr	ne,0xbca
+     ba2:	df6e           	calr	0xcc8
+     ba4:	8ce8           	clrb	rl6
+     ba6:	3ae6 a01d      	outb	#0xa01d,rl6
+     baa:	3ae6 c01d      	outb	#0xc01d,rl6
+     bae:	cc13           	ldb	rl4,#0x13
+     bb0:	3ac6 601d      	outb	#0x601d,rl4
+     bb4:	3ac6 603d      	outb	#0x603d,rl4
+     bb8:	600e 800c 060e 	ldb	rl6,0x60e
+     bbe:	fcfc           	djnz	r12,0xac8
+     bc0:	040e 0101      	orb	rl6,#0x1
+     bc4:	6e0e 800c df61 	ldb	0xdf61,rl6
+     bca:	6004 801e a644 	ldb	rh4,0xa644
+     bd0:	ee0f           	jr	ne,0xbf0
+     bd2:	df86           	calr	0xcc8
+     bd4:	ce04           	ldb	rl6,#0x4
+     bd6:	3ae6 a01d      	outb	#0xa01d,rl6
+     bda:	3ae6 c01d      	outb	#0xc01d,rl6
+     bde:	600e 800c 060e 	ldb	rl6,0x60e
+     be4:	fcfc           	djnz	r12,0xaee
+     be6:	040e 0202      	orb	rl6,#0x2
+     bea:	6e0e 800c df74 	ldb	0xdf74,rl6
+     bf0:	cbff           	ldb	rl3,#0xff
+     bf2:	3ab6 a01b      	outb	#0xa01b,rl3
+     bf6:	3ab6 c01b      	outb	#0xc01b,rl3
+     bfa:	4c08 8012 9e08 	clrb	0x9e08
+     c00:	6029 603f      	ldb	rl1,0x6000003f(r2)
+     c04:	602d 602f      	ldb	rl5,0x6000002f(r2)
+     c08:	6035 6037      	ldb	rh5,0x60000037(r3)
+     c0c:	6039 603b      	ldb	rl1,0x6000003b(r3)
+     c10:	603d 603d      	ldb	rl5,0x6000003d(r3)
+     c14:	602b 6027      	ldb	rl3,0x60000027(r2)
+     c18:	603d c001 c001 	ldb	rl5,0x4000c001(r3)
+     c1e:	c055           	ldb	rh0,#0x55
+     c20:	c057           	ldb	rh0,#0x57
+     c22:	c01d           	ldb	rh0,#0x1d
+     c24:	c003           	ldb	rh0,#0x3
+     c26:	a001           	ldb	rh1,rh0
+     c28:	a001           	ldb	rh1,rh0
+     c2a:	a055           	ldb	rh5,rh5
+     c2c:	a057           	ldb	rh7,rh5
+     c2e:	a01d           	ldb	rl5,rh1
+     c30:	a003           	ldb	rh3,rh0
+     c32:	6009 601f      	ldb	rl1,0x6000001f
+     c36:	600d 600f      	ldb	rl5,0x6000000f
+     c3a:	6015 6017      	ldb	rh5,0x60000017(r1)
+     c3e:	6019 601b      	ldb	rl1,0x6000001b(r1)
+     c42:	601d 601d      	ldb	rl5,0x6000001d(r1)
+     c46:	600b 6007      	ldb	rl3,0x60000007
+     c4a:	601d a001 a001 	ldb	rl5,0x2000a001(r1)
+     c50:	a055           	ldb	rh5,rh5
+     c52:	a057           	ldb	rh7,rh5
+     c54:	a01d           	ldb	rl5,rh1
+     c56:	a003           	ldb	rh3,rh0
+     c58:	c001           	ldb	rh0,#0x1
+     c5a:	c001           	ldb	rh0,#0x1
+     c5c:	c055           	ldb	rh0,#0x55
+     c5e:	c057           	ldb	rh0,#0x57
+     c60:	c01d           	ldb	rh0,#0x1d
+     c62:	c003           	ldb	rh0,#0x3
+     c64:	4f00           	.word 4f00
+     c66:	b1b1           	.word b1b1
+     c68:	8050           	addb	rh0,rh5
+     c6a:	0a00 0303      	cpb	rh0,#0x3
+     c6e:	eac1           	jr	gt,0xbf2
+     c70:	0301 0000      	sub	r1,#0x0
+     c74:	0000 9401      	addb	rh0,#0x1
+     c78:	0000 0000      	addb	rh0,#0x0
+     c7c:	9400           	ldl	rr0,rr0
+     c7e:	00b1           	addb	rh1,@rr11
+     c80:	b1c0           	extsb	r12
+     c82:	50be 0003      	cpl	rr14,0x3(r11)
+     c86:	03ef           	sub	r15,@rr14
+     c88:	db03           	calr	0x1684
+     c8a:	0100 0000      	add	r0,#0x0
+     c8e:	0094           	addb	rh4,@rr9
+     c90:	0100 0000      	add	r0,#0x0
+     c94:	0094           	addb	rh4,@rr9
+     c96:	1000 b1b1 c050 	cpl	rr0,#0xb1b1c050
+     c9c:	be00           	rldb	rh0,rh0
+     c9e:	0303 efdb      	sub	r3,#0xefdb
+     ca2:	0301 0000      	sub	r1,#0x0
+     ca6:	0000 9401      	addb	rh0,#0x1
+     caa:	0000 0000      	addb	rh0,#0x0
+     cae:	9420           	ldl	rr0,rr2
+     cb0:	00aa           	addb	rl2,@rr10
+     cb2:	7ec0           	rsvd7e	
+     cb4:	50be 0003      	cpl	rr14,0x3(r11)
+     cb8:	03eb           	sub	r11,@rr14
+     cba:	db03           	calr	0x16b6
+     cbc:	0100 0000      	add	r0,#0x0
+     cc0:	0094           	addb	rh4,@rr9
+     cc2:	0100 0000      	add	r0,#0x0
+     cc6:	0094           	addb	rh4,@rr9
+     cc8:	cac0           	ldb	rl2,#0xc0
+     cca:	3aa6 6013      	outb	#0x6013,rl2
+     cce:	3402 ff2e      	ldar	rr2,0xc00
+     cd2:	600d 801e a6d5 	ldb	rl5,0xa6d5
+     cd8:	e602           	jr	eq,0xcde
+     cda:	3402 ff54      	ldar	rr2,0xc32
+     cde:	3404 ff82      	ldar	rr4,0xc64
+     ce2:	0304 0019      	sub	r4,#0x19
+     ce6:	0705 0003      	and	r5,#0x3
+     cea:	a8d0           	incb	rl5,#0x1
+     cec:	0104 0019      	add	r4,#0x19
+     cf0:	f583           	djnz	r5,0xcec
+     cf2:	2105 0019      	ld	r5,#0x19
+     cf6:	2126           	ld	r6,@rr2
+     cf8:	204f           	ldb	rl7,@rr4
+     cfa:	a921           	inc	r2,#0x2
+     cfc:	a940           	inc	r4,#0x1
+     cfe:	3e6f           	outb	@r6,rl7
+     d00:	f586           	djnz	r5,0xcf6
+     d02:	9e08           	ret	t
+     d04:	0040           	addb	rh0,@rr4
+     d06:	40c0 8988 f881 	addb	rh0,0x900f881(r12)
+     d0c:	9288           	subl	rr8,rr8
+     d0e:	2102 6011      	ld	r2,#0x6011
+     d12:	2103 6001      	ld	r3,#0x6001
+     d16:	6004 801e a645 	ldb	rh4,0xa645
+     d1c:	ee04           	jr	ne,0xd26
+     d1e:	0102 0020      	add	r2,#0x20
+     d22:	0103 0020      	add	r3,#0x20
+     d26:	8d78           	clr	r7
+     d28:	2106 8080      	ld	r6,#0x8080
+     d2c:	3c34           	inb	rh4,@r3
+     d2e:	a642           	bitb	rh4,#0x2
+     d30:	e60a           	jr	eq,0xd46
+     d32:	0a0e ffff      	cpb	rl6,#0xff
+     d36:	e60a           	jr	eq,0xd4c
+     d38:	a8e0           	incb	rl6,#0x1
+     d3a:	0a0e b1b1      	cpb	rl6,#0xb1
+     d3e:	ee01           	jr	ne,0xd42
+     d40:	a8e0           	incb	rl6,#0x1
+     d42:	3e2e           	outb	@r2,rl6
+     d44:	8d88           	clr	r8
+     d46:	a980           	inc	r8,#0x1
+     d48:	8d84           	test	r8
+     d4a:	e623           	jr	eq,0xd92
+     d4c:	a640           	bitb	rh4,#0x0
+     d4e:	e60b           	jr	eq,0xd66
+     d50:	a860           	incb	rh6,#0x1
+     d52:	0a06 b1b1      	cpb	rh6,#0xb1
+     d56:	ee02           	jr	ne,0xd5c
+     d58:	a860           	incb	rh6,#0x1
+     d5a:	a970           	inc	r7,#0x1
+     d5c:	a970           	inc	r7,#0x1
+     d5e:	3c2c           	inb	rl4,@r2
+     d60:	8d98           	clr	r9
+     d62:	8a6c           	cpb	rl4,rh6
+     d64:	ee13           	jr	ne,0xd8c
+     d66:	a990           	inc	r9,#0x1
+     d68:	8d94           	test	r9
+     d6a:	e616           	jr	eq,0xd98
+     d6c:	0b07 007f      	cp	r7,#0x7f
+     d70:	e1dd           	jr	lt,0xd2c
+     d72:	a931           	inc	r3,#0x2
+     d74:	3c3c           	inb	rl4,@r3
+     d76:	060c f0f0      	andb	rl4,#0xf0
+     d7a:	600d 801e 0705 	ldb	rl5,0x705
+     d80:	0003 3406      	addb	rh3,#0x6
+     d84:	ff7e           	dbjnz	rl7,0xc8a
+     d86:	8156           	add	r6,r5
+     d88:	0a6c           	cpb	rl4,@rr6
+     d8a:	9e06           	ret	eq
+     d8c:	6402 800c e805 	setb	0xe805,#0x2
+     d92:	6404 800c e802 	setb	0xe802,#0x4
+     d98:	6403 800c 97f2 	setb	0x97f2,#0x3
+     d9e:	cbff           	ldb	rl3,#0xff
+     da0:	3ab6 a01b      	outb	#0xa01b,rl3
+     da4:	3ab6 c01b      	outb	#0xc01b,rl3
+     da8:	4c08 8012 9e08 	clrb	0x9e08
+     dae:	3402 feb2      	ldar	rr2,0xc64
+     db2:	dff5           	calr	0xdca
+     db4:	3402 fec5      	ldar	rr2,0xc7d
+     db8:	dffb           	calr	0xdc4
+     dba:	3402 fed8      	ldar	rr2,0xc96
+     dbe:	dffe           	calr	0xdc4
+     dc0:	3402 feeb      	ldar	rr2,0xcaf
+     dc4:	2101 4e1e      	ld	r1,#0x4e1e
+     dc8:	e802           	jr	t,0xdce
+     dca:	2101 04e0      	ld	r1,#0x4e0
+     dce:	a926           	inc	r2,#0x7
+     dd0:	8d08           	clr	r0
+     dd2:	6103 801c 9b30 	ld	r3,0x9b30
+     dd8:	2e21           	ldb	@rr2,rh1
+     dda:	ab20           	dec	r2,#0x1
+     ddc:	2e29           	ldb	@rr2,rl1
+     dde:	9e08           	ret	t
+     de0:	ce01           	ldb	rl6,#0x1
+     de2:	6e0e 8012 7c00 	ldb	0x7c00,rl6
+     de8:	dffd           	calr	0xdf0
+     dea:	4c08 8012 9e08 	clrb	0x9e08
+     df0:	cc80           	ldb	rl4,#0x80
+     df2:	6e0c 800c 3402 	ldb	0x3402,rl4
+     df8:	032e           	sub	r14,@rr2
+     dfa:	a921           	inc	r2,#0x2
+     dfc:	2103 8ffe      	ld	r3,#0x8ffe
+     e00:	8323           	sub	r3,r2
+     e02:	0b03 021c      	cp	r3,#0x21c
+     e06:	9e07           	ret	c/ult
+     e08:	4c08 800c a820 	clrb	0xa820
+     e0e:	7d2d           	ldctl	psapoff,r2
+     e10:	7d25           	ldctl	r2,psapoff
+     e12:	0102 001c      	add	r2,#0x1c
+     e16:	2103 4000      	ld	r3,#0x4000
+     e1a:	2f23           	ld	@rr2,r3
+     e1c:	a921           	inc	r2,#0x2
+     e1e:	3404 0264      	ldar	rr4,0x1086
+     e22:	2f24           	ld	@rr2,r4
+     e24:	a123           	ld	r3,r2
+     e26:	a931           	inc	r3,#0x2
+     e28:	2104 01fe      	ld	r4,#0x1fe
+     e2c:	bb21 0430      	ldir	@rr3,@rr2,r4
+     e30:	7c01           	di	vi
+     e32:	340a 01d9      	ldar	rr10,0x100f
+     e36:	340b 01dd      	ldar	rr11,0x1017
+     e3a:	2109 0008      	ld	r9,#0x8
+     e3e:	df10           	calr	0x1020
+     e40:	70a8 0900      	ldb	rl0,rr10(r9)
+     e44:	def9           	calr	0x1054
+     e46:	8cf8           	clrb	rl7
+     e48:	7c05           	ei	vi
+     e4a:	8d07           	nop	
+     e4c:	8d07           	nop	
+     e4e:	8d07           	nop	
+     e50:	70b7 0900      	ldb	rh7,rr11(r9)
+     e54:	7c00           	di	vi,nvi
+     e56:	8af7           	cpb	rh7,rl7
+     e58:	e61c           	jr	eq,0xe92
+     e5a:	0b09 0005      	cp	r9,#0x5
+     e5e:	e103           	jr	lt,0xe66
+     e60:	6406 800c 9e08 	setb	0x9e08,#0x6
+     e66:	0b09 0004      	cp	r9,#0x4
+     e6a:	ee05           	jr	ne,0xe76
+     e6c:	6404 800c 6402 	setb	0x6402,#0x4
+     e72:	800c           	addb	rl4,rh0
+     e74:	9e08           	ret	t
+     e76:	0b09 0003      	cp	r9,#0x3
+     e7a:	ee03           	jr	ne,0xe82
+     e7c:	6404 800c e808 	setb	0xe808,#0x4
+     e82:	0b09 0002      	cp	r9,#0x2
+     e86:	e6fa           	jr	eq,0xe7c
+     e88:	0b09 0001      	cp	r9,#0x1
+     e8c:	ee02           	jr	ne,0xe92
+     e8e:	6402 800c 0b09 	setb	0xb09,#0x2
+     e94:	0005 ee01      	addb	rh5,#0x1
+     e98:	df3d           	calr	0x1020
+     e9a:	f9ae           	djnz	r9,0xe40
+     e9c:	7d25           	ldctl	r2,psapoff
+     e9e:	0102 001e      	add	r2,#0x1e
+     ea2:	3404 0236      	ldar	rr4,0x10dc
+     ea6:	2f24           	ld	@rr2,r4
+     ea8:	a123           	ld	r3,r2
+     eaa:	a931           	inc	r3,#0x2
+     eac:	2104 01fe      	ld	r4,#0x1fe
+     eb0:	bb21 0430      	ldir	@rr3,@rr2,r4
+     eb4:	df4b           	calr	0x1020
+     eb6:	c807           	ldb	rl0,#0x7
+     eb8:	df33           	calr	0x1054
+     eba:	8c08           	clrb	rh0
+     ebc:	3401 00e2      	ldar	rr1,0xfa2
+     ec0:	bd37           	ldk	r3,#0x7
+     ec2:	2112           	ld	r2,@rr1
+     ec4:	a911           	inc	r1,#0x2
+     ec6:	3e20           	outb	@r2,rh0
+     ec8:	a80f           	incb	rh0,#0x10
+     eca:	f385           	djnz	r3,0xec2
+     ecc:	340e 00e0      	ldar	rr14,0xfb0
+     ed0:	340b 00fc      	ldar	rr11,0xfd0
+     ed4:	340a 0118      	ldar	rr10,0xff0
+     ed8:	92cc           	subl	rr12,rr12
+     eda:	8d68           	clr	r6
+     edc:	c910           	ldb	rl1,#0x10
+     ede:	3a96 6001      	outb	#0x6001,rl1
+     ee2:	3a96 6021      	outb	#0x6021,rl1
+     ee6:	7c05           	ei	vi
+     ee8:	2101 8000      	ld	r1,#0x8000
+     eec:	0301 0001      	sub	r1,#0x1
+     ef0:	8d64           	test	r6
+     ef2:	ee07           	jr	ne,0xf02
+     ef4:	8d14           	test	r1
+     ef6:	eefa           	jr	ne,0xeec
+     ef8:	6401 800c 6206 	setb	0x6206,#0x1
+     efe:	800c           	addb	rl4,rh0
+     f00:	9e08           	ret	t
+     f02:	7c00           	di	vi,nvi
+     f04:	df73           	calr	0x1020
+     f06:	c910           	ldb	rl1,#0x10
+     f08:	3a96 6001      	outb	#0x6001,rl1
+     f0c:	3a96 6021      	outb	#0x6021,rl1
+     f10:	8c08           	clrb	rh0
+     f12:	3401 008c      	ldar	rr1,0xfa2
+     f16:	bd37           	ldk	r3,#0x7
+     f18:	2112           	ld	r2,@rr1
+     f1a:	a911           	inc	r1,#0x2
+     f1c:	3e20           	outb	@r2,rh0
+     f1e:	a80f           	incb	rh0,#0x10
+     f20:	f385           	djnz	r3,0xf18
+     f22:	c807           	ldb	rl0,#0x7
+     f24:	df69           	calr	0x1054
+     f26:	c084           	ldb	rh0,#0x84
+     f28:	3a06 c001      	outb	#0xc001,rh0
+     f2c:	3a06 a001      	outb	#0xa001,rh0
+     f30:	7c05           	ei	vi
+     f32:	2101 8000      	ld	r1,#0x8000
+     f36:	0301 0001      	sub	r1,#0x1
+     f3a:	8d14           	test	r1
+     f3c:	eefc           	jr	ne,0xf36
+     f3e:	6401 800c 6406 	setb	0x6406,#0x1
+     f44:	800c           	addb	rl4,rh0
+     f46:	9e08           	ret	t
+     f48:	6013 c001 a001 	ldb	rh3,0x4000a001(r1)
+     f4e:	c001           	ldb	rh0,#0x1
+     f50:	a001           	ldb	rh1,rh0
+     f52:	6039 603b      	ldb	rl1,0x6000003b(r3)
+     f56:	6019 601b      	ldb	rl1,0x6000001b(r1)
+     f5a:	6003 6023      	ldb	rh3,0x60000023
+     f5e:	6009 6029      	ldb	rl1,0x60000029
+     f62:	600b 602b      	ldb	rl3,0x6000002b
+     f66:	601d 603d      	ldb	rl5,0x6000003d(r1)
+     f6a:	6017 6037      	ldb	rh7,0x60000037(r1)
+     f6e:	6011 6031      	ldb	rh1,0x60000031(r1)
+     f72:	601f 603f      	ldb	rl7,0x6000003f(r1)
+     f76:	c001           	ldb	rh0,#0x1
+     f78:	0100 0020      	add	r0,#0x20
+     f7c:	0020           	addb	rh0,@rr2
+     f7e:	0017           	addb	rh7,@rr1
+     f80:	174f           	pop	@rr15,@rr4
+     f82:	4f0a           	.word 4f0a
+     f84:	0a03 0356      	cpb	rh3,#0x56
+     f88:	5600 0000      	addl	rr0,0x0
+     f8c:	0000 c015      	addb	rh0,#0x15
+     f90:	c017           	ldb	rh0,#0x17
+     f92:	c019           	ldb	rh0,#0x19
+     f94:	a015           	ldb	rh5,rh1
+     f96:	a017           	ldb	rh7,rh1
+     f98:	a019           	ldb	rl1,rh1
+     f9a:	c043           	ldb	rh0,#0x43
+     f9c:	c053           	ldb	rh0,#0x53
+     f9e:	a043           	ldb	rh3,rh4
+     fa0:	a053           	ldb	rh3,rh5
+     fa2:	6005 c009 c005 	ldb	rh5,0x4000c005
+     fa8:	c007           	ldb	rh0,#0x7
+     faa:	a009           	ldb	rl1,rh0
+     fac:	a005           	ldb	rh5,rh0
+     fae:	a007           	ldb	rh7,rh0
+     fb0:	0000 0000      	addb	rh0,#0x0
+     fb4:	1010           	cpl	rr0,@rr1
+     fb6:	1010           	cpl	rr0,@rr1
+     fb8:	1010           	cpl	rr0,@rr1
+     fba:	4040 4040      	addb	rh0,0x40000040(r4)
+     fbe:	4040 0000      	addb	rh0,0x0(r4)
+     fc2:	0000 1010      	addb	rh0,#0x10
+     fc6:	1212           	subl	rr2,@rr1
+     fc8:	1414           	ldl	rr4,@rr1
+     fca:	4040 4242      	addb	rh0,0x42000042(r4)
+     fce:	4444 6021      	orb	rh4,0x60000021(r4)
+     fd2:	6001 c019 c017 	ldb	rh1,0x4000c017
+     fd8:	c015           	ldb	rh0,#0x15
+     fda:	a019           	ldb	rl1,rh1
+     fdc:	a017           	ldb	rh7,rh1
+     fde:	a015           	ldb	rh5,rh1
+     fe0:	6021 6001      	ldb	rh1,0x60000001(r2)
+     fe4:	c019           	ldb	rh0,#0x19
+     fe6:	c017           	ldb	rh0,#0x17
+     fe8:	c015           	ldb	rh0,#0x15
+     fea:	a019           	ldb	rl1,rh1
+     fec:	a017           	ldb	rh7,rh1
+     fee:	a015           	ldb	rh5,rh1
+     ff0:	3828           	rsvd38	
+     ff2:	3828           	rsvd38	
+     ff4:	2020           	ldb	rh0,@rr2
+     ff6:	2020           	ldb	rh0,@rr2
+     ff8:	2020           	ldb	rh0,@rr2
+     ffa:	2020           	ldb	rh0,@rr2
+     ffc:	2020           	ldb	rh0,@rr2
+     ffe:	2020           	ldb	rh0,@rr2
+    1000:	3828           	rsvd38	
+    1002:	3828           	rsvd38	
+    1004:	2020           	ldb	rh0,@rr2
+    1006:	2020           	ldb	rh0,@rr2
+    1008:	2020           	ldb	rh0,@rr2
+    100a:	2020           	ldb	rh0,@rr2
+    100c:	2020           	ldb	rh0,@rr2
+    100e:	2020           	ldb	rh0,@rr2
+    1010:	1309           	.word 1309
+    1012:	0307 0102      	sub	r7,#0x102
+    1016:	0400 0000      	orb	rh0,#0x0
+    101a:	8281           	subb	rh1,rl0
+    101c:	8482           	orb	rh2,rl0
+    101e:	8100           	add	r0,r0
+    1020:	3402 ff24      	ldar	rr2,0xf48
+    1024:	3403 ff4e      	ldar	rr3,0xf76
+    1028:	2104 0017      	ld	r4,#0x17
+    102c:	203d           	ldb	rl5,@rr3
+    102e:	2126           	ld	r6,@rr2
+    1030:	a930           	inc	r3,#0x1
+    1032:	a921           	inc	r2,#0x2
+    1034:	3e6d           	outb	@r6,rl5
+    1036:	f486           	djnz	r4,0x102c
+    1038:	8d38           	clr	r3
+    103a:	cdc0           	ldb	rl5,#0xc0
+    103c:	3402 ff4e      	ldar	rr2,0xf8e
+    1040:	bd4a           	ldk	r4,#0xa
+    1042:	2126           	ld	r6,@rr2
+    1044:	a921           	inc	r2,#0x2
+    1046:	3e6d           	outb	@r6,rl5
+    1048:	f484           	djnz	r4,0x1042
+    104a:	8d34           	test	r3
+    104c:	9e0e           	ret	ne
+    104e:	a930           	inc	r3,#0x1
+    1050:	a2d6           	resb	rl5,#0x6
+    1052:	e8f4           	jr	t,0x103c
+    1054:	8cb8           	clrb	rl3
+    1056:	a684           	bitb	rl0,#0x4
+    1058:	e601           	jr	eq,0x105c
+    105a:	a4b2           	setb	rl3,#0x2
+    105c:	a682           	bitb	rl0,#0x2
+    105e:	e601           	jr	eq,0x1062
+    1060:	a4b3           	setb	rl3,#0x3
+    1062:	3ab6 6013      	outb	#0x6013,rl3
+    1066:	8cb8           	clrb	rl3
+    1068:	a683           	bitb	rl0,#0x3
+    106a:	e601           	jr	eq,0x106e
+    106c:	a4b6           	setb	rl3,#0x6
+    106e:	a681           	bitb	rl0,#0x1
+    1070:	e601           	jr	eq,0x1074
+    1072:	a4b7           	setb	rl3,#0x7
+    1074:	3ab6 c001      	outb	#0xc001,rl3
+    1078:	8cb8           	clrb	rl3
+    107a:	a680           	bitb	rl0,#0x0
+    107c:	e601           	jr	eq,0x1080
+    107e:	a4b7           	setb	rl3,#0x7
+    1080:	3ab6 a001      	outb	#0xa001,rl3
+    1084:	9e08           	ret	t
+    1086:	cf80           	ldb	rl7,#0x80
+    1088:	3402 ff02      	ldar	rr2,0xf8e
+    108c:	bd3a           	ldk	r3,#0xa
+    108e:	2124           	ld	r4,@rr2
+    1090:	a921           	inc	r2,#0x2
+    1092:	3c4d           	inb	rl5,@r4
+    1094:	060d e0e0      	andb	rl5,#0xe0
+    1098:	0a0d e0e0      	cpb	rl5,#0xe0
+    109c:	ee0a           	jr	ne,0x10b2
+    109e:	cd20           	ldb	rl5,#0x20
+    10a0:	3e4d           	outb	@r4,rl5
+    10a2:	cc01           	ldb	rl4,#0x1
+    10a4:	0a04 c0c0      	cpb	rh4,#0xc0
+    10a8:	e601           	jr	eq,0x10ac
+    10aa:	a8c0           	incb	rl4,#0x1
+    10ac:	8c48           	clrb	rh4
+    10ae:	2404 0f00      	setb	rl7,r4
+    10b2:	f393           	djnz	r3,0x108e
+    10b4:	3ad4 6027      	inb	rl5,#0x6027
+    10b8:	060d 1212      	andb	rl5,#0x12
+    10bc:	e60b           	jr	eq,0x10d4
+    10be:	2105 2838      	ld	r5,#0x2838
+    10c2:	3a56 6021      	outb	#0x6021,rh5
+    10c6:	3a56 6001      	outb	#0x6001,rh5
+    10ca:	3ad6 6021      	outb	#0x6021,rl5
+    10ce:	3ad6 6001      	outb	#0x6001,rl5
+    10d2:	a4f0           	setb	rl7,#0x0
+    10d4:	a1f2           	ld	r2,r15
+    10d6:	a921           	inc	r2,#0x2
+    10d8:	232c           	res	@rr2,#0xc
+    10da:	7b00           	iret	
+    10dc:	21f7           	ld	r7,@rr15
+    10de:	70e7 0d00      	ldb	rh7,rr14(r13)
+    10e2:	8a7f           	cpb	rl7,rh7
+    10e4:	e60c           	jr	eq,0x10fe
+    10e6:	8c74           	testb	rh7
+    10e8:	ee03           	jr	ne,0x10f0
+    10ea:	6401 800c e807 	setb	0xe807,#0x1
+    10f0:	a676           	bitb	rh7,#0x6
+    10f2:	ee03           	jr	ne,0x10fa
+    10f4:	6405 800c e802 	setb	0xe802,#0x5
+    10fa:	6403 800c 71b9 	setb	0x71b9,#0x3
+    1100:	0c00           	.word 0c00
+    1102:	70a0 0d00      	ldb	rh0,rr10(r13)
+    1106:	3e90           	outb	@r9,rh0
+    1108:	a9d0           	inc	r13,#0x1
+    110a:	70a0 0d00      	ldb	rh0,rr10(r13)
+    110e:	3e90           	outb	@r9,rh0
+    1110:	a9d0           	inc	r13,#0x1
+    1112:	a9c1           	inc	r12,#0x2
+    1114:	0b0d 0010      	cp	r13,#0x10
+    1118:	ee02           	jr	ne,0x111e
+    111a:	a960           	inc	r6,#0x1
+    111c:	7b00           	iret	
+    111e:	0b0d 0020      	cp	r13,#0x20
+    1122:	e601           	jr	eq,0x1126
+    1124:	7b00           	iret	
+    1126:	a9f5           	inc	r15,#0x6
+    1128:	9e08           	ret	t
+    112a:	e802           	jr	t,0x1130
+    112c:	0000 0000      	addb	rh0,#0x0
+    1130:	ce01           	ldb	rl6,#0x1
+    1132:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+    1138:	800c           	addb	rl4,rh0
+    113a:	6800 800c 97fe 	incb	0x97fe,#0x1
+    1140:	330e ffe8      	ldr	0x112c,r14
+    1144:	330f ffe6      	ldr	0x112e,r15
+    1148:	210e 000e      	ld	r14,#0xe
+    114c:	8d08           	clr	r0
+    114e:	8d04           	test	r0
+    1150:	ee6a           	jr	ne,0x1226
+    1152:	8d06           	tset	r0
+    1154:	e568           	jr	mi,0x1226
+    1156:	340f fff2      	ldar	rr15,0x114c
+    115a:	29ff           	inc	@rr15,#0x10
+    115c:	a9f1           	inc	r15,#0x2
+    115e:	29ff           	inc	@rr15,#0x10
+    1160:	a9f3           	inc	r15,#0x4
+    1162:	29ff           	inc	@rr15,#0x10
+    1164:	fe8d           	djnz	r14,0x114c
+    1166:	210e 000e      	ld	r14,#0xe
+    116a:	0b00 ffff      	cp	r0,#0xffff
+    116e:	ee5b           	jr	ne,0x1226
+    1170:	8d00           	com	r0
+    1172:	8d04           	test	r0
+    1174:	ee58           	jr	ne,0x1226
+    1176:	340f fff0      	ldar	rr15,0x116a
+    117a:	29f0           	inc	@rr15,#0x1
+    117c:	a9f5           	inc	r15,#0x6
+    117e:	29ff           	inc	@rr15,#0x10
+    1180:	a9f1           	inc	r15,#0x2
+    1182:	29ff           	inc	@rr15,#0x10
+    1184:	fe8e           	djnz	r14,0x116a
+    1186:	210e 000e      	ld	r14,#0xe
+    118a:	8d02           	neg	r0
+    118c:	e74c           	jr	c/ult,0x1226
+    118e:	ee4b           	jr	ne,0x1226
+    1190:	e54a           	jr	mi,0x1226
+    1192:	340f fff4      	ldar	rr15,0x118a
+    1196:	29ff           	inc	@rr15,#0x10
+    1198:	fe88           	djnz	r14,0x118a
+    119a:	8de8           	clr	r14
+    119c:	250e 0000      	set	r0,r14
+    11a0:	270e 0000      	bit	r0,r14
+    11a4:	e640           	jr	eq,0x1226
+    11a6:	340f fff2      	ldar	rr15,0x119c
+    11aa:	a9f1           	inc	r15,#0x2
+    11ac:	28f0           	incb	@rr15,#0x1
+    11ae:	a9f3           	inc	r15,#0x4
+    11b0:	28f0           	incb	@rr15,#0x1
+    11b2:	a9e0           	inc	r14,#0x1
+    11b4:	0b0e 000e      	cp	r14,#0xe
+    11b8:	eef1           	jr	ne,0x119c
+    11ba:	abe0           	dec	r14,#0x1
+    11bc:	8101           	add	r1,r0
+    11be:	340f fffa      	ldar	rr15,0x11bc
+    11c2:	29ff           	inc	@rr15,#0x10
+    11c4:	29f0           	inc	@rr15,#0x1
+    11c6:	fe86           	djnz	r14,0x11bc
+    11c8:	0b0d 3fff      	cp	r13,#0x3fff
+    11cc:	ee2c           	jr	ne,0x1226
+    11ce:	210e 0007      	ld	r14,#0x7
+    11d2:	ac80           	exb	rh0,rl0
+    11d4:	340f fffa      	ldar	rr15,0x11d2
+    11d8:	29ff           	inc	@rr15,#0x10
+    11da:	29f0           	inc	@rr15,#0x1
+    11dc:	fe86           	djnz	r14,0x11d2
+    11de:	b309 ffff      	sra	r0,#0x1
+    11e2:	b319 ffff      	sra	r1,#0x1
+    11e6:	b329 ffff      	sra	r2,#0x1
+    11ea:	b339 ffff      	sra	r3,#0x1
+    11ee:	b349 ffff      	sra	r4,#0x1
+    11f2:	b359 ffff      	sra	r5,#0x1
+    11f6:	b369 ffff      	sra	r6,#0x1
+    11fa:	210e 0007      	ld	r14,#0x7
+    11fe:	836d           	sub	r13,r6
+    1200:	340f fffa      	ldar	rr15,0x11fe
+    1204:	2bf0           	dec	@rr15,#0x1
+    1206:	2bff           	dec	@rr15,#0x10
+    1208:	fe86           	djnz	r14,0x11fe
+    120a:	210e 0006      	ld	r14,#0x6
+    120e:	8387           	sub	r7,r8
+    1210:	340f fffa      	ldar	rr15,0x120e
+    1214:	29ff           	inc	@rr15,#0x10
+    1216:	29f0           	inc	@rr15,#0x1
+    1218:	fe86           	djnz	r14,0x120e
+    121a:	8dc4           	test	r12
+    121c:	ee04           	jr	ne,0x1226
+    121e:	0b0d 007f      	cp	r13,#0x7f
+    1222:	ee01           	jr	ne,0x1226
+    1224:	e808           	jr	t,0x1236
+    1226:	310f ff04      	ldr	r15,0x112e
+    122a:	310e fefe      	ldr	r14,0x112c
+    122e:	93fe           	push	@rr15,r14
+    1230:	4c08 8012 9e08 	clrb	0x9e08
+    1236:	1400 02aa aaaa 	ldl	rr0,#0x2aaaaaa
+    123c:	2102 5555      	ld	r2,#0x5555
+    1240:	9b20           	div	rr0,r2
+    1242:	0b00 02aa      	cp	r0,#0x2aa
+    1246:	eeef           	jr	ne,0x1226
+    1248:	0b01 0800      	cp	r1,#0x800
+    124c:	eeec           	jr	ne,0x1226
+    124e:	a103           	ld	r3,r0
+    1250:	8d08           	clr	r0
+    1252:	9920           	mult	rr0,r2
+    1254:	8131           	add	r1,r3
+    1256:	1000 02aa aaaa 	cpl	rr0,#0x2aaaaaa
+    125c:	eee4           	jr	ne,0x1226
+    125e:	210e 000e      	ld	r14,#0xe
+    1262:	8900           	xor	r0,r0
+    1264:	eee0           	jr	ne,0x1226
+    1266:	340f fff8      	ldar	rr15,0x1262
+    126a:	29ff           	inc	@rr15,#0x10
+    126c:	29f0           	inc	@rr15,#0x1
+    126e:	fe87           	djnz	r14,0x1262
+    1270:	210e 0007      	ld	r14,#0x7
+    1274:	0500 5555      	or	r0,#0x5555
+    1278:	0501 aaaa      	or	r1,#0xaaaa
+    127c:	340f fff4      	ldar	rr15,0x1274
+    1280:	29f1           	inc	@rr15,#0x2
+    1282:	a9f3           	inc	r15,#0x4
+    1284:	29f1           	inc	@rr15,#0x2
+    1286:	fe8a           	djnz	r14,0x1274
+    1288:	210e 000d      	ld	r14,#0xd
+    128c:	8710           	and	r0,r1
+    128e:	eecb           	jr	ne,0x1226
+    1290:	a900           	inc	r0,#0x1
+    1292:	340f fff6      	ldar	rr15,0x128c
+    1296:	29ff           	inc	@rr15,#0x10
+    1298:	29f0           	inc	@rr15,#0x1
+    129a:	a9f3           	inc	r15,#0x4
+    129c:	29ff           	inc	@rr15,#0x10
+    129e:	fe8a           	djnz	r14,0x128c
+    12a0:	e801           	jr	t,0x12a4
+    12a2:	e8c1           	jr	t,0x1226
+    12a4:	210e 000d      	ld	r14,#0xd
+    12a8:	b301 0010      	sll	r0,#0x10
+    12ac:	af07           	tcc	c/ult,r0
+    12ae:	340f fff6      	ldar	rr15,0x12a8
+    12b2:	29ff           	inc	@rr15,#0x10
+    12b4:	a9f3           	inc	r15,#0x4
+    12b6:	29ff           	inc	@rr15,#0x10
+    12b8:	fe89           	djnz	r14,0x12a8
+    12ba:	b3d1 0010      	sll	r13,#0x10
+    12be:	afdf           	tcc	nc/uge,r13
+    12c0:	210e 000e      	ld	r14,#0xe
+    12c4:	b30c           	rrc	r0,#0x1
+    12c6:	efaf           	jr	nc/uge,0x1226
+    12c8:	b30c           	rrc	r0,#0x1
+    12ca:	e7ad           	jr	c/ult,0x1226
+    12cc:	340f fff4      	ldar	rr15,0x12c4
+    12d0:	29ff           	inc	@rr15,#0x10
+    12d2:	a9f3           	inc	r15,#0x4
+    12d4:	29ff           	inc	@rr15,#0x10
+    12d6:	fe8a           	djnz	r14,0x12c4
+    12d8:	210e 000e      	ld	r14,#0xe
+    12dc:	b301 fff8      	srl	r0,#0x8
+    12e0:	b309 fff8      	sra	r0,#0x8
+    12e4:	af07           	tcc	c/ult,r0
+    12e6:	0b00 0001      	cp	r0,#0x1
+    12ea:	ee9d           	jr	ne,0x1226
+    12ec:	340f ffec      	ldar	rr15,0x12dc
+    12f0:	29ff           	inc	@rr15,#0x10
+    12f2:	a9f3           	inc	r15,#0x4
+    12f4:	29ff           	inc	@rr15,#0x10
+    12f6:	a9f3           	inc	r15,#0x4
+    12f8:	29ff           	inc	@rr15,#0x10
+    12fa:	a9f1           	inc	r15,#0x2
+    12fc:	29f0           	inc	@rr15,#0x1
+    12fe:	fe92           	djnz	r14,0x12dc
+    1300:	9200           	subl	rr0,rr0
+    1302:	9222           	subl	rr2,rr2
+    1304:	9244           	subl	rr4,rr4
+    1306:	9266           	subl	rr6,rr6
+    1308:	2108 4000      	ld	r8,#0x4000
+    130c:	7d8a           	ldctl	fcw,r8
+    130e:	af0e           	tcc	ne,r0
+    1310:	af1f           	tcc	nc/uge,r1
+    1312:	af2c           	tcc	nov/po,r2
+    1314:	af3d           	tcc	pl,r3
+    1316:	8df5           	comflg	c,z,s,p
+    1318:	af46           	tcc	eq,r4
+    131a:	af57           	tcc	c/ult,r5
+    131c:	af64           	tcc	ov/pe,r6
+    131e:	af75           	tcc	mi,r7
+    1320:	9620           	addl	rr0,rr2
+    1322:	9640           	addl	rr0,rr4
+    1324:	9660           	addl	rr0,rr6
+    1326:	8110           	add	r0,r1
+    1328:	0b00 0008      	cp	r0,#0x8
+    132c:	eeba           	jr	ne,0x12a2
+    132e:	4c08 800c e8b7 	clrb	0xe8b7
+    1334:	ce01           	ldb	rl6,#0x1
+    1336:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+    133c:	800c           	addb	rl4,rh0
+    133e:	4c08 800d de7c 	clrb	0xde7c
+    1344:	cb01           	ldb	rl3,#0x1
+    1346:	df48           	calr	0x14b8
+    1348:	8cb4           	testb	rl3
+    134a:	e603           	jr	eq,0x1352
+    134c:	b2b9 0001      	slab	rl3,#0x1
+    1350:	e8fa           	jr	t,0x1346
+    1352:	cbfe           	ldb	rl3,#0xfe
+    1354:	df4f           	calr	0x14b8
+    1356:	0a0b ffff      	cpb	rl3,#0xff
+    135a:	e604           	jr	eq,0x1364
+    135c:	b2b9 0001      	slab	rl3,#0x1
+    1360:	a4b0           	setb	rl3,#0x0
+    1362:	e8f8           	jr	t,0x1354
+    1364:	8cb8           	clrb	rl3
+    1366:	df58           	calr	0x14b8
+    1368:	2103 1b1b      	ld	r3,#0x1b1b
+    136c:	460b 800c 6e0b 	andb	rl3,0x6e0b
+    1372:	800c           	addb	rl4,rh0
+    1374:	4603 800d 6e03 	andb	rh3,0x6e03
+    137a:	800d           	addb	rl5,rh0
+    137c:	2101 0030      	ld	r1,#0x30
+    1380:	3a96 a057      	outb	#0xa057,rl1
+    1384:	3a96 c057      	outb	#0xc057,rl1
+    1388:	3a16 c01d      	outb	#0xc01d,rh1
+    138c:	3a16 a01d      	outb	#0xa01d,rh1
+    1390:	c2c0           	ldb	rh2,#0xc0
+    1392:	8cb8           	clrb	rl3
+    1394:	dfa8           	calr	0x1446
+    1396:	df88           	calr	0x1488
+    1398:	0603 1919      	andb	rh3,#0x19
+    139c:	0a03 0101      	cpb	rh3,#0x1
+    13a0:	e602           	jr	eq,0x13a6
+    13a2:	6405 800c cbff 	setb	0xcbff,#0x5
+    13a8:	dfb2           	calr	0x1446
+    13aa:	df92           	calr	0x1488
+    13ac:	0603 1919      	andb	rh3,#0x19
+    13b0:	0a03 1919      	cpb	rh3,#0x19
+    13b4:	e602           	jr	eq,0x13ba
+    13b6:	6405 800c c2a0 	setb	0xc2a0,#0x5
+    13bc:	8cb8           	clrb	rl3
+    13be:	dfbd           	calr	0x1446
+    13c0:	df9d           	calr	0x1488
+    13c2:	0603 1919      	andb	rh3,#0x19
+    13c6:	0a03 0101      	cpb	rh3,#0x1
+    13ca:	e602           	jr	eq,0x13d0
+    13cc:	6405 800d cbff 	setb	0xcbff,#0x5
+    13d2:	dfc7           	calr	0x1446
+    13d4:	dfa7           	calr	0x1488
+    13d6:	0603 1919      	andb	rh3,#0x19
+    13da:	0a03 1919      	cpb	rh3,#0x19
+    13de:	e602           	jr	eq,0x13e4
+    13e0:	6405 800d c2c0 	setb	0xc2c0,#0x5
+    13e6:	df6b           	calr	0x1512
+    13e8:	6e08 800e c2a0 	ldb	0xc2a0,rl0
+    13ee:	df6f           	calr	0x1512
+    13f0:	b289 0004      	slab	rl0,#0x4
+    13f4:	4408 800e 6e08 	orb	rl0,0x6e08
+    13fa:	800e           	addb	rl6,rh0
+    13fc:	4c08 8012 9e08 	clrb	0x9e08
+    1402:	0000 320b      	addb	rh0,#0xb
+    1406:	fffa           	djnz	r15,0x1314
+    1408:	ca1d           	ldb	rl2,#0x1d
+    140a:	a0b3           	ldb	rh3,rl3
+    140c:	b231 ffff      	srlb	rh3,#0x1
+    1410:	0403 fcfc      	orb	rh3,#0xfc
+    1414:	0603 b7b7      	andb	rh3,#0xb7
+    1418:	3e23           	outb	@r2,rh3
+    141a:	2104 602b      	ld	r4,#0x602b
+    141e:	0a02 c0c0      	cpb	rh2,#0xc0
+    1422:	e602           	jr	eq,0x1428
+    1424:	2104 600b      	ld	r4,#0x600b
+    1428:	c308           	ldb	rh3,#0x8
+    142a:	a6b3           	bitb	rl3,#0x3
+    142c:	e601           	jr	eq,0x1430
+    142e:	a431           	setb	rh3,#0x1
+    1430:	a6b4           	bitb	rl3,#0x4
+    1432:	e601           	jr	eq,0x1436
+    1434:	a437           	setb	rh3,#0x7
+    1436:	a6b0           	bitb	rl3,#0x0
+    1438:	ee01           	jr	ne,0x143c
+    143a:	a434           	setb	rh3,#0x4
+    143c:	3e43           	outb	@r4,rh3
+    143e:	2104 2800      	ld	r4,#0x2800
+    1442:	f481           	djnz	r4,0x1442
+    1444:	9e08           	ret	t
+    1446:	320b ffb8      	ldrb	0x1402,rl3
+    144a:	ca1d           	ldb	rl2,#0x1d
+    144c:	a0b3           	ldb	rh3,rl3
+    144e:	b231 ffff      	srlb	rh3,#0x1
+    1452:	0403 fcfc      	orb	rh3,#0xfc
+    1456:	0603 b3b3      	andb	rh3,#0xb3
+    145a:	3e23           	outb	@r2,rh3
+    145c:	2104 602b      	ld	r4,#0x602b
+    1460:	0a02 c0c0      	cpb	rh2,#0xc0
+    1464:	e602           	jr	eq,0x146a
+    1466:	2104 600b      	ld	r4,#0x600b
+    146a:	c308           	ldb	rh3,#0x8
+    146c:	a6b3           	bitb	rl3,#0x3
+    146e:	e601           	jr	eq,0x1472
+    1470:	a431           	setb	rh3,#0x1
+    1472:	a6b4           	bitb	rl3,#0x4
+    1474:	e601           	jr	eq,0x1478
+    1476:	a437           	setb	rh3,#0x7
+    1478:	a6b0           	bitb	rl3,#0x0
+    147a:	ee01           	jr	ne,0x147e
+    147c:	a434           	setb	rh3,#0x4
+    147e:	3e43           	outb	@r4,rh3
+    1480:	2104 1d00      	ld	r4,#0x1d00
+    1484:	f481           	djnz	r4,0x1484
+    1486:	9e08           	ret	t
+    1488:	3003 ff76      	ldrb	rh3,0x1402
+    148c:	0603 e0e0      	andb	rh3,#0xe0
+    1490:	ca1b           	ldb	rl2,#0x1b
+    1492:	3c2d           	inb	rl5,@r2
+    1494:	060d 0707      	andb	rl5,#0x7
+    1498:	84d3           	orb	rh3,rl5
+    149a:	2104 6021      	ld	r4,#0x6021
+    149e:	0a02 c0c0      	cpb	rh2,#0xc0
+    14a2:	e602           	jr	eq,0x14a8
+    14a4:	2104 6001      	ld	r4,#0x6001
+    14a8:	3c4d           	inb	rl5,@r4
+    14aa:	a6d5           	bitb	rl5,#0x5
+    14ac:	e601           	jr	eq,0x14b0
+    14ae:	a433           	setb	rh3,#0x3
+    14b0:	a6d3           	bitb	rl5,#0x3
+    14b2:	9e06           	ret	eq
+    14b4:	a434           	setb	rh3,#0x4
+    14b6:	9e08           	ret	t
+    14b8:	c2c0           	ldb	rh2,#0xc0
+    14ba:	d05c           	calr	0x1404
+    14bc:	d01b           	calr	0x1488
+    14be:	88b3           	xorb	rh3,rl3
+    14c0:	4403 800c 6e03 	orb	rh3,0x6e03
+    14c6:	800c           	addb	rl4,rh0
+    14c8:	c2a0           	ldb	rh2,#0xa0
+    14ca:	d064           	calr	0x1404
+    14cc:	d023           	calr	0x1488
+    14ce:	88b3           	xorb	rh3,rl3
+    14d0:	4403 800d 6e03 	orb	rh3,0x6e03
+    14d6:	800d           	addb	rl5,rh0
+    14d8:	9e08           	ret	t
+    14da:	603d 6039      	ldb	rl5,0x60000039(r3)
+    14de:	603b 6037      	ldb	rl3,0x60000037(r3)
+    14e2:	603d 603f      	ldb	rl5,0x6000003f(r3)
+    14e6:	6023 c01d c01d 	ldb	rh3,0x4000c01d(r2)
+    14ec:	c01d           	ldb	rh0,#0x1d
+    14ee:	6037 601d      	ldb	rh7,0x6000001d(r3)
+    14f2:	6019 601b      	ldb	rl1,0x6000001b(r1)
+    14f6:	6017 601d      	ldb	rh7,0x6000001d(r1)
+    14fa:	601f 6003      	ldb	rl7,0x60000003(r1)
+    14fe:	a01d           	ldb	rl5,rh1
+    1500:	a01d           	ldb	rl5,rh1
+    1502:	a01d           	ldb	rl5,rh1
+    1504:	6017 00f8      	ldb	rh7,0xf8(r1)
+    1508:	0056           	addb	rh6,@rr5
+    150a:	0302 017c      	sub	r2,#0x17c
+    150e:	7476           	.word 7476
+    1510:	1600 2100 c000 	addl	rr0,#0x2100c000
+    1516:	3a06 6013      	outb	#0x6013,rh0
+    151a:	3a86 6037      	outb	#0x6037,rl0
+    151e:	3a86 6017      	outb	#0x6017,rl0
+    1522:	3409 ffe0      	ldar	rr9,0x1506
+    1526:	3408 ffb0      	ldar	rr8,0x14da
+    152a:	2103 c01b      	ld	r3,#0xc01b
+    152e:	0a02 c0c0      	cpb	rh2,#0xc0
+    1532:	e604           	jr	eq,0x153c
+    1534:	3408 ffb8      	ldar	rr8,0x14f0
+    1538:	2103 a01b      	ld	r3,#0xa01b
+    153c:	bda7           	ldk	r10,#0x7
+    153e:	dfc6           	calr	0x15b4
+    1540:	2105 0014      	ld	r5,#0x14
+    1544:	dfbd           	calr	0x15cc
+    1546:	3a24 6027      	inb	rh2,#0x6027
+    154a:	0602 0909      	andb	rh2,#0x9
+    154e:	ee01           	jr	ne,0x1552
+    1550:	a483           	setb	rl0,#0x3
+    1552:	000c 1c1c      	addb	rl4,#0x1c
+    1556:	8ca8           	clrb	rl2
+    1558:	3e1a           	outb	@r1,rl2
+    155a:	0209 1e1e      	subb	rl1,#0x1e
+    155e:	ca10           	ldb	rl2,#0x10
+    1560:	3e1a           	outb	@r1,rl2
+    1562:	bda1           	ldk	r10,#0x1
+    1564:	dfd2           	calr	0x15c2
+    1566:	2105 0400      	ld	r5,#0x400
+    156a:	3c34           	inb	rh4,@r3
+    156c:	0604 0404      	andb	rh4,#0x4
+    1570:	8a42           	cpb	rh2,rh4
+    1572:	ee02           	jr	ne,0x1578
+    1574:	f586           	djnz	r5,0x156a
+    1576:	a482           	setb	rl0,#0x2
+    1578:	bda1           	ldk	r10,#0x1
+    157a:	dfdd           	calr	0x15c2
+    157c:	e601           	jr	eq,0x1580
+    157e:	8d07           	nop	
+    1580:	bda1           	ldk	r10,#0x1
+    1582:	dfe1           	calr	0x15c2
+    1584:	ee01           	jr	ne,0x1588
+    1586:	8d07           	nop	
+    1588:	bda1           	ldk	r10,#0x1
+    158a:	dfe5           	calr	0x15c2
+    158c:	2105 0400      	ld	r5,#0x400
+    1590:	a931           	inc	r3,#0x2
+    1592:	2104 3e3c      	ld	r4,#0x3e3c
+    1596:	2107 0505      	ld	r7,#0x505
+    159a:	3e3c           	outb	@r3,rl4
+    159c:	ff01           	dbjnz	rl7,0x159c
+    159e:	3e34           	outb	@r3,rh4
+    15a0:	f703           	dbjnz	rh7,0x159c
+    15a2:	ab31           	dec	r3,#0x2
+    15a4:	3c34           	inb	rh4,@r3
+    15a6:	0604 0404      	andb	rh4,#0x4
+    15aa:	8a42           	cpb	rh2,rh4
+    15ac:	9e0e           	ret	ne
+    15ae:	f590           	djnz	r5,0x1590
+    15b0:	a480           	setb	rl0,#0x0
+    15b2:	9e08           	ret	t
+    15b4:	2181           	ld	r1,@rr8
+    15b6:	209a           	ldb	rl2,@rr9
+    15b8:	a981           	inc	r8,#0x2
+    15ba:	a990           	inc	r9,#0x1
+    15bc:	3e1a           	outb	@r1,rl2
+    15be:	fa86           	djnz	r10,0x15b4
+    15c0:	9e08           	ret	t
+    15c2:	d008           	calr	0x15b4
+    15c4:	3c32           	inb	rh2,@r3
+    15c6:	0602 0404      	andb	rh2,#0x4
+    15ca:	9e08           	ret	t
+    15cc:	0305 0001      	sub	r5,#0x1
+    15d0:	8d54           	test	r5
+    15d2:	9e06           	ret	eq
+    15d4:	e8fb           	jr	t,0x15cc
+    15d6:	c001           	ldb	rh0,#0x1
+    15d8:	a001           	ldb	rh1,rh0
+    15da:	6019 601b      	ldb	rl1,0x6000001b(r1)
+    15de:	6039 603b      	ldb	rl1,0x6000003b(r3)
+    15e2:	c001           	ldb	rh0,#0x1
+    15e4:	a001           	ldb	rh1,rh0
+    15e6:	6013 c047 c057 	ldb	rh3,0x4000c057(r1)
+    15ec:	c00d           	ldb	rh0,#0xd
+    15ee:	c045           	ldb	rh0,#0x45
+    15f0:	c055           	ldb	rh0,#0x55
+    15f2:	c00b           	ldb	rh0,#0xb
+    15f4:	a047           	ldb	rh7,rh4
+    15f6:	a057           	ldb	rh7,rh5
+    15f8:	c00d           	ldb	rh0,#0xd
+    15fa:	c045           	ldb	rh0,#0x45
+    15fc:	a055           	ldb	rh5,rh5
+    15fe:	c00b           	ldb	rh0,#0xb
+    1600:	c003           	ldb	rh0,#0x3
+    1602:	a003           	ldb	rh3,rh0
+    1604:	6029 6037      	ldb	rl1,0x60000037(r2)
+    1608:	603d 6039      	ldb	rl5,0x60000039(r3)
+    160c:	603b 603f      	ldb	rl3,0x6000003f(r3)
+    1610:	603d 6027      	ldb	rl5,0x60000027(r3)
+    1614:	6009 6017      	ldb	rl1,0x60000017
+    1618:	601d 6019      	ldb	rl5,0x60000019(r1)
+    161c:	601b 601f      	ldb	rl3,0x6000001f(r1)
+    1620:	601d 6007      	ldb	rl5,0x60000007(r1)
+    1624:	0101 0200      	add	r1,#0x200
+    1628:	0200 0000      	subb	rh0,#0x0
+    162c:	c0ff           	ldb	rh0,#0xff
+    162e:	340f 0000      	ldar	rr15,0x1632
+    1632:	00ff           	addb	rl7,@rr15
+    1634:	340f 0000      	ldar	rr15,0x1638
+    1638:	0084           	addb	rh4,@rr8
+    163a:	844f           	orb	rl7,rh4
+    163c:	5000 000b      	cpl	rr0,0xb
+    1640:	0003 c14f      	addb	rh3,#0x4f
+    1644:	5000 000b      	cpl	rr0,0xb
+    1648:	0003 c100      	addb	rh3,#0x0
+    164c:	c927           	ldb	rl1,#0x27
+    164e:	3402 ff84      	ldar	rr2,0x15d6
+    1652:	3403 ffce      	ldar	rr3,0x1624
+    1656:	2124           	ld	r4,@rr2
+    1658:	203d           	ldb	rl5,@rr3
+    165a:	3e4d           	outb	@r4,rl5
+    165c:	a921           	inc	r2,#0x2
+    165e:	a930           	inc	r3,#0x1
+    1660:	f906           	dbjnz	rl1,0x1656
+    1662:	9e08           	ret	t
+    1664:	ce01           	ldb	rl6,#0x1
+    1666:	6e0e 8012 4c08 	ldb	0x4c08,rl6
+    166c:	800c           	addb	rl4,rh0
+    166e:	df93           	calr	0x174a
+    1670:	6106 8012 0b06 	ld	r6,0xb06
+    1676:	ffff           	djnz	r15,0x157a
+    1678:	e608           	jr	eq,0x168a
+    167a:	8d64           	test	r6
+    167c:	e9f9           	jr	ge,0x1670
+    167e:	a062           	ldb	rh2,rh6
+    1680:	a0eb           	ldb	rl3,rl6
+    1682:	4d08 8012 dffc 	clr	0xdffc
+    1688:	e8f3           	jr	t,0x1670
+    168a:	4c08 8012 9e08 	clrb	0x9e08
+    1690:	ca1d           	ldb	rl2,#0x1d
+    1692:	c3b4           	ldb	rh3,#0xb4
+    1694:	a6b1           	bitb	rl3,#0x1
+    1696:	ee01           	jr	ne,0x169a
+    1698:	a234           	resb	rh3,#0x4
+    169a:	a6b2           	bitb	rl3,#0x2
+    169c:	ee01           	jr	ne,0x16a0
+    169e:	a235           	resb	rh3,#0x5
+    16a0:	a6b5           	bitb	rl3,#0x5
+    16a2:	ee01           	jr	ne,0x16a6
+    16a4:	a232           	resb	rh3,#0x2
+    16a6:	3e23           	outb	@r2,rh3
+    16a8:	2104 602b      	ld	r4,#0x602b
+    16ac:	0a02 c0c0      	cpb	rh2,#0xc0
+    16b0:	e602           	jr	eq,0x16b6
+    16b2:	2104 600b      	ld	r4,#0x600b
+    16b6:	c308           	ldb	rh3,#0x8
+    16b8:	a6b3           	bitb	rl3,#0x3
+    16ba:	e601           	jr	eq,0x16be
+    16bc:	a431           	setb	rh3,#0x1
+    16be:	a6b4           	bitb	rl3,#0x4
+    16c0:	e601           	jr	eq,0x16c4
+    16c2:	a437           	setb	rh3,#0x7
+    16c4:	a6b0           	bitb	rl3,#0x0
+    16c6:	ee01           	jr	ne,0x16ca
+    16c8:	a434           	setb	rh3,#0x4
+    16ca:	3e43           	outb	@r4,rh3
+    16cc:	2104 2800      	ld	r4,#0x2800
+    16d0:	f481           	djnz	r4,0x16d0
+    16d2:	9e08           	ret	t
+    16d4:	c001           	ldb	rh0,#0x1
+    16d6:	a001           	ldb	rh1,rh0
+    16d8:	6019 601b      	ldb	rl1,0x6000001b(r1)
+    16dc:	6039 603b      	ldb	rl1,0x6000003b(r3)
+    16e0:	c001           	ldb	rh0,#0x1
+    16e2:	a001           	ldb	rh1,rh0
+    16e4:	6013 c047 c057 	ldb	rh3,0x4000c057(r1)
+    16ea:	c00d           	ldb	rh0,#0xd
+    16ec:	c045           	ldb	rh0,#0x45
+    16ee:	c055           	ldb	rh0,#0x55
+    16f0:	c00b           	ldb	rh0,#0xb
+    16f2:	a047           	ldb	rh7,rh4
+    16f4:	a057           	ldb	rh7,rh5
+    16f6:	c00d           	ldb	rh0,#0xd
+    16f8:	c045           	ldb	rh0,#0x45
+    16fa:	a055           	ldb	rh5,rh5
+    16fc:	c00b           	ldb	rh0,#0xb
+    16fe:	c003           	ldb	rh0,#0x3
+    1700:	a003           	ldb	rh3,rh0
+    1702:	6029 6037      	ldb	rl1,0x60000037(r2)
+    1706:	603d 6039      	ldb	rl5,0x60000039(r3)
+    170a:	603b 603f      	ldb	rl3,0x6000003f(r3)
+    170e:	603d 6027      	ldb	rl5,0x60000027(r3)
+    1712:	6009 6017      	ldb	rl1,0x60000017
+    1716:	601d 6019      	ldb	rl5,0x60000019(r1)
+    171a:	601b 601f      	ldb	rl3,0x6000001f(r1)
+    171e:	601d 6007      	ldb	rl5,0x60000007(r1)
+    1722:	0101 0200      	add	r1,#0x200
+    1726:	0200 0000      	subb	rh0,#0x0
+    172a:	c0ff           	ldb	rh0,#0xff
+    172c:	340f 0000      	ldar	rr15,0x1730
+    1730:	00ff           	addb	rl7,@rr15
+    1732:	340f 0000      	ldar	rr15,0x1736
+    1736:	0094           	addb	rh4,@rr9
+    1738:	944f           	ldl	rr15,rr4
+    173a:	5000 000b      	cpl	rr0,0xb
+    173e:	0003 c14f      	addb	rh3,#0x4f
+    1742:	5000 000b      	cpl	rr0,0xb
+    1746:	0003 c100      	addb	rh3,#0x0
+    174a:	c927           	ldb	rl1,#0x27
+    174c:	3402 ff84      	ldar	rr2,0x16d4
+    1750:	3403 ffce      	ldar	rr3,0x1722
+    1754:	2124           	ld	r4,@rr2
+    1756:	203d           	ldb	rl5,@rr3
+    1758:	3e4d           	outb	@r4,rl5
+    175a:	a921           	inc	r2,#0x2
+    175c:	a930           	inc	r3,#0x1
+    175e:	f906           	dbjnz	rl1,0x1754
+    1760:	9e08           	ret	t
+	...
+    1806:	0000 2020      	addb	rh0,#0x20
+    180a:	2020           	ldb	rh0,@rr2
+    180c:	2020           	ldb	rh0,@rr2
+    180e:	2020           	ldb	rh0,@rr2
+    1810:	2020           	ldb	rh0,@rr2
+	...
+    1852:	0000 aaa1      	addb	rh0,#0xa1
+	...
+    1866:	0001 0000      	addb	rh1,#0x0
+	...

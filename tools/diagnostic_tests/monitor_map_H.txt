@@ -1,0 +1,21 @@
+disk: H
+source: generated from DML catalog records
+note: runtime MAP uses TR/ST and its own LENGHT unit; this file uses DML LOC and sector/byte length
+
+DCOS *L1* LIBRARY
+CODE  FILENAME  REL  LOC     LEN(SECT)  BYTES  DATE    NOTES
+001   UTILY8   84   -               -      -  871127  special/catalog loader
+002   HDFDU7   84   0x106c          1    256  870331
+003   ESDIF3   84   0x122c          5   1280  871127  ESDI hard-disk diagnostic family.
+004   ESDIE1   83   0x12c4         49  12544  861117  ESDI hard-disk diagnostic family.
+005   ESDIV2   84   0x1be2         33   8448  871127  ESDI hard-disk diagnostic family.
+006   EIM3S0   84   0x2486         47  12032  871127
+007   ESDIT1   83   0x2c78         21   5376  861117  ESDI hard-disk diagnostic family.
+008   EIW3S3   83   0x3300         33   8448  861117
+009   EIM5S3   83   0x3878         29   7424  861117
+
+Monitor workflow from the collaudi manual and live menu:
+  1 + ENTER: LOAD, then type the MAP code as three digits and ENTER.
+  2 + ENTER: MAP, displays the monitor's runtime catalogue screen.
+  4 + ENTER: GO, runs the loaded program.
+  SKIP: documented back-page/back-to-menu key; the MAME key binding still needs confirmation.

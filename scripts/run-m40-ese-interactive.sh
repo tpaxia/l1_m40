@@ -1,9 +1,10 @@
 #!/bin/sh
 # Visible ESE session using a disposable writable copy of the original disk.
 set -eu
-cd /Users/paxia/Projects/L1_M30_M40
-run_dir=$(mktemp -d "$PWD/re/runs/ese-interactive.XXXXXX")
-cp 'docs/Disk Images (Stefano Marinelli + others)/Ese L1/ESE.IMD' "$run_dir/boot.imd"
+cd "$(dirname "$0")/.."
+mkdir -p runs
+run_dir=$(mktemp -d "$PWD/runs/ese-interactive.XXXXXX")
+cp 'reference/Disk Images (Stefano Marinelli + others)/Ese L1/ESE.IMD' "$run_dir/boot.imd"
 unset SDL_MAC_BACKGROUND_APP SDL_VIDEODRIVER
 printf '%s\n' "$run_dir"
 exec /Users/paxia/Projects/mame_latest/mame/m40 m40 \

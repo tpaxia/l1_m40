@@ -1,5 +1,9 @@
 # Olivetti M30 / M40 (L1) — ROM Reverse-Engineering & MAME Bring-Up
 
+**BCOS command line verified:** [BCOS_BOOT.md](re/os/bcos/BCOS_BOOT.md) records the tested
+date → SYS prompt → SYS generator → Exit back to SYS sequence, including
+headless launch commands and date-error recovery.
+
 ## 1. Project goal
 
 Reverse-engineer the Olivetti **M40** boot ROM (a **Zilog Z8001** program) to
@@ -35,24 +39,27 @@ device handlers, including the direct hard-disk governo.
 
 ### Documents
 
-- **[HARDWARE.md](HARDWARE.md)** — the hardware reference / **MAME build spec**:
+- **[HARDWARE.md](doc/HARDWARE.md)** — the hardware reference / **MAME build spec**:
   confirmed chipset (from board photos), the three address spaces, MMU segment and
   physical memory maps, per-board register maps, the interrupt/boot model, an
   identified-board inventory, and a MAME device checklist.
-- **[MAME_DRIVER.md](MAME_DRIVER.md)** — the implementation and reverse-engineering
+- **[MAME_DRIVER.md](doc/MAME_DRIVER.md)** — the implementation and reverse-engineering
   companion to `m40.cpp`: MMU suppression, READY/NMI behavior, UC/KDC multiplexing,
   shared interrupt priority, GO280 DMA/latches, video rendering, arbiter behavior,
   trace anchors, and known approximations.
-- **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
+- **[DIAGNOSTICS.md](doc/DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
   contents, the two-stage boot flow, and the ROM→bootloader config-table handoff.
-- **[KDC.md](KDC.md)** — the **GO252 video/keyboard governo** behavioral model: the
+- **[KDC.md](doc/KDC.md)** — the **GO252 video/keyboard governo** behavioral model: the
   keyboard VI interrupt path, the keyboard serial protocol and positional scancode
   tables, the ANK 1426 / 1427 keyboards, and the character-cell attribute encoding
   (reverse / high light / blink / line attributes).
-- **[KEYMAP.md](KEYMAP.md)** — the official **L1 MOS ↔ PC keyboard mapping**
+- **[keyboard/M40_8049_KEYBOARD.md](keyboard/M40_8049_KEYBOARD.md)** — correlation of the recovered,
+  byte-exact 8049 firmware with KEYTE1 and an audit of the current MAME HLE: matrix,
+  auxiliary edges, startup/self-test, all commands, repeat, LEDs, and beeper.
+- **[keyboard/KEYMAP.md](keyboard/KEYMAP.md)** — the official **L1 MOS ↔ PC keyboard mapping**
   (MOS Programmer Guide §7, Tab. 7-3, used by L1WSE) and its realization in the
   MAME driver.
-- **[L1WSE.md](L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
+- **[L1WSE.md](re/os/l1wse/L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
   "L1 Work-Station Emulator" (see §6).
 
 ## 2. Approach — the ROM defines the minimum to reach IPL
@@ -122,7 +129,7 @@ Ordered roughly by the sequence in which the ROM exercises them.
   attribute). Implemented in MAME: the CRTC text display, the **character-cell
   attributes** (reverse / high light / blink / high-low-left-right line), the L1 house
   font, and the **keyboard** (VI interrupt, serial protocol, ANK positional scancodes
-  mapped to a PS/2 keyboard). Full behavioural model in **[KDC.md](KDC.md)**.
+  mapped to a PS/2 keyboard). Full behavioural model in **[KDC.md](doc/KDC.md)**.
 
 ### 3.6 FDU — floppy governo (IPL source) — *modeled, boots*
 - The IPL device search (`0x065c`) is traced: order set by the **ISL switch**
@@ -143,7 +150,7 @@ Ordered roughly by the sequence in which the ROM exercises them.
   word-addressed DMA counter, and an exploratory CHD read path are also present.
   HDC505 tests 1–4 now pass, including uPD7261 programming, the private six-byte FIFO loopback, and the local 8253 timer/interrupt path. Test 4 established that the timer starts when its count is loaded, before the later private diagnostic command, and that `ff02` enables VI while `0002` selects polling. The same test proved that its delay/watchdog interrupt comes from the separate UC 8253. Remaining work includes local SRAM, refinement of the timer clock/divider, and
   DMA interfaces, write/verify operations, and a bootable CHD.  Detailed
-  evidence is in `re/GO363_HDC5_diagnostics.md`.
+  evidence is in `re/hardware/go363/GO363_HDC5_diagnostics.md`.
 
 ### 3.8 Interconnect — backplane slot scan & device-select model
 - Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
@@ -182,7 +189,7 @@ HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
 
 ## 6. Related work
 
-**L1WSE — Olivetti M24 "L1 Work-Station Emulator"** (see **[L1WSE.md](L1WSE.md)**). A separate
+**L1WSE — Olivetti M24 "L1 Work-Station Emulator"** (see **[L1WSE.md](re/os/l1wse/L1WSE.md)**). A separate
 reverse-engineering effort on the DOS-side software that turns an Olivetti M24
 PC into an L1 graphics workstation / terminal. Different CPU (8086, real mode) and
 a different artifact, but the same L1 ecosystem — useful for the host-link
@@ -193,6 +200,9 @@ expects.
 
 **The MAME driver boots the DCOS 8.4 field-diagnostic disk to its interactive
 monitor and runs standalone diagnostics** (M1–M3 done; M4 in progress).
+It also boots the recovered Gardini NLS3000 utility disk to its interactive menu;
+that disk independently exercises the keyboard's polled `01 -> FA`, `02 -> FB F1`
+handshake before identifying the KUSA02.1 layout.
 
 Modeled and working: the Z8001 reset path + PSA, Z8010 MMU test + map, ROM checksum,
 8253 timer, RAM sizing, the backplane slot scan / config-table build, the UC bus
@@ -200,14 +210,14 @@ arbiter, and the **GO280 floppy governo** (µPD765 + AM9517 word-addressed DMA +
 + RD1NT latch) — the machine IPLs from floppy and reaches the diagnostic monitor
 (LOAD / MAP / HELP / GO). The **GO252 KDC** is modeled too: MC6845 text video with
 character attributes (reverse / high light / blink / lines), the L1 font, and the
-keyboard (VI, serial protocol, ANK scancodes → PS/2). It runs the on-disk diagnostics
+keyboard (VI, byte-level serial HLE, ANK scancodes → PS/2). It runs the on-disk diagnostics
 **KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
 
 The **complete ANK 1426 keyboard** is modeled from KEYTE1's own expected-scancode
 grids: every key of the alpha block, function row, keypad and editing block is wired
 to a real PC key, with SHIFT/CONTROL make+break, and mapped per the official L1 MOS
 PC-keyboard table so a PC keyboard drives the M40 the way L1WSE drives it from an
-M24. See **[KEYMAP.md](KEYMAP.md)** and **[KDC.md](KDC.md)** §4–5.
+M24. See **[keyboard/KEYMAP.md](keyboard/KEYMAP.md)** and **[KDC.md](doc/KDC.md)** §4–5.
 
 **The factory diagnostic suite passes on every M40-applicable test.**
 - **UC3003** (UC central-unit test): zero errors — TRAP (all Z8010 MMU violation
@@ -239,4 +249,4 @@ the cell's last one (MC6845 R9), leaving box bottoms a pixel short of their corn
 Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
 wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type
 register and the character-attribute bit map; and obtain the real `GI 9428DS`
-char-gen glyphs. Details in **[HARDWARE.md](HARDWARE.md)** and **[KDC.md](KDC.md)**.
+char-gen glyphs. Details in **[HARDWARE.md](doc/HARDWARE.md)** and **[KDC.md](doc/KDC.md)**.

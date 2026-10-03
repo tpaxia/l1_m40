@@ -1,0 +1,9 @@
+disk: G
+run: runs-archive/20260716-164525-enter-menu-G
+
+DIAGNOSTIC MONITOR  8.4 870331  K.03970
+ 1  LOAD (PGM CODE)
+ 2  MAP  (PGMS)
+ 3  HELP (MONITOR)
+ 4  GO
+  HIT  1..4 + "ENTER":
