@@ -14,14 +14,14 @@ floppy and from the hard disk, and MOS from the hard disk.
 | Software | Result | Where it is recorded |
 |---|---|---|
 | ROM REL 6.0 self-test and IPL | Passes; IPLs from floppy, and from the hard disk with the patched hd65 ROM | [doc/HARDWARE.md](doc/HARDWARE.md) §10; `scripts/test-m40-ram-config.sh` runs the ROM memory test for every RAM size |
-| DCOS 8.4 field diagnostics | UC3003 and MEM813 with zero errors; UCV305 except an M44-only sub-test; RAMVID `ERR 00000`; 6030T6 FDU tests 1, 2, 3, 5; 4305T6 tests 1–10, 12–13; KEYTE1 runs, scancodes verified; CRTAN5 runs, its video-type check still fails. On the GO363: HDC5F5 formats the disk, S24W25 writes and reads back Standard 24, HDC505 fails test 2 (below) | Results table in [doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md); GO363 in [doc/GO363_DCOS_RECOVERY.md](doc/GO363_DCOS_RECOVERY.md) and the step table of [OSLEM_STATUS.md](re/os/oslem/OSLEM_STATUS.md) |
+| DCOS 8.4 field diagnostics | UC3003 and MEM813 with zero errors; UCV305 except an M44-only sub-test; RAMVID `ERR 00000`; 6030T6 FDU tests 1, 2, 3, 5; 4305T6 tests 1–10, 12–13; KEYTE1 runs, scancodes verified; CRTAN5 runs, its video-type check still fails. On the GO363: HDC5F5 formats the disk, S24W25 writes and reads back Standard 24, HDC505 passes tests 1–3 (test 4, below) | Results table in [doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md); GO363 in [doc/GO363_DCOS_RECOVERY.md](doc/GO363_DCOS_RECOVERY.md) and the step table of [OSLEM_STATUS.md](re/os/oslem/OSLEM_STATUS.md) |
 | ESE 3.1, MDOS 3.0, MDOS 3.1 utilities | Boot to `READY` | [re/os/OS_boot_media_survey.md](re/os/OS_boot_media_survey.md) |
 | BCOS II 3.3 from floppy | All-resident system to its mono-user banner; the K02733 configurator to the SYS generator; the generated LOAD/RUN pair to the password prompt | [OS_boot_media_survey.md](re/os/OS_boot_media_survey.md), [re/os/bcos/BCOS_BOOT.md](re/os/bcos/BCOS_BOOT.md); the full generation walk-through is [BCOS_GENERATION.md](https://github.com/tpaxia/mame_disks/blob/main/m40/BCOS_GENERATION.md) in `mame_disks` |
 | BCOS II 3.3 on the hard disk | Installed with the Olivetti restore procedure (JX24, MX24, TOC£, DKC£ under OSLEM 7+, which needed two debugger patches); boots to `/SYS` | [re/os/oslem/OSLEM_STATUS.md](re/os/oslem/OSLEM_STATUS.md); checked by `scripts/test-m40-hd.sh` |
 | MOS 5.2.15 on the hard disk | Installed from the ST506 starter and the seven DPC_ALLES floppies; login, root menu, MCL, shutdown | [screenshots/](screenshots/) (install and login); login checked by `scripts/test-m40-hd.sh`; [mame_disks MOS section](https://github.com/tpaxia/mame_disks/blob/main/m40/README.md#mos) |
 | Gardini NLS3000 utilities | Boots to its utility menu; its keyboard handshake matches the 8049 firmware | [GO252_BIT4_ABLATION.md](re/hardware/go252/GO252_BIT4_ABLATION.md) (boot regression), [keyboard/M40_8049_KEYBOARD.md](keyboard/M40_8049_KEYBOARD.md) (handshake), `scripts/test-m40-kdc-bit4.sh gardini` |
 
-Not working yet: the GO363 board test HDC505 fails test 2 on the current build (a regression since 20 September; see [doc/MAME_DRIVER.md](doc/MAME_DRIVER.md) §9); MDOSC 2.0, 3.1 and 3.2 load but stop with `ERROR 172/173`;
+Not working yet: the GO363 board test HDC505 stops at test 4 step 3, because the board timer runs too fast (its clock divider is unknown; [doc/MAME_DRIVER.md](doc/MAME_DRIVER.md) §9); MDOSC 2.0, 3.1 and 3.2 load but stop with `ERROR 172/173`;
 BCOS II 5.0 boots only partway; OSLEM 7+ needs two debugger patches to
 accept its own boot floppy (root cause open).
 
@@ -124,7 +124,7 @@ MAME are in [AGENTS.md](AGENTS.md).
 
 ## Open work
 
-- The HDC505 test 2 regression, the MDOSC `ERROR 172/173` stops, BCOS II
+- The GO363 timer clock (HDC505 test 4), the MDOSC `ERROR 172/173` stops, BCOS II
   5.0, and the root cause behind the OSLEM 7+ patches.
 - Decompiling MOS ([strategy](re/os/mos/MOS_DECOMPILATION_STRATEGY.md)).
 - Submitting the driver and the Z8000 fixes to mainline MAME.

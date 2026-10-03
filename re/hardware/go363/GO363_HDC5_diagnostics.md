@@ -1003,8 +1003,9 @@ initial CHS-to-CHD read/DMA path.  In particular:
   `ff02`-controlled timer interrupt latch are modelled; the exact oscillator
   divider remains provisional;
 - HDC505 tests 1–4 pass; test 5 is the next implementation/debugging boundary.
-- **3 October 2026:** on the current build HDC505 fails test 2 (`UNSE0`, `SKEN0`,
-  `UPR00` stuck at 1 after the run command); see `doc/MAME_DRIVER.md` §9.
+- **3 October 2026:** two regressions (test 2 unit status, test 4 timer expiry)
+  found and fixed; tests 1–3 pass and test 4 stops at step 3 on the timer clock;
+  see `doc/MAME_DRIVER.md` §9.
 
 The next useful step is to trace the first boot read after the successful unit
 enumeration, then implement the uPD7261 data path and board SRAM/DMA rather than
