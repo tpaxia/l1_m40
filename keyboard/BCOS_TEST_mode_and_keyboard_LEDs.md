@@ -85,7 +85,7 @@ the saved-state registration; use a fresh boot/state with this build.
 
 All are under `runs-archive/`, with `bcos-run-error.` or `bcos-generated-boot.`
 prefixes. Disks are disposable copies; user GUI session was not modified.
-The temporary chord input is in `re/os/bcos/leftovers/mame_bcos_run_error.lua`, controlled
+The temporary chord input is in `re/os/bcos/leftovers/mame_bcos_run_error.lua` (removed; in tag `re-leftovers-archive`), controlled
 by BCOS_TEST_RUN_KEY and optional BCOS_TEST_TOGGLE_OFF.
 
 This validates the TEST/LED path, not every aspect of the keyboard HLE.

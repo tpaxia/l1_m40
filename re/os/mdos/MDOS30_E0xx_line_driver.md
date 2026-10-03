@@ -470,7 +470,7 @@ read failure. The tests/manuals identify the likely hardware family as the
 M30/M40 line-controller group, especially GO151/GO327-class serial/current-loop
 hardware, but they do not yet prove the exact semantics of `E000/E008/E0B0/E0C0/E0D0`.
 
-A focused Lua trace (`re/os/mdos/leftovers/mame_m40_mdos30_slot_probe.lua`) can show the logical
+A focused Lua trace (`re/os/mdos/leftovers/mame_m40_mdos30_slot_probe.lua` (removed; in tag `re-leftovers-archive`)) can show the logical
 config image later containing repeated `FF FE E1 FF` groups:
 
 ```text

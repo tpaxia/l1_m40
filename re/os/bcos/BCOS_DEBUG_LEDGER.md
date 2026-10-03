@@ -12,7 +12,7 @@ User permits temporary debug code provided it is tracked (2026-09-09).
 The temporary `BCOS_HISTORY` instrumentation in MAME's
 `src/devices/bus/olivetti_l1/uc.cpp` and `uc.h` was added to investigate a
 corrupted BCOS scheduler queue pointer and the interrupt save/restore of R2.
-The initial 256-entry trace (`re/os/bcos/leftovers/bcos-scheduler-history.log`) showed the bad
+The initial 256-entry trace (`re/os/bcos/leftovers/bcos-scheduler-history.log` (removed; in tag `re-leftovers-archive`)) showed the bad
 R2 restoration at 3B:0F10 and its propagation through 02:101E. Expanding the
 ring to 4096 entries was intended to capture the earlier save or overwrite,
 not to implement hardware behavior or assume an FDC cause.
@@ -63,7 +63,7 @@ MAME branch olivetti_m40 committed/pushed as 0cf819193f12db100ec37c58a1a7d43617b
 native changes contain no Lua observers, guest RAM probes or test loggers.
 Layout regeneration and incremental native build passed; remote HEAD verified.
 
-TEMP additions to re/os/bcos/leftovers/mame_bcos_run_error.lua: support physical keypad digits,
+TEMP additions to re/os/bcos/leftovers/mame_bcos_run_error.lua (removed; in tag `re-leftovers-archive`): support physical keypad digits,
 Space and timed Shift for uppercase letters in BCOS_RUN_COMMAND. No guest RAM
 or disk content override enabled. Disposable runs FaO6Yn (lowercase) and vIoP54
 (uppercase) restore HpSmLA/swap.sta, enable TEST via CONTROL+5A, launch BASIC,
@@ -326,7 +326,7 @@ it does not prove the original swap was notified or identify the origin of
 the expected label. Next trace must follow the upper-layer handling / the
 creation of the expected-volume request during initialization.
 
-TEMP opt-in instrumentation: `re/os/bcos/leftovers/mame_bcos_media_swap.lua`, called by the
+TEMP opt-in instrumentation: `re/os/bcos/leftovers/mame_bcos_media_swap.lua` (removed; in tag `re-leftovers-archive`), called by the
 existing replay Lua only with BCOS_MEDIA_SWAP; launcher copies LOAD as well
 as RUN. Reads saved controller/drive state each frame and watches the label
 without modifying it. CLEAR/F8 delayed 300 frames only in this mode; use
@@ -385,7 +385,7 @@ instruction fetches, covers retryframes90–178, max180000records.
 
 TEMP generated RUN error006 investigation: scripts/trace-m40-bcos-run.sh
 copies state C and BCOS_RUN.imd, mounts copy in flop1 and invokes
-re/os/bcos/leftovers/mame_bcos_run_error.lua. Read-only RAM/MMU snapshots, KDC/FDC I/O taps,
+re/os/bcos/leftovers/mame_bcos_run_error.lua (removed; in tag `re-leftovers-archive`). Read-only RAM/MMU snapshots, KDC/FDC I/O taps,
 at most90000 instruction fetch records, exits at180frames. Optional
 BCOS_RUN_KEY supplies a normal physical key; default no input. No live
 session or guest-memory changes.
@@ -409,7 +409,7 @@ saved emulated time (~491s); removed that option, retaining frame180 exit.
 
 TEMP space-prompt investigation: scripts/trace-m40-bcos-space.sh copies new
 state B and both PPK session media (actual folder bcos-interactive.PPkCmJ),
-then runs re/os/bcos/leftovers/mame_bcos_space.lua headlessly. Captures RAM/MMU/screens, sends
+then runs re/os/bcos/leftovers/mame_bcos_space.lua (removed; in tag `re-leftovers-archive`) headlessly. Captures RAM/MMU/screens, sends
 physical CLEAR49 then SPACE12, logs KDC I/O and at most60000 instruction
 fetches over150ms. No guest memory patches or interactive-session changes.
 
@@ -419,11 +419,11 @@ Controller command decoding is untouched. Boot/interactive/OS/FDU launchers
 and harness default updated; old saved-A replay guarded against accidental use
 with the new topology. Native m40.cpp also installs m40.lay, a bottom IPL
 indicator bound directly to :cpu:uc042:ISL bit02. No new native debug code.
-Patch artifacts: re/os/bcos/leftovers/m40-bcos-drive-order.patch and re/os/bcos/leftovers/m40-ipl-panel.patch.
-Read-only alias assertions in re/os/bcos/leftovers/mame_verify_bcos_drive_order.lua pass for all
+Patch artifacts: re/os/bcos/leftovers/m40-bcos-drive-order.patch (removed; in tag `re-leftovers-archive`) and re/os/bcos/leftovers/m40-ipl-panel.patch (removed; in tag `re-leftovers-archive`).
+Read-only alias assertions in re/os/bcos/leftovers/mame_verify_bcos_drive_order.lua (removed; in tag `re-leftovers-archive`) pass for all
 four images; fresh run bcos-single-fd1.kO9Evf reaches SYS generator at219s.
 Initial assertion failure was a test API error (generic device rather than
-image interface), not failed numbering. IPL test re/os/bcos/leftovers/mame_verify_ipl_panel.lua
+image interface), not failed numbering. IPL test re/os/bcos/leftovers/mame_verify_ipl_panel.lua (removed; in tag `re-leftovers-archive`)
 temporarily changes only its disposable configuration switch and restores it;
 no media or RAM patches. Initial IPL test used an unsupported numeric item
 lookup; ipairs also uses that unsupported lookup, so the final test uses
@@ -486,14 +486,14 @@ hWloR8 failed its assertion before mutation because state load was pending;
 moving it to first frame resolved this timing issue.
 CPU trace BBy7Wp covers the failure window; uKrqJX/XwLRIr earlier wider
 service traces. Temporary scripts: scripts/trace-m40-bcos-label.sh and
-re/os/bcos/leftovers/mame_bcos_fd_label.lua, each successful replay exits after600 frames.
+re/os/bcos/leftovers/mame_bcos_fd_label.lua (removed; in tag `re-leftovers-archive`), each successful replay exits after600 frames.
 Correct next launch needs -slot4:go280:fdc:2 8dsdd and keyboard on-flop3;
 JJKEYB loading with that topology not yet verified. No native MAME fix
 is justified by this failure. IPL panel patch remains unapplied.
 
 FD2 label investigation: user confirms FD1 displays K02733, FD0/FD6 reject
 as invalid choices, FD2 reports missing volume label. Prepared temporary
-re/os/bcos/leftovers/mame_bcos_fd_label.lua: read-only FDC I/O taps, RAM/MMU snapshots, and
+re/os/bcos/leftovers/mame_bcos_fd_label.lua (removed; in tag `re-leftovers-archive`): read-only FDC I/O taps, RAM/MMU snapshots, and
 physical FDn/keypad-Enter replay, bounded to 600 frames. Not yet executed;
 requires a saved state at the drive-name prompt and disposable disk copies.
 Live PID44046 has no debugger/console attachment interface. Asked user for
@@ -683,7 +683,7 @@ commit d45e8448447 is the GO252 receive status fix; not committed or pushed yet.
   after locating the corruption. Not included in save states; use cold starts.
   Also logs CPU writes to physical 02262C and 0227E4 (the two saved R2 words)
   after second 68 via a TEMP block in `physical_word_w`; remove that block too.
-  Initial 256-entry trace: `re/os/bcos/leftovers/bcos-scheduler-history.log` identifies bad R2
+  Initial 256-entry trace: `re/os/bcos/leftovers/bcos-scheduler-history.log` (removed; in tag `re-leftovers-archive`) identifies bad R2
   restoration at 3B:0F10, propagated through 02:101E. Extended ring is to capture
   the earlier save/overwrite, not to assume another nested FDC cause.
   Write logging now stops when the corruption snapshot is captured.
@@ -733,7 +733,7 @@ Additional level-2 gate correction: `l1.cpp/l1.h`, `uc.h`. The CPU exposes
 VIENO masks every level-2 source, retaining pending state, not level 1a/1b.
 Primary manual: Concise Functional Checks Manual 4102230 T(0), §3.1.1 test 2,
 printed p. 3-1 explicitly identifies VIENO as level-2 vectored interrupt.
-After the alias-only change, `re/os/bcos/leftovers/bcos-post-alias-history.log` catches FDU
+After the alias-only change, `re/os/bcos/leftovers/bcos-post-alias-history.log` (removed; in tag `re-leftovers-archive`) catches FDU
 re-entry at 85.2034115 s (3B:1AAE -> 3B:0D28) despite VIENO being masked.
 The earlier timer-only interpretation of VIENO was incomplete.
 

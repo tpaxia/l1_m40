@@ -87,6 +87,11 @@ taught it.
 - When an investigation ends, move what was learned into the permanent
   reference documents and delete the working notes and experiment leftovers
   (scratch patches, temporary run output).
+- Commit leftovers once before deleting them, so they stay in history. The
+  probes, patches and logs from July to September 2026 are in the tag
+  `re-leftovers-archive` under `re/**/leftovers/`; recover one with
+  `git show re-leftovers-archive:<path>`. The notes that cite them mark
+  them "(removed; in tag `re-leftovers-archive`)".
 
 ## MAME debugger and Lua techniques
 

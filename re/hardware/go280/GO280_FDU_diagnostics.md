@@ -38,7 +38,7 @@ work must explain the diagnostic's PU4 command construction before any
 MAME image-device renumbering. No evidence here justifies changing the
 765's two-bit unit decode.
 
-Temporary instrumentation: re/hardware/go280/leftovers/mame_fdu_unit_trace.lua wraps the existing
+Temporary instrumentation: re/hardware/go280/leftovers/mame_fdu_unit_trace.lua (removed; in tag `re-leftovers-archive`) wraps the existing
 timed-key script, records FIFO accesses after130s and screenshots every20s
 from120–220. scripts/test-m40-fdu.sh accepts optional M40_FDU_SCRIPT;
 default behavior is unchanged. Logs are screen.png.fdc.log in each run.

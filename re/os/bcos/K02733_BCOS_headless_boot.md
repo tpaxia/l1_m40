@@ -75,6 +75,9 @@ K02737 must not be described as a proven run-time companion.
 
 Run from `/Users/paxia/Projects/L1_M30_M40`:
 
+`re/os/bcos/leftovers/mame_m40_snapshot.lua` has been removed; recover it with
+`git show re-leftovers-archive:re/os/bcos/leftovers/mame_m40_snapshot.lua`.
+
 ```sh
 mkdir -p runs-archive/k02733-baseline/nvram
 

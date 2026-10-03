@@ -66,7 +66,7 @@ in that path, so use MAME's `-debug` or the `debugger` console instead.
 ## How to re-apply
 
 The exact source state at the time of the experiment is captured in
-`re/hardware/go363/leftovers/mame-worktree-20260925.patch` (whole modified-tree diff as of 2026-09-25).
+`re/hardware/go363/leftovers/mame-worktree-20260925.patch` (removed; in tag `re-leftovers-archive`) (whole modified-tree diff as of 2026-09-25).
 The experiment is the `0x0d00` addition shown above; apply it on top of that
 snapshot, then rebuild with the normal M40 command in
 `re/mame/MAME_REBASE_20260915.md`.

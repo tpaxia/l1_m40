@@ -61,7 +61,7 @@ fitted drives, and the bootable L1 media use uPD765 unit 1. Overriding this with
 `--flop-name=-flop1` selects the other physical drive and can produce the monitor's
 `ERROR ON UNIT 4` rather than testing the requested diagnostic.
 
-For Gardini/BCOS boot experiments, use `re/hardware/go252/leftovers/mame_m40_keyboard_probe.lua` with the
+For Gardini/BCOS boot experiments, use `re/hardware/go252/leftovers/mame_m40_keyboard_probe.lua` (removed; in tag `re-leftovers-archive`) with the
 native `M40_VRAM_TRACE` and `M40_FDU_TRACE` logs. The broad diagnostic script's
 whole-slot Lua taps currently crash during the ROM's second GO252 alias pass on
 these media, while both an uninstrumented run and the narrow `0x1000-0x1003`
