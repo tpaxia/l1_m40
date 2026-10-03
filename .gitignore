@@ -12,8 +12,6 @@
 !/re/os/
 !/re/mame/
 !/re/checkpoints/
-/re/checkpoints/*
-!/re/checkpoints/README.md
 /re/disassembly/**/*.o
 /re/disassembly/**/*.coff
 /re/disassembly/**/*.rebuilt

@@ -11,7 +11,7 @@ evidence for each emulator change, and the disassembled sources.
 | [os/](os/README.md) | One folder per operating system: BCOS II, OSLEM, MDOS, MOS, DCOS, and L1WSE on the M24 | [OS_boot_media_survey.md](os/OS_boot_media_survey.md) |
 | [evidence/](evidence/README.md) | One note per change to MAME, written before the change: the documentation behind it, the test, the result | [uc-arbiter-nvi-latency-evidence.md](evidence/uc-arbiter-nvi-latency-evidence.md) |
 | [mame/](mame/README.md) | The diagnostic trace harness, and dated records of the MAME branch work | [MAME_diagnostic_trace_harness.md](mame/MAME_diagnostic_trace_harness.md) |
-| [checkpoints/](checkpoints/README.md) | Saved machine states and hard-disk images for resuming the BCOS and MOS installs (local only) | |
+| [checkpoints/](checkpoints/README.md) | Saved machine states and hard-disk images for resuming the BCOS and MOS installs | |
 
 ## Status words used in the indexes
 

@@ -101,7 +101,7 @@ Behaviour that the original software depends on and that had to be found
 | Folder | Contents |
 |---|---|
 | [doc/](doc/) | The hardware reference, the MAME driver notes, GO252, GO363 and the diagnostics |
-| [re/](re/) | The reverse engineering: `disassembly/` (round-trippable ROM and bootloader sources, diagnostic listings), `hardware/` (per board), `os/` (per operating system), `evidence/` (one note per emulator change, written before it), `mame/` (driver history and the trace harness), `checkpoints/` (saved states and disk images, local only) |
+| [re/](re/) | The reverse engineering: `disassembly/` (round-trippable ROM and bootloader sources, diagnostic listings), `hardware/` (per board), `os/` (per operating system), `evidence/` (one note per emulator change, written before it), `mame/` (driver history and the trace harness), `checkpoints/` (saved states and disk images for resuming the BCOS and MOS installs) |
 | [keyboard/](keyboard/README.md) | Everything about the ANK keyboards: firmware, scancodes, key maps, photos |
 | [installation/](installation/README.md) | Pointers to the published run instructions in `mame_disks`, and the MAME UI controls |
 | [reference/](reference/README.md) | ROM images, datasheets and digests of the manuals; the disk images and scanned manuals are kept locally |

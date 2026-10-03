@@ -1,10 +1,9 @@
 # Checkpoints
 
 Saved machine states and hard-disk images from the GO363 work, kept so a
-long procedure can be resumed at any stage instead of rerun. The data is
-local only (git-ignored, about 390 MB); only this README is tracked. A
-compressed copy of the original run archive is on the backup volume
-(`/Volumes/Backups/Projects/M40_re_backups/`).
+long procedure can be resumed at any stage instead of rerun (about 390 MB;
+the largest file is 8 MB). The runs these came from are in the local run
+archive, backed up on `/Volumes/Backups/Projects/M40_re_backups/`.
 
 Save states depend on the MAME build that made them: a build whose devices
 save different fields may refuse to load them. The disk images do not have
