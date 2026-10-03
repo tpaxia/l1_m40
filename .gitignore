@@ -37,3 +37,4 @@
 /tools/diagnostic_tests/__pycache__/
 /tools/z8kdisrom
 !/screenshots/
+.DS_Store

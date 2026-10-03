@@ -1,252 +1,139 @@
-# Olivetti M30 / M40 (L1) — ROM Reverse-Engineering & MAME Bring-Up
+# Olivetti M30 / M40 (L1): reverse engineering and MAME emulation
 
-**BCOS command line verified:** [BCOS_BOOT.md](re/os/bcos/BCOS_BOOT.md) records the tested
-date → SYS prompt → SYS generator → Exit back to SYS sequence, including
-headless launch commands and date-error recovery.
+The Olivetti **M40** is a Zilog **Z8001** multi-user computer of the Olivetti
+**L1** line (1982); the M30 is its smaller sibling. This project
+reverse-engineers the machine from its boot ROM, its field diagnostics and
+its operating systems, and emulates it in **MAME**. The emulated M40 now
+runs its original software: the DCOS diagnostics, ESE, MDOS, BCOS II from
+floppy and from the hard disk, and MOS from the hard disk.
 
-## 1. Project goal
+![MOS 5.2 on the emulated M40, logged in from the hard disk](screenshots/mos-hd-login.png)
 
-Reverse-engineer the Olivetti **M40** boot ROM (a **Zilog Z8001** program) to
-establish, in as much detail as possible, **how each board is detected and
-tested** by the resident power-on autodiagnostic — and from that, derive the
-**minimum set of hardware needed to run the self-test and start an IPL**.
+## What runs
 
-That hardware is then reimplemented in **MAME**, and the machine is driven
-through a fixed sequence of milestones:
+| Software | Result | How it was checked |
+|---|---|---|
+| ROM REL 6.0 self-test and IPL | Passes; boots from floppy or hard disk | ROM disassembly and every board's power-on test |
+| DCOS 8.4 field diagnostics | Central unit, memory, video and keyboard tests pass (UC3003, UCV305, MEM813, RAMVID, CRTAN5, KEYTE1); the floppy test 6030T6 passes its FDU tests; the GO363 programs HDC505, HDC5F5 and Standard 24 format and verify the emulated hard disk | [doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md), [tools/diagnostic_tests/](tools/diagnostic_tests/README.md) |
+| ESE 3.1, MDOS 3.0, MDOS 3.1 utilities | Boot to `READY` | [re/os/OS_boot_media_survey.md](re/os/OS_boot_media_survey.md) |
+| BCOS II 3.3 from floppy | All-resident system, configurator, system generation and the generated LOAD/RUN pair | [re/os/bcos/BCOS_BOOT.md](re/os/bcos/BCOS_BOOT.md) |
+| BCOS II 3.3 on the hard disk | Installed with the Olivetti restore procedure (OSLEM 7+, JX24, MX24, TOC£, DKC£); boots to `/SYS` | [re/os/oslem/OSLEM_STATUS.md](re/os/oslem/OSLEM_STATUS.md) |
+| MOS 5.2.15 on the hard disk | Installed from the ST506 starter and the seven DPC_ALLES floppies; login, shell, MCL, shutdown | [screenshots/](screenshots/), [re/os/mos/](re/os/mos/MOS_DECOMPILATION_STRATEGY.md) |
+| Gardini NLS3000 utilities | Boots to its menu | [doc/KDC.md](doc/KDC.md) |
 
-1. execute the **BIOS / resident autodiagnostic** to completion — **done**,
-2. perform an **IPL** (initial program load) — **done**,
-3. **boot from floppy** — **done** (boots the DCOS 8.4 field-diagnostic disk to its
-   interactive monitor and runs standalone diagnostics), and
-4. **detect the hard disk** (as required for installation) — **in progress**.
+Not working yet: MDOSC 2.0, 3.1 and 3.2 load but stop with `ERROR 172/173`;
+BCOS II 5.0 boots only partway; OSLEM 7+ needs two debugger patches to
+accept its own boot floppy (root cause open).
 
-The MAME driver (`src/mame/olivetti/m40.cpp`) already models the Z8001 CPU,
-Z8010 MMU, RAM, 8253 timer, the MC6845 video board (GO252 KDC, with keyboard,
-character attributes and the L1 font), and the floppy governo (GO280: µPD765 +
-AM9517 DMA + the UC bus arbiter) — enough to boot the diagnostic disk and drive its
-menus and tests (KEYTE1 keyboard test, CRTAN5 video/attribute test).
+## Running it
 
-The M40 is the segmented-CPU member of the Olivetti **L1** line; the M30 is its
-sibling and shares this ROM family. The firmware in scope is **`REL 6.0`** (16 KB
-EPROM pair), banner-dated *17 DEC 82* — the build carrying the full set of IPL
-device handlers, including the direct hard-disk governo.
+Ready-to-run disk images, ROMs and instructions (including Windows
+step-by-step guides) are published in
+[mame_disks/m40](https://github.com/tpaxia/mame_disks/tree/main/m40).
 
-> The service manual splits the resident firmware into **ROM 151** (on
-> central-unit boards produced up to Nov 1982) and **ROM 152** (from Nov 1982) — a
-> board/hardware generation, *distinct* from the `REL x.x` loader-release number.
-> The manual does not tie the REL to 151/152; the Dec-1982 date only *suggests*
-> this dump belongs to the 152 era. Treated here as unconfirmed.
+The emulation is in the `m40_z8010_sup_test` branch of
+[tpaxia/mame](https://github.com/tpaxia/mame/tree/m40_z8010_sup_test), not
+yet in mainline MAME:
 
-### Documents
+| Source | Models |
+|---|---|
+| `src/mame/olivetti/m40.cpp` | The machine (`m40`, and an `m44` variant) |
+| `src/devices/bus/olivetti_l1/uc.cpp` | UC042 central unit: Z8001, Z8010 MMU, 8253, EF68B50 ACIA, MB15652 bus arbiter, console and IPL switch |
+| `src/devices/bus/olivetti_l1/go252.cpp`, `keyboard.cpp` | GO252 video/keyboard board (MC6845, GI 9428DS character generator) and the ANK keyboard (a high-level model checked against its 8049 firmware) |
+| `src/devices/bus/olivetti_l1/go280.cpp` | GO280 floppy board (uPD765, AM9517 DMA, 8253) |
+| `src/devices/bus/olivetti_l1/go363.cpp` | GO363 hard-disk board around the uPD7261 (`-slot5 go363`) |
+| `src/devices/bus/olivetti_l1/l1.cpp`, `ram.cpp` | The L1 backplane and RAM boards |
 
-- **[HARDWARE.md](doc/HARDWARE.md)** — the hardware reference / **MAME build spec**:
-  confirmed chipset (from board photos), the three address spaces, MMU segment and
-  physical memory maps, per-board register maps, the interrupt/boot model, an
-  identified-board inventory, and a MAME device checklist.
-- **[MAME_DRIVER.md](doc/MAME_DRIVER.md)** — the implementation and reverse-engineering
-  companion to `m40.cpp`: MMU suppression, READY/NMI behavior, UC/KDC multiplexing,
-  shared interrupt priority, GO280 DMA/latches, video rendering, arbiter behavior,
-  trace anchors, and known approximations.
-- **[DIAGNOSTICS.md](doc/DIAGNOSTICS.md)** — the L1 DCOS 8.4 field-diagnostic disk set:
-  contents, the two-stage boot flow, and the ROM→bootloader config-table handoff.
-- **[KDC.md](doc/KDC.md)** — the **GO252 video/keyboard governo** behavioral model: the
-  keyboard VI interrupt path, the keyboard serial protocol and positional scancode
-  tables, the ANK 1426 / 1427 keyboards, and the character-cell attribute encoding
-  (reverse / high light / blink / line attributes).
-- **[keyboard/M40_8049_KEYBOARD.md](keyboard/M40_8049_KEYBOARD.md)** — correlation of the recovered,
-  byte-exact 8049 firmware with KEYTE1 and an audit of the current MAME HLE: matrix,
-  auxiliary edges, startup/self-test, all commands, repeat, LEDs, and beeper.
-- **[keyboard/KEYMAP.md](keyboard/KEYMAP.md)** — the official **L1 MOS ↔ PC keyboard mapping**
-  (MOS Programmer Guide §7, Tab. 7-3, used by L1WSE) and its realization in the
-  MAME driver.
-- **[L1WSE.md](re/os/l1wse/L1WSE.md)** — related work: reverse-engineering of the Olivetti M24
-  "L1 Work-Station Emulator" (see §6).
+Booting from the hard disk needs `m40rom-6.0-hd65.bin`, a patched REL 6.0
+ROM: REL 6.0, the latest M40 ROM available, cannot IPL the GO363. The patch
+adds a GO363 sector-read routine (the register sequence of the OSLEM 7+
+hard-disk driver) and the M44 ROM's service-table entries that the
+hard-disk loader calls. It never existed as a real ROM; it is built from the
+disassembly by [tools/mkrom_hd65.py](tools/mkrom_hd65.py).
 
-## 2. Approach — the ROM defines the minimum to reach IPL
+## Main findings
 
-The resident autodiagnostic is a concrete, executable lower bound on the
-machine's hardware: at power-on it programs the MMU, sizes RAM, scans the
-backplane for boards, tests each one, sets up video for diagnostics, and selects
-an IPL device. Reverse-engineering it tells us which devices — and which of their
-registers — must exist for the machine to reach IPL.
+The hardware, as recovered from the ROM, the diagnostics and the manuals:
 
-That is a starting point, not the whole machine. Once an IPL image, standalone
-diagnostic, or OS is loaded, it will exercise features the ROM never touches
-(fuller disk I/O, interrupts, keyboard, etc.). Those are added to the MAME model
-incrementally, driven by what each later stage actually accesses.
+- **[doc/HARDWARE.md](doc/HARDWARE.md)**: the machine as built: boards and
+  chips, the three Z8000 address spaces, MMU and memory maps, the UC
+  register map, the backplane slot scan, RAM sizing and the reset sequence.
+- **[doc/MAME_DRIVER.md](doc/MAME_DRIVER.md)**: how the emulation implements
+  it, and why: MMU suppression, READY/NMI, interrupt priority, GO280 DMA,
+  arbiter, video, known approximations.
+- **[doc/KDC.md](doc/KDC.md)** and **[keyboard/](keyboard/README.md)**: the
+  GO252 video/keyboard board, the keyboard protocol and the recovered 8049
+  keyboard firmware; how a PC keyboard maps onto the ANK keyboard.
+- **[doc/GO363_DCOS_RECOVERY.md](doc/GO363_DCOS_RECOVERY.md)**: the GO363
+  register protocol, which no surviving document describes, recovered from
+  the DCOS hard-disk diagnostics and checked against the Olivetti manual and
+  the NEC uPD7261 datasheet.
+- **[doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md)**: the DCOS 8.4 diagnostic
+  disks, their boot flow and the ROM-to-bootloader handoff.
+- **[tools/L1_DISK_FORMATS.md](tools/L1_DISK_FORMATS.md)**: the L1 floppy and
+  hard-disk formats (labels, module headers, library directories,
+  configuration records).
 
-## 3. Target machine — minimum hardware to model in MAME
+Behaviour that the original software depends on and that had to be found
+(each with its evidence in [re/evidence/](re/evidence/)):
 
-Ordered roughly by the sequence in which the ROM exercises them.
+- **Bus-arbiter latency.** The MOS kernel enables the non-vectored
+  interrupt for a single instruction (`EI NVI`, `DI NVI`) after an arbiter
+  request, so the arbiter must raise NVI within a few clocks; the model's
+  old 50 µs delay stopped the kernel with code 51. Fixing it exposed a race
+  in the floppy DMA model. Provisional: there is no MB15652 timing data
+  ([uc-arbiter-nvi-latency](re/evidence/uc-arbiter-nvi-latency-evidence.md)).
+- **Z8001 PC segment bit 15.** Settled on a physical Z8001, where the part
+  contradicts the Zilog manual ([z8001-pcseg-bit15](re/evidence/z8001-pcseg-bit15-evidence.md)).
+- **Two MAME Z8000 core bugs** (`COMB @Rd` register decode, block-I/O flags),
+  found by the RAMVID and UC3003 diagnostics; they affect every Z8000 machine
+  in MAME ([doc/HARDWARE.md §10](doc/HARDWARE.md)).
+- **uPD7261 timing and command behaviour**: read-data completion, buffered
+  seeks, Verify ID after Format, DMA requests at sector boundaries.
+- **GO252 keyboard port reset** and the **dumped character generator**,
+  which replaces the hand-drawn font
+  ([chargen](re/evidence/go252-chargen-evidence.md)).
+- **The REL 6.0 ROM has no GO363 boot path**: its hard-disk IPL handler is
+  for the older GO230 board ([OSLEM_STATUS, Issue 2](re/os/oslem/OSLEM_STATUS.md)).
 
-### 3.1 CPU — Zilog **Z8001** (segmented)
-- Segmented mode, system/normal split; reset vector at seg 0 (`FCW=0xC000`,
-  `PC=<<0>>0x0106`).
-- A UC042 board photo shows a **32.000 MHz master oscillator**; the CPU clock is
-  **4 MHz** (`32 MHz / 8`).
-- Program Status Area at `<<0>>0x0000`; NMI and NVI vectors used (RAM sizing,
-  timer). No CPU instruction self-test was found in the reset path.
+## Repository map
 
-### 3.2 MMU — Zilog **Z8010**
-- Programmed via Special-I/O (mode/SAR/DSC/descriptor opcodes).
-- Descriptor R/W self-test (write 0x00 to all 256 bytes, verify).
-- Live map loaded from a descriptor table: **seg 0 → phys `0x000000` (ROM)** and
-  **seg 61 → phys `0xFF0000`** (video, confirmed by the code); segs 62–63 are also
-  set up (`0xF00000` / `0x000000`). Mode `0xC0` enables translation.
+| Folder | Contents |
+|---|---|
+| [doc/](doc/) | The hardware reference, the MAME driver notes, GO252, GO363 and the diagnostics |
+| [re/](re/) | The reverse engineering: `disassembly/` (round-trippable ROM and bootloader sources, diagnostic listings), `hardware/` (per board), `os/` (per operating system), `evidence/` (one note per emulator change, written before it), `mame/` (driver history and the trace harness), `checkpoints/` (saved states and disk images, local only) |
+| [keyboard/](keyboard/README.md) | Everything about the ANK keyboards: firmware, scancodes, key maps, photos |
+| [installation/](installation/) | Windows guides for running BCOS, and the MAME UI controls |
+| [reference/](reference/) | ROM images, datasheets and digests of the manuals; the disk images and scanned manuals are kept locally |
+| [scripts/](scripts/README.md) | Launchers and regression tests; the hard-disk harness and MOS install stages |
+| [tools/](tools/README.md) | ROM disassembly and rebuild, the patched-ROM builder, floppy-image tools, the diagnostic-disk harness |
+| [screenshots/](screenshots/) | ESE, MDOS, BCOS generation and hard-disk login, MOS installation and login |
 
-### 3.3 Memory
-- **ROM** at seg 0. A trailing checksum word (top 4 bytes) is recomputed and
-  compared at power-on ("Test ROM").
-- **RAM**, contiguous, **≥ 16 KB** minimum; sized by probing `READY`/NMI.
+## Method
 
-### 3.4 I/O — slot-windowed device selects
-- **Decode model** (reconstructed from the slot scans; to confirm against
-  schematics): **slot = I/O address bits 15–12**, **register = the low byte**, and
-  **bits 11–8 are don't-care** (two scans read the same board register at both
-  `0x?FFF` and `0x?0FF`). Each board's **type-ID (*nome logico*) is register `0xFF`**.
-  Peripheral registers are addressed register-indirect with the slot's high nibble.
-- The **UC (central unit) is slot 15**, so its on-board chips live at high nibble
-  `0xF_` (canonically `0xFF__`):
-  - **8253 PIT** at `0xFFC1/C3/C5/C7` (system tick + a rate/interrupt test).
-  - **Diagnostic console**: code latch `0xFFE0` + the 3-bit lamp latch at `0xFF60..0xFF6F`
-    (set `0xFF68-6A`, clear `0xFF60-62`, readback).
-  - **NMI / READY logic** at `0xFF41`.
-  - **EF68B50P ACIA** at `0xFF20/22` (serial keyboard link + UC3003 loopback test);
-    VI vector latches `0xFF01` (timer) and `0xFFA0` write-side (ACIA); `0xFFA0` read =
-    config/jumpers.
-  - `0xFF80..0xFF8F` — the **MB15652/UC bus arbiter** (NVI source): `0xFF81` grant,
-    `0xFF80-83` ack, request/release strobe groups (decoded from disk-A's arbiter test).
-  - `0xF0E0/0xF0E2` = the console latch (`0xFFE0/E2`) via the don't-care bits;
-    the reset writes them to clear the console indicator.
-  - `0xF0E0/0xF0E2` — a UC latch (the only non-`FF` immediate I/O), to be identified.
+The ROM is disassembled into sources that reassemble byte for byte, so
+annotations can be added and re-verified at any time
+([re/disassembly/m40-rom/](re/disassembly/m40-rom/README.md)). The ROM's
+power-on tests define the minimum hardware; the DCOS diagnostics and the
+operating systems then define the rest. Every change to the emulator is
+backed by hardware documentation or, where none exists, by the original
+Olivetti software, and is checked against the whole set of diagnostics and
+systems before and after. The method, with the cases that taught it, is in
+**[DEBUGGING_STRATEGY.md](DEBUGGING_STRATEGY.md)**; the rules for changing
+MAME are in [AGENTS.md](AGENTS.md).
 
-### 3.5 Video / keyboard — **GO252 KDC** (6845-family CRTC) — *modeled*
-- Register-select `0x41` (address) / `0x43` (data); type/status at `0x81`.
-- **80 × 25** character text (40 × 13 alternate); character cell height
-  12/16/17 scan lines depending on monitor type (→ 300/400/425 active lines). The
-  character *width* in dots is not yet determined, so horizontal dot count is open.
-- Framebuffer at **seg 61 / phys `0xFF0000`**, 2 bytes per character cell (character +
-  attribute). Implemented in MAME: the CRTC text display, the **character-cell
-  attributes** (reverse / high light / blink / high-low-left-right line), the L1 house
-  font, and the **keyboard** (VI interrupt, serial protocol, ANK positional scancodes
-  mapped to a PS/2 keyboard). Full behavioural model in **[KDC.md](doc/KDC.md)**.
+## Open work
 
-### 3.6 FDU — floppy governo (IPL source) — *modeled, boots*
-- The IPL device search (`0x065c`) is traced: order set by the **ISL switch**
-  (`0xFF41` bit 1), priority list `E4`(HDU) `EF`(GIPO) `E1`(FDU) `E0`(MFDU) `E6`(STC),
-  each dispatched to a handler. The **FDU/MFDU boot handler is `0x0eae`**.
-- Implemented in MAME (GO280 governo): **µPD765** FDC at 500 kbps, **AM9517** DMA with
-  the anomalous word-addressed 2-channel scheme, the **8253** command timer, the
-  **RD1NT** interrupt-source latch, and the **MB15652/UC bus arbiter** — enough to
-  boot the DCOS 8.4 diagnostic disk. Register model cross-checked against manual
-  `3963590` and the disk-D `6030T6` diagnostic.
+- The MDOSC `ERROR 172/173` stops, BCOS II 5.0, and the root cause behind
+  the OSLEM 7+ patches.
+- Decompiling MOS ([strategy](re/os/mos/MOS_DECOMPILATION_STRATEGY.md)).
+- Submitting the driver and the Z8000 fixes to mainline MAME.
+- A configurable card cage for other UC and board combinations
+  ([design](re/hardware/uc/M40_bus_slot_configuration_design.md)).
 
-### 3.7 HDU — hard-disk governo (installation target) — *in progress*
-- The ROM IPL search type `E4` and handler `0x1e58` belong to the older GO230
-  18 MB governo, not GO363.  GO363's hardware and HDC505 diagnostic ID is `65`.
-  GIPO/IEEE-488 remains type `EF`, handler `0x1a5e`.
-- The GO363 wrapper now exists and HDC505 tests 1 and 2 pass.  Its test-2 PRIN0,
-  PROINT, VI and acknowledge sequence is decoded and modelled.  CHS fields, a
-  word-addressed DMA counter, and an exploratory CHD read path are also present.
-  HDC505 tests 1–4 now pass, including uPD7261 programming, the private six-byte FIFO loopback, and the local 8253 timer/interrupt path. Test 4 established that the timer starts when its count is loaded, before the later private diagnostic command, and that `ff02` enables VI while `0002` selects polling. The same test proved that its delay/watchdog interrupt comes from the separate UC 8253. Remaining work includes local SRAM, refinement of the timer clock/divider, and
-  DMA interfaces, write/verify operations, and a bootable CHD.  Detailed
-  evidence is in `re/hardware/go363/GO363_HDC5_diagnostics.md`.
+## Related work
 
-### 3.8 Interconnect — backplane slot scan & device-select model
-- Confirmed mechanism: the ROM walks the 16 slot windows (high bytes
-  `0x0F, 0x1F, …, 0xFF`; see §3.4) and reads each board's **type-ID** at window
-  offset `0xFF` (port `0x?FFF`); an **empty slot faults (no `READY`) → NMI**, and
-  the NMI handler resumes the scan at the next slot. IDs are the *nome logico*
-  codes (`FF`=central unit, `FE`=video, …; full table in the service manual).
-- Several scans are traced: a preliminary pass (dispatch on board type), a video
-  pass (init + self-test each video board), and the **config-table build**
-  (`0x0590`) — a full 16-slot scan that records each slot's `type (XX)` +
-  diagnostic-response `(YYYY)` into system RAM at `<<1>>0x0230+slot*4` (the
-  *"SYSTEM ENVIRONMENT"* table; absent slot → `0xFFFF`). The IPL-device
-  **selection + boot load** is the next part to trace.
-
-## 4. Milestones (MAME bring-up)
-
-| # | Milestone | Done when | Status |
-|---|-----------|-----------|--------|
-| **M1** | Resident autodiagnostic runs clean | CPU + MMU + RAM + 8253 + video pass; no diagnostic hang; reaches the IPL stage | ✅ done |
-| **M2** | IPL | ROM selects an IPL controller and loads the first stage per the priority order | ✅ done |
-| **M3** | Boot from floppy | FDU governo modeled well enough to load the OS/monitor image | ✅ done (DCOS 8.4 diagnostic monitor) |
-| **M4** | Detect HD for installation | HDU governo enumerated and readable so install can target it | 🔶 in progress (GO363 enumerates and performs initial CHD reads; full transfer modes and install still pending) |
-
-IPL device priority (from the service manual, absent the ISL switch): HDU 5010 →
-HDU 6813 → DCU 9448 (fixed) → FDU → MFDU → STC → DCU 9448 (removable).
-
-## 5. Method
-
-- **Round-trippable disassembly.** The ROM is disassembled to a form that
-  reassembles to a **byte-identical** image, so annotations can be added freely
-  and always re-verified against the original.
-- **Annotate outward from reset**, block by block, keeping every change
-  byte-neutral.
-- **Model in MAME** device-by-device, matched to exactly what the annotated ROM
-  touches, and re-run the milestones after each addition.
-
-## 6. Related work
-
-**L1WSE — Olivetti M24 "L1 Work-Station Emulator"** (see **[L1WSE.md](re/os/l1wse/L1WSE.md)**). A separate
-reverse-engineering effort on the DOS-side software that turns an Olivetti M24
-PC into an L1 graphics workstation / terminal. Different CPU (8086, real mode) and
-a different artifact, but the same L1 ecosystem — useful for the host-link
-protocol, the display model, and the terminal/keyboard behaviour an L1 host
-expects.
-
-## 7. Status
-
-**The MAME driver boots the DCOS 8.4 field-diagnostic disk to its interactive
-monitor and runs standalone diagnostics** (M1–M3 done; M4 in progress).
-It also boots the recovered Gardini NLS3000 utility disk to its interactive menu;
-that disk independently exercises the keyboard's polled `01 -> FA`, `02 -> FB F1`
-handshake before identifying the KUSA02.1 layout.
-
-Modeled and working: the Z8001 reset path + PSA, Z8010 MMU test + map, ROM checksum,
-8253 timer, RAM sizing, the backplane slot scan / config-table build, the UC bus
-arbiter, and the **GO280 floppy governo** (µPD765 + AM9517 word-addressed DMA + 8253
-+ RD1NT latch) — the machine IPLs from floppy and reaches the diagnostic monitor
-(LOAD / MAP / HELP / GO). The **GO252 KDC** is modeled too: MC6845 text video with
-character attributes (reverse / high light / blink / lines), the L1 font, and the
-keyboard (VI, byte-level serial HLE, ANK scancodes → PS/2). It runs the on-disk diagnostics
-**KEYTE1** (keyboard) and **CRTAN5** (video/attributes).
-
-The **complete ANK 1426 keyboard** is modeled from KEYTE1's own expected-scancode
-grids: every key of the alpha block, function row, keypad and editing block is wired
-to a real PC key, with SHIFT/CONTROL make+break, and mapped per the official L1 MOS
-PC-keyboard table so a PC keyboard drives the M40 the way L1WSE drives it from an
-M24. See **[keyboard/KEYMAP.md](keyboard/KEYMAP.md)** and **[KDC.md](doc/KDC.md)** §4–5.
-
-**The factory diagnostic suite passes on every M40-applicable test.**
-- **UC3003** (UC central-unit test): zero errors — TRAP (all Z8010 MMU violation
-  types, bit-exact VTR/BCS/status semantics), VIENO, TIMER 0/1/2 (incl. the ch1
-  vectored interrupt), ACIA (EF68B50P at `0xFF20/22`, polling + interrupt modes),
-  INTERRUPT NOT-VECTORED (arbiter NVI) and VECTORED (vector latches `0xFF01`
-  timer / `0xFFA0` ACIA), ROM.
-- **UCV305** (S.3000 V/SV UC test): all subtests incl. the MASTO master/slave
-  flip-flop (`0xFF19`/`0xFF11`/`0xFFB1` bit 6) and the ch1-OUT latch (`0xFF41`
-  bit 4); sole counted error = the M44-only MMU1 sub-test self-skipping.
-- **MEM813** memory pattern suite and **RAMVID** video-RAM march: zero errors.
-  RAMVID exposed a decades-old MAME Z8000 core bug — `COMB @Rd` decoded its
-  destination register from the wrong opcode nibble — fixed upstream-ready.
-- **6030T6** (disk-D FDU running test): controller-communication, timer,
-  interrupt and compatibility tests pass; the remaining subtests verify the
-  governo as an MFDU (XU6030, NOM10 jumper) with a 5.25" drive — future work.
-
-- **KEYTE1** (keyboard): the alpha and functions/numerical sections address every
-  key by cell and print the scancode each one must return — which makes the test a
-  complete keyboard map. Both sections' grids now match the driver key-for-key.
-
-This campaign factory-verified the Z8010 device, the UC interrupt architecture,
-the memory and video-RAM subsystems, and fixed two Z8000 core bugs (COMB @Rd,
-block-I/O flags) affecting every Z8000 machine in MAME. KEYTE1 additionally
-corrected the published scancode map (the letter row was off by one cell) and
-exposed a video-attribute bug: LOW LINE was drawn on a fixed scanline instead of
-the cell's last one (MC6845 R9), leaving box bottoms a pixel short of their corners.
-
-Remaining high-value work: **M4** — wire the GO363 hard-disk governo (a gate-array
-wrapper around MAME's existing **µPD7261** device); confirm the CRTAN5 video-type
-register and the character-attribute bit map; and obtain the real `GI 9428DS`
-char-gen glyphs. Details in **[HARDWARE.md](doc/HARDWARE.md)** and **[KDC.md](doc/KDC.md)**.
+**[L1WSE](re/os/l1wse/L1WSE.md)**: reverse engineering of the Olivetti M24
+"L1 Work-Station Emulator", the DOS program that turns an M24 into an L1
+terminal. It is the source of the official L1 MOS PC-keyboard mapping that
+the MAME keyboard follows ([keyboard/KEYMAP.md](keyboard/KEYMAP.md)).
