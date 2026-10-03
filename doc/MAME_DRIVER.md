@@ -549,9 +549,14 @@ instructions describe the pre-cleanup build. **[EMU]**
   with the same disk G, blank disk image and keystrokes. The saved binaries from
   1 October (`m40.pre-pcseg`, before any October change) and 2 October
   (`m40.pre-arb`) fail test 2 identically, and so does the current build with the
-  IPL switch on floppy. The failure therefore came in with the commits of 21–26
-  September: `7679be9ad48` (keyboard only), `2eef3161383` or `f7144257e16`
-  (GO363/uPD7261). HDC5F5, Standard 24 and the BCOS and MOS hard-disk systems work.
+  IPL switch on floppy. Cause: `2eef3161383` (26 September) made register `43`
+  report the unit-0 status bits whenever a disk is attached, which S24W25 needs,
+  but HDC505 reads them without the auxiliary code `0D` that enables them
+  ([evidence](../re/evidence/go363-unit-status-gate-evidence.md)). A fix in the
+  MAME working tree (uncommitted) gates the bits on that code; with it tests 1–3
+  pass and test 4 stops at step 1 (board timer interrupt), earlier than on
+  20 September, a second regression not yet investigated. HDC5F5, Standard 24 and
+  the BCOS and MOS hard-disk systems work.
 - GO280 collapses the FUMEO no-READY timeout to an immediate missing-responder fault;
   RAM parity/PERRO and the exact DAW02 diagnostic waveform are not modeled. The
   external MASKO/IDXC0 index mux is also pending; channel 2 receives its documented

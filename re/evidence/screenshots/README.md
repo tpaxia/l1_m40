@@ -58,3 +58,4 @@ this is the last one written, normally the snapshot MAME saves when
 | [uc-validation.D80ueX.png](uc-validation.D80ueX.png) | `runs-archive/uc-validation.D80ueX/screen.png` |
 | [uc-validation.dQEC8W.png](uc-validation.dQEC8W.png) | `runs-archive/uc-validation.dQEC8W/screen.png` |
 | [hdc505-20261003-test2-failure.png](hdc505-20261003-test2-failure.png) | Rerun of HDC505 on the current build, 3 October 2026 (not from the archive) |
+| [hdc505-20261003-after-unit-gate.png](hdc505-20261003-after-unit-gate.png) | HDC505 after the unit-status fix: tests 1–3 pass, test 4 step 1 fails (3 October 2026, not from the archive) |
