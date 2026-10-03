@@ -48,7 +48,7 @@ alone does not prove Pascal.
 watchpoints, memory dumps), the Z8000 disassembler library and round-trip
 assembler flow used for the ROM (`re/disassembly/m40-rom/m40rom-6.0.s`), the floppy toolkit
 (`tools/l1lib.py`), and the staged run harness with save states
-(`scripts/mos-install/`; checkpoints in `runs-archive/mos-install-20261002/`).
+(`scripts/mos-install/`; checkpoints in `re/checkpoints/mos-install/`).
 
 **Manuals** in `reference/Manuals (Stefano Marinelli + Olivrea)/`: *Introduction
 to MOS*, *Programmer Guide*, *Program Development Tools Reference*, *System

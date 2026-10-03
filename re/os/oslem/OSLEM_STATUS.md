@@ -40,15 +40,15 @@ Issue 1 has priority; Issue 2 is a later, independent improvement.
 
 Disk images (all disposable copies):
 
-- Formatted HD: `runs-archive/hdc5f5-timeout-20260926/wren2-formatted-hdc5f5.chd`
+- Formatted HD: `re/checkpoints/mos-install/wren2-formatted-hdc5f5.chd`
   (summary screen `hdc5f5-formatted-summary.png`)
 - Error-rate summary: `runs-archive/hdc5e-errorrate-20260926/hdc5e-summary.png`
 - Formatted + LDHSEL: `runs-archive/ldhsel-20260926/wren2-ldhsel.chd`
   (screen `ldhsel-summary.png`) — **current starting point**
 - Formatted + LDHSEL + restored FF/80 + SSID `1EX` entry:
-  `runs-archive/restore-hd-20260928/wren2-restored.chd` (Issue 1D)
+  `re/checkpoints/bcos-hd/wren2-restored.chd` (Issue 1D)
 - **Baseline: BCOS II installed by JX24/MX24/TOC£/DKC£** (Issue 1F):
-  `runs-archive/restore-hd-20260928/install/wren2-bcos-installed-baseline.chd`
+  `re/checkpoints/bcos-hd/wren2-bcos-installed-baseline.chd`
   (read-only). Work on copies.
 
 MAME changes that made formatting work (committed and pushed as `f7144257e16`
@@ -443,7 +443,7 @@ sits at LBA 16 and TOC volume sector *n* at LBA 15 + *n*.
   `0x3EA11`, free `0x1370`.
 - FF → LBA 16–3986; 80 → LBA 3987–18111. Data sets 81–87 are left blank.
 
-Output: `runs-archive/restore-hd-20260928/wren2-restored.chd`. Harness:
+Output: `re/checkpoints/bcos-hd/wren2-restored.chd`. Harness:
 `launch.sh` + `run.lua` (`OUT=dir`, `ISL=floppy` for FD boot, 5-second
 screenshots).
 
@@ -853,7 +853,7 @@ for drive numbers (`FD2` = Shift+F, Shift+D, keypad 2).
 
 ## Next
 
-1. **Step 10 / Issue 2:** the installed `install/hd.chd` cannot IPL on REL
+1. **Step 10 / Issue 2:** the installed `re/checkpoints/bcos-hd/hd.chd` cannot IPL on REL
    6.0; one of the ROM options above is needed for a floppy-less boot.
    Untested meanwhile: booting `oslem7+` (with the hacks) against the
    installed `hd.chd` and running BCOS from the HD data sets.

@@ -104,7 +104,7 @@ MOS install, and the arbiter/DMA regression runs. Full reference in
 | `run_*.lua` (others), `pcsample.lua` | Probes from the BCOS/OSLEM investigation: breakpoints, traces, segment dumps, PC histograms |
 
 The patched-ROM runs use `~/Projects/mame_disks/m40/roms/m40-hd65`. Saved
-states and work disks stay in `runs-archive/restore-hd-20260928/install/`.
+states and disk images are in `re/checkpoints/bcos-hd/`; new runs go to `runs/`.
 `build_k02743_fmd.py`, `build_allres_osg.py` and the `build_oslem7_*` scripts
 also read a K02743 boot image from `/private/tmp/k02743-probe/`, which no
 longer exists.
@@ -117,7 +117,6 @@ longer exists.
 | `hdrun.sh NAME [FROM]` | Boot or resume the installed MOS disk on the patched ROM |
 | `mksteps.py START 'cmd' …` | Turn typed commands into a `STEPS` string for `run_keys.lua` |
 
-The checkpoints, work disks and the formatted starting disk are in
-`runs-archive/mos-install-20261002/` and
-`runs-archive/hdc5f5-timeout-20260926/wren2-formatted-hdc5f5.chd`; the
-finished disk is `m40-mos-hd.chd` in `mame_disks`.
+The stage states, disk snapshots, the starter and the formatted starting
+disk are in `re/checkpoints/mos-install/`; each run works in `runs/` and adds
+its state and snapshot to that store. The finished disk is `m40-mos-hd.chd` in `mame_disks`.

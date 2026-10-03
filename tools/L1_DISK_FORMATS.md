@@ -232,7 +232,7 @@ Running `COS#` (OSLEM "system configuration") on the HD-booted system:
 6. Empty Enter ends editing; Enter twice more accepts `CUR. PAR IS: J0XP` and
    `CUR. LIB IS: 0001`; `FUNCTION OK` means it was written.
 
-Typing under the Italian map (`install/kita_keymap.txt`): `#` is the unshifted
+Typing under the Italian map (`re/checkpoints/bcos-hd/kita_keymap.txt`): `#` is the unshifted
 `1 !` key (LOCK off) and is drawn as a blank; `M` is the `; +` key; `+` is the
 `~ ^` key with LOCK on; `.` is the `,` key with LOCK on; `W`/`Z` are swapped.
 `SMV#` is not peripheral configuration: it is "SET MV0 IPL DATA".
@@ -328,13 +328,13 @@ containing `go`). Screenshots go to `OUT/s_NNNN.png` every 5 s.
 | `run_st45.lua` | log FDC data-register reads returning ST0 `0x45` |
 | `run_att*.lua`, `run_modd*.lua`, `run_handler.lua` | attention-path probes |
 
-Saved states (`runs-archive/restore-hd-20260928/install/`): `base02/sta/m40/mount02.sta` (272 s, DKC£ FF at
+Saved states (`re/checkpoints/bcos-hd/`): `base02/sta/m40/mount02.sta` (272 s, DKC£ FF at
 `MOUNT INPUT DISK NR. 02`), `base03/sta/m40/ffdone.sta` (325 s, FF copied,
 `END OF PROGRAM`; `^j` gives `0X - COMMAND :`). Loading takes ~8 s wall.
 
 oslem7+ OX sequence (from power-on, LOCK on): `150:@LOCK;153:^j`, then
 `=exec dkc;@LOCK;@#38;@Keypad ENTER;@LOCK` (`#` = key `#38` with LOCK off;
-answer Y with `=z`). Active keymap: `install/oslem7_keymap.txt`.
+answer Y with `=z`). Active keymap: `re/checkpoints/bcos-hd/oslem7_keymap.txt`.
 
 Login/OX sequence for ALL_RESIDENT (password `ALLRES`, date `860909`):
 `100:@Keypad ENTER;110:=ALLRES;117:@Keypad ENTER;125:=860909;132:@Keypad ENTER;140:@LOCK;143:^j`
@@ -344,7 +344,7 @@ then `=exec name` and `@Keypad ENTER`.
 
 1. **Keyboard.** Read the active table from memory instead of guessing
    (oslem7+: segment 04, unshifted `0x255E`, shifted `0x2652`; decoded in
-   `install/oslem7_keymap.txt`). LOCK selects the shifted table for every
+   `re/checkpoints/bcos-hd/oslem7_keymap.txt`). LOCK selects the shifted table for every
    key regardless of Shift. oslem7+: `#` = key `#38` (`] }`), `.` = `#2D`,
    `=` = Shift+`#2E`, `+` = `#36`, all with LOCK off; `y`/`z` are swapped.
    The earlier claim that `#` cannot be typed was a misreading; aliasing

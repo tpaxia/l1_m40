@@ -4,9 +4,9 @@
 #        INNER=run_state_probe.lua SAVE_T SAVE_NAME saves a new state into EXPDIR/sta).
 #        Copies BASE/hd.chd into EXPDIR.
 set -eu
-R=/Users/paxia/Projects/L1_M30_M40/scripts/harness; A=/Users/paxia/Projects/L1_M30_M40/runs-archive/restore-hd-20260928
+R=/Users/paxia/Projects/L1_M30_M40/scripts/harness; C=/Users/paxia/Projects/L1_M30_M40/re/checkpoints/bcos-hd
 t=$1; rm -rf "$t"; mkdir -p "$t"; cp "$BASE/hd.chd" "$t/hd.chd"
 printf 'go\n' > "$t/debug.cmd"
 DEBUG=1 SCRIPT=${WRAP:-$R/run_state_probe.lua} ISL=floppy OUT=$t $R/launch.sh "$t/hd.chd" \
-  -flop1 $A/install/oslem7.imd -state_directory "${SAVE_DIR:-$BASE/sta}" -state "$STATE" \
+  -flop1 $C/oslem7.imd -state_directory "${SAVE_DIR:-$BASE/sta}" -state "$STATE" \
   -debugscript "$t/debug.cmd" ${EXTRA:-} > "$t/launch.out" 2>&1

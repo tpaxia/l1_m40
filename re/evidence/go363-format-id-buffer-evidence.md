@@ -188,7 +188,7 @@ on `runs-archive/hdc5f5-timeout-20260926/wren2.chd` (a copy of
 0 errors. It passed Standard 24 read, ETF read, Format, Verify identifier,
 Write & verify data field (13,789 WRITE DATA + 13,789 VERIFY DATA), and
 certify/format/write of the diagnostic areas. The formatted image is saved
-as `runs-archive/hdc5f5-timeout-20260926/wren2-formatted-hdc5f5.chd` (393,216
+as `re/checkpoints/mos-install/wren2-formatted-hdc5f5.chd` (393,216
 bytes, SHA-256
 `7789c8aa8dce4a8498a94b79170be461c2e680b9916930539742e405dd0e2858`), and
 the summary screen as `hdc5f5-formatted-summary.png`. Regressions: ERMAP

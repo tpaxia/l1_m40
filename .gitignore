@@ -10,6 +10,9 @@
 !/re/hardware/
 !/re/os/
 !/re/mame/
+!/re/checkpoints/
+/re/checkpoints/*
+!/re/checkpoints/README.md
 /re/disassembly/**/*.o
 /re/disassembly/**/*.coff
 /re/disassembly/**/*.rebuilt
@@ -24,6 +27,8 @@
 /reference/Manuals (Stefano Marinelli + Olivrea)/
 /reference/Pictures (M40 + spares)/
 /reference/zips/
+/reference/images/*
+!/reference/images/README.md
 /reference/datasheets/Z8000_CPU_Technical_Manual_Jan83.pdf
 !/doc/
 !/installation/
