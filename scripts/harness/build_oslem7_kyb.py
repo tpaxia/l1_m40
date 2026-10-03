@@ -3,10 +3,12 @@
 K02743's 1KYB 1000 (same 6-sector footprint); directory length updated.
 Used with the run-time patches in run_descpatch_ext2.lua."""
 import struct, sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 from l1lib import Image, directory_index, read_directory
-OS = '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
+OS = str(ROOT) + '/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
 KP = '/private/tmp/k02743-probe/boot.imd'
 o, k = Image(OS), Image(KP)
 src = [h for h in k.headers() if h.name == '1KYB'][0]

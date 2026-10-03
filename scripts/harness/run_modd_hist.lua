@@ -1,5 +1,6 @@
 -- At WATCH_T: find the segment holding MODD (header name at offset 0), then break at
 -- MODD+DISP (dispatch entry) and MODD+ATT (attention entry), logging r0 and flags word.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local watch_t = tonumber(os.getenv("WATCH_T") or "0")
@@ -23,4 +24,4 @@ emu.register_frame_done(function()
     end
     log:close()
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

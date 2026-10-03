@@ -1,3 +1,4 @@
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local done = false
 emu.register_frame_done(function()
@@ -7,4 +8,4 @@ emu.register_frame_done(function()
     m.debugger:command('bpset 0x2205d6,1,{printf "ATT2 ret r0=%04X\\n",r0; g}')
     m.debugger:command('bpset 0x03021c,1,{printf "LOCKWAIT rr2=%04X:%04X val=%04X dev=%04X\\n",r2,r3,dw@r3,r4; g}')
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_descpatch_ext2.lua")
+dofile(HERE .. "run_descpatch_ext2.lua")

@@ -4,17 +4,10 @@ This note documents the current reusable infrastructure for running M30/M40
 diagnostic disks under MAME, injecting operator input, tracing board I/O, dumping
 loaded overlays, and using the video screen as a future synchronization point.
 
-The working MAME tree is outside this repository:
-
-```text
-/Users/paxia/Projects/mame_latest/mame
-```
-
-The current driver source is:
-
-```text
-/Users/paxia/Projects/mame_latest/mame/src/mame/olivetti/m40.cpp
-```
+The MAME tree is outside this repository: branch `m40_z8010_sup_test` of
+`tpaxia/mame`, driver source `src/mame/olivetti/m40.cpp`. The examples below run
+from the project folder with `M40_MAME_BIN` set to that build, and use the ROM
+folder `runs/roms` that `scripts/m40env.sh` builds from `reference/roms/`.
 
 ## Current driver shape
 
@@ -128,14 +121,13 @@ M40_FDU_TRACE          driver-side GO280/FDC trace, parsed manually for now
 Basic disk-B run:
 
 ```sh
-cd /Users/paxia/Projects/mame_latest/mame
 env SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
   M40_TRACE_LOG=/tmp/m40_B_enter.log \
   M40_KEYS='\n' \
   M40_KEY_DELAY=28 \
-  ./mame m40 \
-  -flop '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/diagnostici l1 dcos 8.4/B.IMD' \
-  -autoboot_script /Users/paxia/Projects/L1_M30_M40/scripts/lua/mame_m40_diag_trace.lua \
+  "$M40_MAME_BIN" m40 -rompath runs/roms \
+  -flop 'reference/Disk Images (Stefano Marinelli + others)/diagnostici l1 dcos 8.4/B.IMD' \
+  -autoboot_script scripts/lua/mame_m40_diag_trace.lua \
   -seconds_to_run 60 -video none -sound none -nomouse -nothrottle
 ```
 
@@ -228,16 +220,15 @@ Use it to capture resident code and loaded overlays after a deterministic key
 sequence. For example, after booting disk B and pressing Enter:
 
 ```sh
-cd /Users/paxia/Projects/mame_latest/mame
 env SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
   M40_KEYS='\n' \
   M40_KEY_DELAY=28 \
   M40_POST_KEY_WAIT=5 \
   M40_DUMP_DIR=/tmp \
   M40_DUMP_SEGMENTS=00,01,1d,1e,21,3d \
-  ./mame m40 \
-  -flop '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/diagnostici l1 dcos 8.4/B.IMD' \
-  -autoboot_script /Users/paxia/Projects/L1_M30_M40/scripts/lua/mame_m40_dump_segments.lua \
+  "$M40_MAME_BIN" m40 -rompath runs/roms \
+  -flop 'reference/Disk Images (Stefano Marinelli + others)/diagnostici l1 dcos 8.4/B.IMD' \
+  -autoboot_script scripts/lua/mame_m40_dump_segments.lua \
   -seconds_to_run 90 -video none -sound none -nomouse -nothrottle
 ```
 

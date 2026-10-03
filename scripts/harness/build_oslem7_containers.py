@@ -3,10 +3,12 @@
 RTS/INIT containers. Usage: build_oslem7_containers.py OUT RTSNAME INITNAME
 (e.g. HE4R HE4I). Load segments/addresses are kept."""
 import struct, sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 from l1lib import Image
-OS = '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
+OS = str(ROOT) + '/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
 img = Image(OS)
 d = L1Disk(OS)
 t0 = bytearray(d.track0())

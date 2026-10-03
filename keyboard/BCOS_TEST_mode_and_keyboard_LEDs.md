@@ -24,7 +24,7 @@ these tests; changing them is not needed to enable TEST.
 
 ## Manual and traced software path
 
-`/Users/paxia/Downloads/000-040-corrected.pdf`:
+`000-040-corrected.pdf` (a scanned BCOS error reference, not in this repository):
 - PDF35: ERR.163 means `"TEST" presetting not active`.
 - PDF40, printed185: CONTROL + RUN activates TEST, LED L2 on.
 

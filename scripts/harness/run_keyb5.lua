@@ -1,3 +1,4 @@
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local done, started = false, nil
 local out = os.getenv("OUT")
@@ -11,4 +12,4 @@ emu.register_periodic(function()
     if f then f:close(); if not started then started = emu.time() end end
     if started and emu.time() > started + 3 then m.debugger:command("trace off"); started = 1e9 end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_descpatch_ext2.lua")
+dofile(HERE .. "run_descpatch_ext2.lua")

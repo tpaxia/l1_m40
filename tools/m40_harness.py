@@ -22,8 +22,12 @@ from typing import Iterable
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MAME_ROOT = Path("/Users/paxia/Projects/mame_latest/mame")
-DEFAULT_MAME_BIN = DEFAULT_MAME_ROOT / "mame"
+# The M40 MAME build: $M40_MAME_BIN, else mame_latest/mame/m40 next to this project.
+DEFAULT_MAME_BIN = Path(os.environ.get("M40_MAME_BIN")
+                        or REPO_ROOT.parent / "mame_latest" / "mame" / "m40")
+DEFAULT_MAME_ROOT = DEFAULT_MAME_BIN.parent
+# ROM folder for -rompath ($M40_ROMS, set by scripts/m40env.sh); unset = MAME's default.
+DEFAULT_ROMPATH = os.environ.get("M40_ROMS")
 DEFAULT_TRACE_SCRIPT = REPO_ROOT / "scripts" / "lua" / "mame_m40_diag_trace.lua"
 DEFAULT_DUMP_SCRIPT = REPO_ROOT / "scripts" / "lua" / "mame_m40_dump_segments.lua"
 DEFAULT_OUT_ROOT = REPO_ROOT / "runs"
@@ -281,6 +285,8 @@ def common_mame_args(args: argparse.Namespace, script: Path, seconds: int | None
         str(args.mame_bin),
         "m40",
     ]
+    if args.rompath:
+        cmd += ["-rompath", args.rompath]
     # Slot-fitting options (e.g. -fdc:0 8dsdd) must precede slot-dependent media
     # options like -flop1, so extra args go first.
     cmd.extend(args.mame_arg)
@@ -489,6 +495,7 @@ def cmd_disks(args: argparse.Namespace) -> int:
 def add_common_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mame-root", type=Path, default=DEFAULT_MAME_ROOT)
     parser.add_argument("--mame-bin", type=Path, default=DEFAULT_MAME_BIN)
+    parser.add_argument("--rompath", default=DEFAULT_ROMPATH, help="MAME ROM path (default: $M40_ROMS)")
     parser.add_argument("--disk", type=Path, default=diag_disk("B"))
     parser.add_argument("--diag", choices=list("ABCDEFGHR"), help="use diagnostic disk letter")
     parser.add_argument("--out-root", type=Path, default=DEFAULT_OUT_ROOT)

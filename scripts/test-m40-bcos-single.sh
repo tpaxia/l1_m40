@@ -2,6 +2,7 @@
 # One disposable K02733 image, no companion, bounded background boot.
 set -eu
 cd "$(dirname "$0")/.."
+M40_ROOT=$PWD; . scripts/m40env.sh
 mkdir -p runs
 case "${1:?specify fd0 or fd1}" in
   fd0) drive=-flop4 ;; # Historical argument: physical controller unit 0.
@@ -13,8 +14,8 @@ cp 'reference/Disk Images/K02733_BCOS_II_3.3_CONFIGURATOR.imd' "$run_dir/boot.im
 export SDL_MAC_BACKGROUND_APP=1 M40_SERIES_DIR="$run_dir"
 export BCOS_KEYPAD=1 BCOS_KBD_TRACE=1
 printf '%s\n' "$run_dir"
-exec /Users/paxia/Projects/mame_latest/mame/m40 m40 \
-  -rompath /Users/paxia/Projects/mame_latest/mame/roms \
+exec "$M40_MAME_BIN" m40 \
+  -rompath "$M40_ROMS" \
   "$drive" "$run_dir/boot.imd" -ram 2m \
   -nvram_directory "$run_dir/nvram" -cfg_directory "$run_dir/cfg" -snapshot_directory "$run_dir/snap" \
   -autoboot_script "${BCOS_BOOT_SCRIPT:-scripts/lua/mame_bcos_state.lua}" \

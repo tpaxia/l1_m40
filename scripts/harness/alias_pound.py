@@ -3,7 +3,9 @@
 not typeable at the OX prompt under MAME) to the same name with 'X'.
 Usage: alias_pound.py IMG_IN IMG_OUT NAME [NAME ...]   e.g. TOC# DKC#"""
 import sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 from l1lib import Image, directory_index, read_directory
 img = Image(sys.argv[1]); d = L1Disk(sys.argv[1])

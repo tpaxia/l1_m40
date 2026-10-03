@@ -851,7 +851,7 @@ configuration entries).
 
 - Obtain a later M40 UC ROM dump (then only a new BIOS entry is needed).
 - Emulate the M44 UC048 (M44 ROM plus the M34–M44 schematics in
-  `~/Projects/P6066/reference/…/L1/`).
+  the L1 reference collection of the separate P6066 project).
 - Add GO363 IPL support to MAME, modelled on the M44 ROM's
   `0x120A`/`0x1880` code; AGENTS.md requires hardware documentation first
   (`reference/ArchiviOlivetti/M30-M40_HDC.pdf` turned out to be an archive catalogue

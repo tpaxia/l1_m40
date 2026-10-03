@@ -4,9 +4,10 @@
 
 set -eu
 script_dir=$(cd "$(dirname "$0")" && pwd)
+M40_ROOT=$(cd "$script_dir/.." && pwd); . "$M40_ROOT/scripts/m40env.sh"
 
-mame_bin=${M40_MAME_BIN:-/Users/paxia/Projects/mame_latest/mame/m40}
-rom_path=${M40_ROMPATH:-/Users/paxia/Projects/mame_latest/mame/roms}
+mame_bin=$M40_MAME_BIN
+rom_path=${M40_ROMPATH:-$M40_ROMS}
 test_tmp=$(mktemp -d "${TMPDIR:-/tmp}/m40-ram-test.XXXXXX")
 
 run_mame()

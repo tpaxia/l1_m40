@@ -15,7 +15,7 @@ annotate freely and always re-verify against the silicon.
 - `Makefile` — `make verify` rebuilds both and `cmp`s against the originals.
 
 ## Toolchain
-Uses the **patched** `z8k-coff` binutils at `~/Projects/binutils-2.46.0` (same as
+Uses the **patched** `z8k-coff` binutils (a binutils 2.46.0 build with the `.long_addr` patch) (same as
 the M20 BIOS project). The patch adds the **`.long_addr`** directive, which forces
 long-form for the *next* segmented-address instruction — essential for round-trip,
 because stock `as` picks short form whenever the offset fits in 8 bits.

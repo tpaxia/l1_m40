@@ -1,5 +1,6 @@
 -- At BP_T set breakpoints at TRACE_AT (comma-separated hex, logical); when hit, start a CPU trace to
 -- trace.txt; stop it TRACE_LEN seconds later.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local t, done, started = tonumber(os.getenv("BP_T")), false, nil
 local out = os.getenv("OUT")
@@ -18,4 +19,4 @@ emu.register_periodic(function()
         m.debugger:command("trace off"); started = 1e9
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

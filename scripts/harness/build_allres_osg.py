@@ -7,11 +7,12 @@ header sector, data length). Entry 0 "RE33" holds the entry count. Modules go
 to the blank cylinder 74 (data index 3796..3847; 75-76 hold "@" fill) as header + data sectors.
 """
 import struct, sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 
-ROOT = '/Users/paxia/Projects/L1_M30_M40/'
-A = L1Disk(ROOT + 'reference/Disk Images/BCOS_II_3.3_FD_ALL_RESIDENT.imd')
+A = L1Disk(str(ROOT) + '/reference/Disk Images/BCOS_II_3.3_FD_ALL_RESIDENT.imd')
 K = L1Disk('/private/tmp/k02743-probe/boot.imd')
 MODS = {'OSG#': 0x2d6, 'OSG1': 0x2e5, 'OSG2': 0x2e6, 'OSG3': 0x2e7,
         'SMV#': 0x31c, 'SMV0': 0x31e, 'PMV0': 0x2fa, 'PMV1': 0x2fc,

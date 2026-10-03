@@ -1,17 +1,18 @@
 #!/bin/sh
 # usage: test-m40-hd.sh [bcos|mos|all]   (env M40_MAME_BIN, M40_UPDATE_EXPECTED=1)
-# Boots the published hard-disk systems from mame_disks on the patched hd65 ROM,
-# on disposable copies, and compares the final screen pixel by pixel with
-# scripts/expected/: BCOS II to /SYS (password A, date, time), MOS to the root
+# Boots the BCOS II and MOS hard-disk systems on the patched hd65 ROM, from
+# disposable copies of re/checkpoints/ (byte-identical to the images published
+# in mame_disks; M40_HD_BCOS / M40_HD_MOS select other images), and compares
+# the final screen pixel by pixel with scripts/expected/: BCOS II to /SYS (password A, date, time), MOS to the root
 # menu (login, date, time, login again). M40_UPDATE_EXPECTED=1 stores the
 # screens as the new references.
 set -eu
 cd "$(dirname "$0")/.."
+M40_ROOT=$PWD; . scripts/m40env.sh
 mkdir -p runs
 P=$PWD
-BIN=${M40_MAME_BIN:-/Users/paxia/Projects/mame_latest/mame/m40}
-DISKS=/Users/paxia/Projects/mame_disks/m40
-ROMPATH="$DISKS/roms/m40-hd65;/Users/paxia/Projects/mame_latest/mame/roms"
+BIN=$M40_MAME_BIN
+ROMPATH=$M40_ROMS_HD65
 NL='
 '
 status=0
@@ -43,13 +44,13 @@ EOF
 }
 
 case "${1:-all}" in
-  bcos|all) run bcos "$DISKS/m40-bcos-hd-kusa.chd" 300 \
+  bcos|all) run bcos "${M40_HD_BCOS:-$P/re/checkpoints/bcos-hd/hd-bcos-kusa.chd}" 300 \
       "200:=A;204:@Keypad ENTER;225:=860909;232:@Keypad ENTER;250:=120000;257:@Keypad ENTER" ;;
 esac
 case "${1:-all}" in
   # MOS asks for the date and time after the first login, then for the user
   # name again; "/" is the ANK key "? (29)".
-  mos|all) run mos "$DISKS/m40-mos-hd.chd" 480 \
+  mos|all) run mos "${M40_HD_MOS:-$P/re/checkpoints/mos-install/mos-hd-bootable.chd}" 480 \
       "203:=root$NL;262:=10;264:@? (29);266:=02;268:@? (29);270:=87;272:=$NL;280:=10;282:@? (29);284:=30;286:@? (29);288:=00;290:=$NL;402:=root$NL" ;;
   bcos) ;;
   *) echo "usage: $0 [bcos|mos|all]" >&2; exit 2 ;;

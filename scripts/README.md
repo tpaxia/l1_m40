@@ -6,11 +6,12 @@ folder under `runs/` (created if missing; git ignores it) with private NVRAM
 and settings; the original media are never written. Run them from anywhere,
 e.g. `sh scripts/test-m40-fdu.sh`. Each prints its run folder first.
 
-The scripts find the project folder from their own location. Paths outside
-the project are fixed to this machine: the MAME binary is
-`/Users/paxia/Projects/mame_latest/mame/m40` and the ROMs come from
-`/Users/paxia/Projects/mame_latest/mame/roms` (which must hold
-`m40/m40rom-6.0.bin` and the character generator `m40/9428ds-2067.bin`).
+The scripts find the project folder from their own location and share the
+settings in `m40env.sh`. The only thing outside the project is MAME:
+**`M40_MAME_BIN`** names a MAME binary built with the M40 driver (default:
+`mame_latest/mame/m40` next to the project folder). The ROMs come from
+`reference/roms/`: `m40env.sh` builds `runs/roms/` (stock REL 6.0) and
+`runs/roms-hd65/` (the hard-disk ROM) with the character generator, once.
 
 All scripts were last run against the current build on 2 October 2026.
 
@@ -56,7 +57,7 @@ The Lua observers read these; all are optional.
 | `BCOS_BOOT_SCRIPT`, `BCOS_BOOT_SECONDS`, `BCOS_SERIES_TIMES` | `boot-m40-bcos.sh`, `test-m40-bcos-single.sh` | Replace the observer script, the run length, the screenshot times |
 | `BCOS_GENERATED_SECONDS`, `BCOS_GENERATED_SWAP`, `BCOS_GENERATED_DIRECT_SWAP`, `BCOS_GENERATED_ISL2` | `test-m40-generated-boot.sh` | Run length and how the LOAD/RUN swap is done |
 | `M40_KEYS`, `M40_KEY_DELAY`, `M40_INTER_KEY_DELAY`, `M40_FINAL_SNAPSHOT`, `M40_FINAL_SNAPSHOT_TIME` | `scripts/lua/mame_m40_timed_keys.lua` (diagnostic tests) | Keys to type (`\n` = Enter, `{WAIT:n}` = pause n s) and a final screenshot |
-| `M40_KDC_BINARY` | `test-m40-generated-boot.sh`, `test-m40-kdc-bit4.sh`, `test-m40-keyte1-leds.sh` | Alternative MAME binary (for before/after runs) |
+| `M40_MAME_BIN` | every script, `tools/m40_harness.py` | The MAME binary with the M40 driver (default: `mame_latest/mame/m40` next to the project). Set it to an older build for before/after runs |
 
 ## Lua helpers (`lua/`)
 
@@ -81,8 +82,9 @@ are now regular test helpers.
 - `tools/m40_harness.py` (used by the UC3003 and floppy tests).
 - Disk images in `reference/Disk Images/` and `reference/Disk Images (Stefano Marinelli + others)/`
   (kept out of git: copy them in from the original archive),
-  and the generated BCOS media and keyboard disk in
-  `/Users/paxia/Projects/mame_latest/mame/flop/`.
+  and the IMD copies in `reference/images/` (also local; the keyboard disk
+  K02741 is used from there). The generated BCOS LOAD/RUN pair is in
+  `re/checkpoints/bcos-generated/`.
 - The hard-disk harnesses below use data that is still in the run archive
   (git-ignored, local only); see the next two sections.
 
@@ -104,7 +106,7 @@ MOS install, and the arbiter/DMA regression runs. Full reference in
 | `build_*.py`, `alias_pound.py` | Image surgery with `tools/l1disk.py`: write data sets onto a CHD, add modules and directory entries |
 | `run_*.lua` (others), `pcsample.lua` | Probes from the BCOS/OSLEM investigation: breakpoints, traces, segment dumps, PC histograms |
 
-The patched-ROM runs use `~/Projects/mame_disks/m40/roms/m40-hd65`. Saved
+The patched-ROM runs use `runs/roms-hd65/` (see the top of this page). Saved
 states and disk images are in `re/checkpoints/bcos-hd/`; new runs go to `runs/`.
 `build_k02743_fmd.py`, `build_allres_osg.py` and the `build_oslem7_*` scripts
 also read a K02743 boot image from `/private/tmp/k02743-probe/`, which no

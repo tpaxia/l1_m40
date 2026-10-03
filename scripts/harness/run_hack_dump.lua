@@ -1,4 +1,5 @@
 -- run_oslem7_hack.lua (oslem7+ hack stack) plus segment dumps at DUMP_T.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local done = false
@@ -13,4 +14,4 @@ emu.register_frame_done(function()
         f:close()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_oslem7_hack.lua")
+dofile(HERE .. "run_oslem7_hack.lua")

@@ -176,7 +176,7 @@ at90hex: executable BASIC plus OCL parameter-dialog module. Copying only
 the BASIC entry is not the documented complete interactive utility.
 No modules have been copied to RUN; external-library launch remains unsolved.
 
-New scanned error reference /Users/paxia/Downloads/000-040-corrected.pdf,
+New scanned error reference `000-040-corrected.pdf` (not in this repository),
 PDF35: ERR.163 = '"TEST" presetting not active', action TEST + RUN.
 This supplies the documented meaning missing from earlier BASIC notes;
 the physical control/sequence that sets it has not yet been verified.

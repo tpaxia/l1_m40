@@ -15,10 +15,12 @@ Layout evidence (all from the disks, see OSLEM_STATUS.md trial-restore notes):
   field is data sectors + 1.
 """
 import struct, sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 
-D = '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/'
+D = str(ROOT) + '/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/'
 raw_in, raw_out = sys.argv[1], sys.argv[2]
 MNR = int(sys.argv[3], 16) if len(sys.argv) > 3 else 0x3EA00
 

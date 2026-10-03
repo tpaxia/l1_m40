@@ -15,7 +15,7 @@ MAME maps a PC keyboard onto it, the generated key maps, and photographs.
 
 | Document | What it covers |
 |---|---|
-| [M40_8049_KEYBOARD.md](M40_8049_KEYBOARD.md) | The keyboard's 8049 firmware: commands, replies, scanning, LEDs. The ROM image is `../reference/roms/80491402.MCU`; its annotated source is in `~/Projects/M20/PCOS/src/KeyBoard/M40/` |
+| [M40_8049_KEYBOARD.md](M40_8049_KEYBOARD.md) | The keyboard's 8049 firmware: commands, replies, scanning, LEDs. The ROM image is `../reference/roms/80491402.MCU`; its annotated source is `PCOS/src/KeyBoard/M40/` in the separate M20 project |
 | [GO252_keyboard_reverse_engineering.md](GO252_keyboard_reverse_engineering.md) | The keyboard port on the GO252 video/keyboard board, from the ROM and diagnostics |
 | [GO252_keyboard_scancodes.md](GO252_keyboard_scancodes.md) | The full scancode map |
 | [ANK_key_switch_protocol.md](ANK_key_switch_protocol.md) | The three key-operated switches: firmware behaviour and the KEYTE1 diagnostic |

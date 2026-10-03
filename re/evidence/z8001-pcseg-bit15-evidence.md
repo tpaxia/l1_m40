@@ -27,7 +27,7 @@ So the manual does not support a constant 1 in bit 31 for LDAR. It says 0.
 ## Measurement on the physical part
 
 The manual's "cleared to zero" is not what the part does either. Captures on
-the physical Z8001 rig (`~/Projects/Z8000_FPGA/z8000_test`, branch
+the physical Z8001 rig (the `z8000_test` rig of the separate Z8000_FPGA project, branch
 `pcseg-bit15-tests`, goldens in `golden/z8001-seg/`, tests 38-48 in
 `tests/gen_segmented.py`):
 

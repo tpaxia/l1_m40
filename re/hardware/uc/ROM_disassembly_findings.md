@@ -1,7 +1,7 @@
 # M30/M40 ROM — Disassembly Findings (pass 1)
 
 Disassembled with a local driver over the MAME-based Z8000 library at
-`~/Projects/M20/PCOS/z8kdis` (generic Z8000, **Z8001 segmented mode** — not
+the z8kdis library (`PCOS/z8kdis` in the separate M20 project; generic Z8000, **Z8001 segmented mode** — not
 PCOS-specific). Driver: `tools/z8kdisrom.cpp`. Listings: `re/disassembly/m40-rom/m40rom-4.1.asm`,
 `re/disassembly/m40-rom/m40rom-6.0.asm`. ROMs are `REL 4.1` (8 KB) and `REL 6.0` (16 KB), both
 banner-dated *17 DEC 82*. (The manual's "ROM 151/152" is a board-generation label
@@ -10,8 +10,8 @@ from the date, not confirmed.)
 
 Rebuild / regenerate:
 ```sh
-c++ -std=c++17 -O2 -I ~/Projects/M20/PCOS/z8kdis tools/z8kdisrom.cpp \
-    -L ~/Projects/M20/PCOS/z8kdis -lz8kdis -o tools/z8kdisrom
+c++ -std=c++17 -O2 -I "$Z8KDIS" tools/z8kdisrom.cpp \
+    -L "$Z8KDIS" -lz8kdis -o tools/z8kdisrom
 ./tools/z8kdisrom reference/roms/m40rom-4.1 0x106 0x1fac > re/disassembly/m40-rom/m40rom-4.1.asm
 ```
 

@@ -7,6 +7,7 @@
 --     request +0x84 == 0, use length LIMIT (register only). v2 used 0x0F08
 --     (ff1 only); v3 default 0x7FFF covers data sets FF and 80 (OSLEM_STATUS 1F).
 -- Polling starts at 73 s (reading guest memory during ROM start-up breaks the boot).
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local ds = m.devices[":cpu:uc042:maincpu"].spaces["data"]
 local f = io.open(os.getenv("OUT") .. "/patch.txt", "w")
@@ -22,4 +23,4 @@ emu.register_frame_done(function()
         f:write(string.format("t=%.4f unit3 0901->0801 (#%d)\n", emu.time(), n)); f:flush()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

@@ -1,4 +1,5 @@
 -- run_keys.lua plus a PC histogram between PC_FROM and PC_TO seconds (pcs.txt).
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local t0, t1 = tonumber(os.getenv("PC_FROM") or "0"), tonumber(os.getenv("PC_TO") or "0")
@@ -16,4 +17,4 @@ emu.register_periodic(function()
         f:close()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

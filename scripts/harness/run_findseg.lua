@@ -1,4 +1,5 @@
 -- At FIND_T, list segments whose offset 0 holds a module header named FIND (4 chars).
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local t, name, done = tonumber(os.getenv("FIND_T")), os.getenv("FIND"), false
@@ -15,4 +16,4 @@ emu.register_frame_done(function()
     end
     f:close()
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

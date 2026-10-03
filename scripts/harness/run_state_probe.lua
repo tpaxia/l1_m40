@@ -1,5 +1,6 @@
 -- Runs after a -state load: arms hack v3 + PROBE debugger commands ('|'-separated)
 -- once the restored machine time is past 73 s, then runs run_keys.lua.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local armed = false
 emu.register_frame_done(function()
@@ -13,4 +14,4 @@ emu.register_frame_done(function()
         m.debugger:command(c)
     end
 end)
-dofile(os.getenv("RUN_KEYS") or "/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(os.getenv("RUN_KEYS") or HERE .. "run_keys.lua")

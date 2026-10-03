@@ -1,4 +1,5 @@
 -- Time-window CPU trace: trace to OUT/trace.txt between TR_FROM and TR_TO seconds.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local a, b = tonumber(os.getenv("TR_FROM")), tonumber(os.getenv("TR_TO"))
 local state = 0
@@ -10,4 +11,4 @@ emu.register_periodic(function()
         m.debugger:command("trace off"); state = 2
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

@@ -17,7 +17,7 @@ taught it.
   datasheet (`doc/GO363_DCOS_RECOVERY.md`).
 - When a manual is ambiguous or wrong, measure the real chip. The Z8001
   PC-segment bit 15 was settled on the physical Z8001 test rig
-  (`~/Projects/Z8000_FPGA/z8000_test`), not from the Zilog manual, which says
+  (the `z8000_test` rig of the separate Z8000_FPGA project), not from the Zilog manual, which says
   the opposite of what the part does (`re/evidence/z8001-pcseg-bit15-evidence.md`).
 - Label anything that rests on a single source as provisional.
 

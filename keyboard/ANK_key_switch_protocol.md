@@ -6,7 +6,7 @@ The ANK1402 8049 firmware reports these controls separately from auxiliary
 make/break codes 6A–70 / 72–78. The earlier suggestion that the six rotary
 contacts belonged to that auxiliary group was incorrect.
 
-Firmware source: `/Users/paxia/Projects/M20/PCOS/src/KeyBoard/M40/m40_8049.s`.
+Firmware source: `PCOS/src/KeyBoard/M40/m40_8049.s` in the separate M20 project (annotated 8049 disassembly).
 
 - 0363–0371 selects BUS=00, samples P2, forces bits 7–6 high, and saves
   the result in RAM 13 (SAVED1).

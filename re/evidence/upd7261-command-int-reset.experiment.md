@@ -29,7 +29,7 @@ this mode.
 External source:
 
 ```text
-/Users/paxia/Projects/mame_latest/mame/src/devices/machine/upd7261.cpp
+src/devices/machine/upd7261.cpp (MAME tree)
 ```
 
 In `upd7261_device::command_w`, disk-command acceptance currently executes:

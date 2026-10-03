@@ -3,6 +3,7 @@
 -- skips the logical-unit check. Logs to OUT/patch.txt. Polling starts at
 -- POLL_FROM (default 73 s): reading guest memory during ROM start-up raises
 -- bus NMIs (unpopulated addresses) and breaks the boot.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local ds = m.devices[":cpu:uc042:maincpu"].spaces["data"]
 local a = tonumber(os.getenv("DESC"), 16)
@@ -18,4 +19,4 @@ emu.register_frame_done(function()
             ds:read_u8(a), ds:read_u8(a + 1), ds:read_u8(a + 2), ds:read_u8(a + 3))); f:flush()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

@@ -5,8 +5,8 @@ patched hard-disk boot ROM, floppy-image inspection, and the diagnostic-disk
 harness. Run them from the project root.
 
 Outside the project they need the patched z8k-coff binutils
-(`~/Projects/binutils-2.46.0`) for the ROM builds, the
-`~/Projects/M20/PCOS/z8kdis` library for `z8kdisrom`, and MAME for the harness.
+(a binutils 2.46.0 build with the `.long_addr` patch) for the ROM builds, the
+z8kdis library (`PCOS/z8kdis` in the separate M20 project, `$Z8KDIS` below) for `z8kdisrom`, and MAME for the harness.
 The diagnostic and OS disk images under `reference/` are kept out of git.
 The harness writes its run folders to `runs/` (git-ignored).
 
@@ -18,11 +18,11 @@ real images.
 
 | Tool | Use |
 |---|---|
-| `mkasm.py ROM OUT.s` | Generate a round-trippable Z8001 disassembly of an M40 ROM. The `.s` reassembles (patched z8k-coff binutils, `~/Projects/binutils-2.46.0`) to the original bytes |
+| `mkasm.py ROM OUT.s` | Generate a round-trippable Z8001 disassembly of an M40 ROM. The `.s` reassembles (patched z8k-coff binutils) to the original bytes |
 | `annotate_baa.py`, `annotate_tests.py`, `annotate_slotscan.py`, `annotate_ramsize.py`, `annotate_memtest.py`, `annotate_ipl.py`, `annotate_fdu.py` | Insert the comments for one region each of `re/disassembly/m40-rom/m40rom-4.1.s` (console/video, self-tests, slot scans, RAM sizing, memory test, IPL, floppy boot). Annotations live in these scripts, not in hand edits to the `.s` |
 | `rebuild.sh` | Regenerate `re/disassembly/m40-rom/m40rom-4.1.s` and `re/disassembly/m40-rom/m40rom-6.0.s` from `reference/roms/`, apply every annotation pass, then `make verify` in `re/` (expects `IDENTICAL` for both) |
 | `annotate_boot.py` | Annotate `re/disassembly/dcos-bootloader/boot.s`, the first-stage loader on the DCOS diagnostic disks; run by `make regen` in that folder |
-| `z8kdisrom ROM [start] [end]` | Linear Z8001 disassembly of a ROM range, for quick looks. Build: `c++ -std=c++17 -O2 -I ~/Projects/M20/PCOS/z8kdis tools/z8kdisrom.cpp -L ~/Projects/M20/PCOS/z8kdis -lz8kdis -o tools/z8kdisrom` |
+| `z8kdisrom ROM [start] [end]` | Linear Z8001 disassembly of a ROM range, for quick looks. Build: `c++ -std=c++17 -O2 -I "$Z8KDIS" tools/z8kdisrom.cpp -L "$Z8KDIS" -lz8kdis -o tools/z8kdisrom` |
 
 ## Patched GO363 boot ROM
 

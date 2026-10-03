@@ -4,10 +4,12 @@ replaced by K02743's versions (default FF#R from HDIR into H65R).
 Usage: build_oslem7_ffr.py OUT [SUB ...]   e.g. FF#R FF#I
 The sub-module span (to the next sub-module) must fit; the rest is zeroed."""
 import sys
-sys.path.insert(0, '/Users/paxia/Projects/L1_M30_M40/tools')
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]   # the project folder
+sys.path.insert(0, str(ROOT / 'tools'))
 from l1disk import L1Disk
 from l1lib import Image
-OS = '/Users/paxia/Projects/L1_M30_M40/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
+OS = str(ROOT) + '/reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/oslem7+.imd'
 KP = '/private/tmp/k02743-probe/boot.imd'
 o, k = Image(OS), Image(KP)
 d = L1Disk(OS)

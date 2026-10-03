@@ -207,7 +207,7 @@ Earlier E0xx run form:
 
 ```sh
 python3 tools/m40_harness.py run \
-  --mame-bin /Users/paxia/Projects/mame_latest/mame/olivetti \
+  --mame-bin "$M40_MAME_BIN" \
   --disk 'reference/Disk Images (Stefano Marinelli + others)/Ese L1/MDOS30.IMD' \
   --name mdos30-post-fixes --seconds 240 --vram-trace --fdu-trace   # options since removed
 ```

@@ -6,7 +6,8 @@
 # machine state is saved as NAME and the work disks are snapshotted; both go to
 # the checkpoint store re/checkpoints/mos-install/ (sta/m40/, snap/NAME/).
 set -eu
-P=/Users/paxia/Projects/L1_M30_M40; R=$P/scripts/harness; D=$P/re/checkpoints/mos-install; W=$P/runs/mos-install
+M40_ROOT=$(cd "$(dirname "$0")/../.." && pwd); . "$M40_ROOT/scripts/m40env.sh"
+P=$M40_ROOT; R=$P/scripts/harness; D=$P/re/checkpoints/mos-install; W=$P/runs/mos-install
 name=$1; from=${2:-}
 rm -rf "$W/out/$name"; mkdir -p "$W/work" "$D/sta/m40" "$D/snap" "$W/out/$name"
 if [ -n "$from" ]; then
@@ -23,7 +24,7 @@ export OUT="$W/out/$name" SHOT_STEP=${SHOT_STEP:-20} RUN_SECONDS=${UNTIL:?} ISL=
 export SAVE_T=$((UNTIL - 1)) SAVE_NAME=$name INNER=$R/run_keys.lua
 export SDL_MAC_BACKGROUND_APP=1 SDL_VIDEODRIVER=dummy
 cd "$OUT"
-/Users/paxia/Projects/mame_latest/mame/m40 m40 -rompath /Users/paxia/Projects/mame_latest/mame/roms \
+"$M40_MAME_BIN" m40 -rompath "$M40_ROMS" \
   -slot5 go363 -hard1 "$W/work/hd.chd" -flop1 "$W/work/${FLOP:-starter.imd}" -ram 2m \
   -nvram_directory "$W/nvram" -cfg_directory "$W/cfg" -state_directory "$D/sta" $state \
   -autoboot_script "$R/run_savestate.lua" -video none -sound none -nothrottle -log \

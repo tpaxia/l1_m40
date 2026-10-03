@@ -1,6 +1,7 @@
 -- Once the kernel pointer 00:00A8 is set, locate the logical-unit table
 -- (word [A8]+6) and log all writes to units 0..7 (data space), plus a
 -- snapshot of units 0..7 every second.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local ds = cpu.spaces["data"]
@@ -25,4 +26,4 @@ emu.register_frame_done(function()
         out:write(s .. "\n"); out:flush()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

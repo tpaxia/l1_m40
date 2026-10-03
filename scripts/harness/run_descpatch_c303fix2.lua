@@ -1,3 +1,4 @@
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local done = false
 emu.register_frame_done(function()
@@ -10,4 +11,4 @@ emu.register_frame_done(function()
     m.debugger:command('bpset 0x210b9c,1,{printf "RET r0=%04X\\n",r0; g}')
     m.debugger:command('wpiset 0x201f,1,w,1,{printf "FDCW %02X\\n",wpdata&ff; g}')
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_descpatch.lua")
+dofile(HERE .. "run_descpatch.lua")

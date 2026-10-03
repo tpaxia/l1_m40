@@ -73,7 +73,7 @@ K02737 must not be described as a proven run-time companion.
 
 ## Exact no-key baseline command
 
-Run from `/Users/paxia/Projects/L1_M30_M40`:
+Run from the project folder, with `M40_MAME_BIN` set to the M40 MAME build:
 
 `re/os/bcos/leftovers/mame_m40_snapshot.lua` has been removed; recover it with
 `git show re-leftovers-archive:re/os/bcos/leftovers/mame_m40_snapshot.lua`.
@@ -84,11 +84,11 @@ mkdir -p runs-archive/k02733-baseline/nvram
 SDL_MAC_BACKGROUND_APP=1 \
 M40_SNAPSHOT_DELAY=60 \
 M40_SNAPSHOT_SETTLE=30 \
-M40_SNAPSHOT=/Users/paxia/Projects/L1_M30_M40/runs-archive/k02733-baseline/screen.png \
-M40_SNAPSHOT_STATE=/Users/paxia/Projects/L1_M30_M40/runs-archive/k02733-baseline/state.txt \
-M40_FDU_TRACE=/Users/paxia/Projects/L1_M30_M40/runs-archive/k02733-baseline/fdu.log \
-/Users/paxia/Projects/mame_latest/mame/m40 m40 \
-  -rompath /Users/paxia/Projects/mame_latest/mame/roms \
+M40_SNAPSHOT=$PWD/runs-archive/k02733-baseline/screen.png \
+M40_SNAPSHOT_STATE=$PWD/runs-archive/k02733-baseline/state.txt \
+M40_FDU_TRACE=$PWD/runs-archive/k02733-baseline/fdu.log \
+"$M40_MAME_BIN" m40 \
+  -rompath runs/roms \
   -flop1 'reference/Disk Images/K02737_BCOS_II_3.3.imd' \
   -flop2 'reference/Disk Images/K02733_BCOS_II_3.3_CONFIGURATOR.imd' \
   -autoboot_script re/os/bcos/leftovers/mame_m40_snapshot.lua \
@@ -147,7 +147,7 @@ each input state across two input-update intervals.  For keypad verification als
 set an absolute debug path:
 
 ```sh
-M40_SNAPSHOT_INPUT_DEBUG=/Users/paxia/Projects/L1_M30_M40/runs-archive/k02733-key/input.txt
+M40_SNAPSHOT_INPUT_DEBUG=$PWD/runs-archive/k02733-key/input.txt
 ```
 
 `M40_SNAPSHOT_FORCE_KBD_START=1` is a deliberately intrusive experiment: just

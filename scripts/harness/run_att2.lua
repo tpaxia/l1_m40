@@ -1,4 +1,5 @@
 -- As run_att.lua, but on the first ATTNAME hit dump segment 0x26 program space and the stack.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local watch_t = tonumber(os.getenv("WATCH_T") or "0")
 local armed = false
@@ -24,4 +25,4 @@ emu.register_frame_done(function()
         g:close()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

@@ -1,4 +1,5 @@
 -- Dump program-space segments DUMP_SEGS (comma hex list) at DUMP_T to OUT/segXX.bin.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local done = false
@@ -13,4 +14,4 @@ emu.register_frame_done(function()
         f:close()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

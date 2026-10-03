@@ -1,5 +1,6 @@
 -- run_keys.lua plus: at WATCH_T arm read watchpoints on the attention/error program
 -- names (00:010E, 00:0116) and log pc/regs to debug output.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local watch_t = tonumber(os.getenv("WATCH_T") or "0")
 local armed = false
@@ -11,4 +12,4 @@ emu.register_frame_done(function()
         m.debugger:command('wpdset 0x0116,4,r,1,{printf "ERRNAME pc=%06X addr=%06X data=%04X\\n",pc,wpaddr,wpdata; g}')
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_keys.lua")
+dofile(HERE .. "run_keys.lua")

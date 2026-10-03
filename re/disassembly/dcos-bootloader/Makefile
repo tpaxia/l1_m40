@@ -1,6 +1,6 @@
 # Round-trip the SYS0 first-stage bootloader (track 0 of an L1 DCOS 8.4 diag
 # disk) to a byte-identical image, then annotate. Requires the patched z8k-coff
-# binutils (adds .long_addr; ~/Projects/binutils-2.46.0).
+# binutils (adds .long_addr; a patched binutils 2.46.0 build).
 AS      = z8k-coff-as
 LD      = z8k-coff-ld
 OBJCOPY = z8k-coff-objcopy

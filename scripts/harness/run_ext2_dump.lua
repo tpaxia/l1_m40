@@ -1,4 +1,5 @@
 -- run_descpatch_ext2.lua (oslem7+ hack stack) plus segment dumps at DUMP_T.
+local HERE = debug.getinfo(1, "S").source:match("^@(.*/)") or ""
 local m = manager.machine
 local cpu = m.devices[":cpu:uc042:maincpu"]
 local done = false
@@ -13,4 +14,4 @@ emu.register_frame_done(function()
         f:close()
     end
 end)
-dofile("/Users/paxia/Projects/L1_M30_M40/scripts/harness/run_descpatch_ext2.lua")
+dofile(HERE .. "run_descpatch_ext2.lua")

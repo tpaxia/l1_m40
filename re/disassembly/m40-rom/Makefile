@@ -1,5 +1,5 @@
 # Reassemble the M30/M40 ROM disassemblies to byte-identical binaries.
-# Requires the patched z8k-coff binutils (adds .long_addr; ~/Projects/binutils-2.46.0).
+# Requires the patched z8k-coff binutils (adds .long_addr; a patched binutils 2.46.0 build).
 AS      = z8k-coff-as
 LD      = z8k-coff-ld
 OBJCOPY = z8k-coff-objcopy
