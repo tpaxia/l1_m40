@@ -15,14 +15,14 @@ manual extracts, and tests in MAME.
 | [UC3003_NVI.md](uc/UC3003_NVI.md) | UC3003 test 5, the non-vectored interrupt | Current |
 | [UCY805_bus_arbiter.md](uc/UCY805_bus_arbiter.md) | The bus-arbiter test and the MB15652 register model | Historical (superseded in part by `UC3003_NVI.md`) |
 | [M40_REGISTER_CONSTANTS_AUDIT.md](uc/M40_REGISTER_CONSTANTS_AUDIT.md) | Audit of the register constants in the driver source (15 September) | Historical |
-| [M40_bus_slot_configuration_design.md](uc/M40_bus_slot_configuration_design.md) | Proposed MAME card-cage design for other UC and board combinations | Proposal, partly implemented by the slot options |
+| [M40_bus_slot_configuration_design.md](uc/M40_bus_slot_configuration_design.md) | MAME card-cage design: cage positions, slot cards, interrupt and DMA priority by position | The structural part is implemented (its "Current implementation status"); other UC boards and an M30 machine are not |
 
 ## `go252/`: video and keyboard board
 
 | Note | Contents | Status |
 |---|---|---|
 | [GO252_KDC_diagnostics.md](go252/GO252_KDC_diagnostics.md) | Board photos, ROM anchors, the disk-B video and keyboard programs | Current |
-| [CRTAN5_video_test.md](go252/CRTAN5_video_test.md) | CRTAN5, the video, character and attribute test | Current |
+| [CRTAN5_video_test.md](go252/CRTAN5_video_test.md) | CRTAN5, the video, character and attribute test | Current for the test's structure; a note at the top lists what changed since (attributes, dumped character ROM) |
 | [GO252_BIT4_ABLATION.md](go252/GO252_BIT4_ABLATION.md) | Proof that the old control-bit-4 keyboard workaround was unnecessary (15 September) | Historical |
 
 The keyboard itself is documented in [`../../keyboard/`](../../keyboard/README.md).
@@ -39,6 +39,6 @@ The keyboard itself is documented in [`../../keyboard/`](../../keyboard/README.m
 
 | Note | Contents | Status |
 |---|---|---|
-| [GO363_HDC5_diagnostics.md](go363/GO363_HDC5_diagnostics.md) | The disk-G hard-disk programs (HDC505, HDC5F5, HDC5X3, Standard 24) and the board protocol they show | Current; summarised in `doc/GO363_DCOS_RECOVERY.md` |
+| [GO363_HDC5_diagnostics.md](go363/GO363_HDC5_diagnostics.md) | The disk-G hard-disk programs (HDC505, HDC5F5, HDC5X3, Standard 24) and the board protocol they show | Investigation record, opening with its conclusions; the protocol is in `doc/GO363_DCOS_RECOVERY.md` |
 | [GO363_DOCUMENTATION.md](go363/GO363_DOCUMENTATION.md) | What the Olivetti documents say about the GO363 and Standard 24, and where they stop | Current |
 | [upd7261_GROUND_TRUTH.md](go363/upd7261_GROUND_TRUTH.md) | MAME already has a uPD7261 device; what it does, how MG-1 wires it, and the GO363 gate-array command protocol (16 July) | Historical; the protocol is current in `doc/GO363_DCOS_RECOVERY.md` |

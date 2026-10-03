@@ -24,7 +24,7 @@ section 9.
 | `hd-bcos-kusa.chd`, `hd.chd` | The installed disk (`hd.chd` is the one in OSLEM_STATUS step 10 / Issue 2) |
 | `oslem7.imd`, `ff1.imd`, `ff2.imd`, `80-1.imd` … `80-4.imd` | Working copies of the OSLEM 7+ boot floppy and the data-set floppies used by the install |
 | `oslem7_keymap.txt`, `kita_keymap.txt` | The active OSLEM 7+ and Italian keymaps |
-| `bcos-base/` | `hd.chd` + states `bcos-sys` (BCOS II at `/SYS`, 300 s), `bcos-cos`, `bcos-cos-ky` (configurator keyboard page) |
+| `bcos-base/` | `hd.chd` + states `bcos-sys` (BCOS II at `/SYS`, 300 s), `bcos-cos-ky` (the `COS#` utility on its keyboard record page, used by `cos_try.sh`) and `bcos-cos` (undocumented; by its name, `COS#` before that page) |
 | `base02/` | `hd.chd`, `ff1.imd` + state `mount02` (272 s, DKC£ FF at `MOUNT INPUT DISK NR. 02`) |
 | `base03/` | `hd.chd` + state `ffdone` (325 s, FF copied, `END OF PROGRAM`) |
 
@@ -40,7 +40,7 @@ state and disk snapshot here.
 |---|---|
 | `wren2-formatted-hdc5f5.chd` | The WREN2 formatted by HDC5F5: the cold-start disk |
 | `starter.imd` | Working copy of the MOS ST506 starter |
-| `sta/m40/s0-date.sta` … `s9-down.sta` | One state per install stage (date, time, menu, `/SYS`, each DPC_ALLES volume, user setup, shutdown) |
+| `sta/m40/s0-date.sta` … `s9-down.sta` | One state per install stage: date, time, install menu, SYS_INSTALL, the DPC_ALLES prompt and each of its seven volumes, USR_INSTALL, CHM_INSTALL, shutdown |
 | `snap/<stage>/` | The disks (`hd.chd`, `starter.imd`, `dpc71.imd` … `dpc77.imd`) at each stage |
 | `mos-hd-installed.chd`, `mos-hd-bootable.chd` | The installed disk, and the same with the LDHSEL loader added (the image published in `mame_disks` as `m40-mos-hd.chd`) |
-| `hd/sta/m40/*.sta`, `hd/<name>/hd.chd` | States and disks from booting the installed system: `h0-login` … `h6-down` (login as `root`, shell, MCL, shutdown) and `t1` … `t6` |
+| `hd/sta/m40/*.sta`, `hd/<name>/hd.chd` | States and disks from booting the installed system: `h0-login` (login prompt), `h1a`–`h2-root` (user name), `h3-shell` (date and time), `h4-in` (root menu), `h5-mcl` (MCL), `h6-down` (logout and shutdown); `t1`–`t6` are MCL sessions (`ls /ipl`, `ls /ipl/dpc`, `pry`, `shdate`, `who`, `mkdir`, `copy`) used to list the installed software |

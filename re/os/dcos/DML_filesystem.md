@@ -1,7 +1,7 @@
 # L1 DCOS 8.4 diagnostic disk — "DML" filesystem / test library (RE notes)
 
 Working notes on the on-disk structure of the L1 diagnostic disks (disk A analysed;
-DCOS 8.4). Gitignored. Coordinates are byte offsets into the *concatenated-sector
+DCOS 8.4). Coordinates are byte offsets into the *concatenated-sector
 image* produced by `tools/imd.py extract` (track 0 = 26×128B, tracks 1+ = 26×256B).
 
 ## Volume layout (track 0)

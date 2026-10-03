@@ -12,7 +12,7 @@ For running them, see the published guide in
 
 | Note | Contents | Status |
 |---|---|---|
-| [BCOS_BOOT.md](bcos/BCOS_BOOT.md) | The working BCOS II 3.3 sequence from the K02733 configurator: date, `/SYS`, the SYS generator | Current |
+| [BCOS_BOOT.md](bcos/BCOS_BOOT.md) | The working BCOS II 3.3 sequence from the K02733 configurator: date, `/SYS`, the SYS generator; drive numbering, key switches, LOAD/RUN media change | Sequence current; key bindings in the body date from September (the header gives today's) |
 | [BCOS_boot_reverse_engineering.md](bcos/BCOS_boot_reverse_engineering.md) | How BCOS boots: loader, scheduler, keyboard and floppy paths | Current up to 10 September |
 | [K02733_BCOS_headless_boot.md](bcos/K02733_BCOS_headless_boot.md) | A reproducible unattended K02733 boot on macOS | Historical |
 | [BCOS_DEBUG_LEDGER.md](bcos/BCOS_DEBUG_LEDGER.md) | Log of every BCOS debugging step and instrument, July to September | Historical |

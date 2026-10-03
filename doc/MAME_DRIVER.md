@@ -545,9 +545,13 @@ instructions describe the pre-cleanup build. **[EMU]**
   HDC505 fails test 2, "generate interrupt and test vectors": `'STATUS' ERROR AFTER
   RUN-COMMAND`, `UNSE0`, `SKEN0` and `UPR00` stuck at 1, with a blank or a formatted
   disk ([screen](../re/evidence/screenshots/hdc505-20261003-test2-failure.png)).
-  On 20 September tests 1–3 passed and test 4 stopped at step 3. The GO363 changes
-  since then (`2eef3161383`, `f7144257e16`) are the candidates; HDC5F5, Standard 24
-  and the BCOS and MOS hard-disk systems work.
+  On 20 September (`576ccea57ec`) tests 1–3 passed and test 4 stopped at step 3,
+  with the same disk G, blank disk image and keystrokes. The saved binaries from
+  1 October (`m40.pre-pcseg`, before any October change) and 2 October
+  (`m40.pre-arb`) fail test 2 identically, and so does the current build with the
+  IPL switch on floppy. The failure therefore came in with the commits of 21–26
+  September: `7679be9ad48` (keyboard only), `2eef3161383` or `f7144257e16`
+  (GO363/uPD7261). HDC5F5, Standard 24 and the BCOS and MOS hard-disk systems work.
 - GO280 collapses the FUMEO no-READY timeout to an immediate missing-responder fault;
   RAM parity/PERRO and the exact DAW02 diagnostic waveform are not modeled. The
   external MASKO/IDXC0 index mux is also pending; channel 2 receives its documented
@@ -565,16 +569,20 @@ make SUBTARGET=m40 SOURCES=src/mame/olivetti/m40.cpp \
 
 How the branch got to its present form:
 
-- **14 September 2026.** The MAME UI toggle was moved off Scroll Lock, which
-  Windows users need; the published commands now use `-uimodekey F12 -ctrlr m40-ui`
+- **14 September 2026.** The MAME UI toggle was standardised on Scroll Lock
+  (MAME's Windows default, set explicitly with `-uimodekey SCRLOCK` on macOS) and
+  the host-keymap test was extended to check it. It was later replaced by F12 and
+  the `m40-ui` controller profile, which the published commands now use
   ([installation/M40_UI_CONTROLS.md](../installation/M40_UI_CONTROLS.md)).
 - **15 September.** The branch (`olivetti_m40`) was rebased onto mamedev master;
   all 51 commits replayed unchanged. Upstream had turned the RAM device into a
   slot, so `-ramsize 2048K` became `-ram 2m` (§2). The experimental GO363 was split
   into its own branch, `olivetti_m40_hd`. Three `invalidate_caches()` calls on MMU
   mode writes were removed: MAME's memory-access cache holds handler lookups, not
-  Z8010 translations, and the M40 handlers translate on every access. The keyboard
-  map, RAM configurations and BCOS boots were regression-tested after each step.
+  Z8010 translations, and the M40 handlers translate on every access. After the
+  rebase the keyboard map, the RAM configurations and a BCOS boot were retested,
+  and after the cache change UC3003 and two BCOS boots; the HD split was only
+  build-checked.
 - **20 September.** GO363 was ported onto `m40_z8010_sup_test`, the branch with the
   current Z8010 bus-cycle model, as an ordinary L1 slot card (`-slot5 go363`).
   ESE and BCOS II regressions were unchanged. On this build HDC505 stopped at

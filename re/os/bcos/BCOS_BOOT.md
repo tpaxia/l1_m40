@@ -2,9 +2,10 @@
 
 For current user-facing Windows instructions, use
 [M40 Windows: configuration through BASIC](https://github.com/tpaxia/mame_disks/blob/main/m40/BCOS_WINDOWS_BASIC.md).
-That guide supersedes historical F8/UI-toggle and pre-reorder drive mappings
-in this investigation log. Current BCOS RUN is **PC F12**, TEST is
-**left Ctrl+F12**, and the documented UI toggle is **Scroll Lock**.
+That guide supersedes the key and drive mappings recorded below, which date
+from September 2026. With the current `m40-ui` profile, BCOS RUN is **F8**, TEST
+is **Ctrl+F8**, and **F12** toggles the MAME UI controls
+([installation/M40_UI_CONTROLS.md](../../../installation/M40_UI_CONTROLS.md)).
 
 ## Key-operated switches (2026-09-11)
 

@@ -1,5 +1,12 @@
 # CRTAN5 (011) — video / character / attribute test
 
+> October 2026: the renderer excerpt and the font sections below predate two
+> changes. Attribute rendering is implemented ("Attribute rendering —
+> IMPLEMENTED" below), and the GI 9428DS-2067 character ROM has been dumped and
+> drives the display, so the CRT ROM PATTERN step now shows all 256 codes
+> (`re/evidence/go252-chargen-evidence.md`). TEST1's automatic video-type check
+> still reports `UNIDENTIFIED ERROR` (`doc/KDC.md` §7).
+
 Program code **011** on disk B, "**CRTAN5 · *TEST VIDEO***". Alphanumeric
 MC6845 / character-generator / attribute display test for the GO252 board.
 

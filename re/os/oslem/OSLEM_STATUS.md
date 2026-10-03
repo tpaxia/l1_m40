@@ -854,7 +854,9 @@ configuration entries).
   `~/Projects/P6066/reference/…/L1/`).
 - Add GO363 IPL support to MAME, modelled on the M44 ROM's
   `0x120A`/`0x1880` code; AGENTS.md requires hardware documentation first
-  (`reference/ArchiviOlivetti/M30-M40_HDC.pdf` is the unread candidate).
+  (`reference/ArchiviOlivetti/M30-M40_HDC.pdf` turned out to be an archive catalogue
+  printout, not the manual; `re/hardware/go363/GO363_HDC5_diagnostics.md`, "Archive
+  manual record").
 - Patch the REL 6.0 ROM image itself, outside MAME.
 
 ### Resolution: a patched REL 6.0 ROM

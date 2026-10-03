@@ -14,9 +14,9 @@ tracked.
 | `restore-hd/` | `Ripristino_HD/`: the OSLEM 5, 6, 6 ST506, 7 and 7+ boot disks and the FF / 80 data-set disks used to restore the BCOS hard disk |
 | `bcos-christian/` | `BcosII M30M40 Christian ok/`: a second copy of the OSLEM 7+ and FF / 80 data-set disks |
 | `diagnostics/` | `diagnostici l1 dcos 8.4/`: the DCOS 8.4 diagnostic disks A–H and R |
-| `ese-mdos/` | `Ese L1/`: ESE, MDOS 2.0 (`probejsf.imd`), 3.0, 3.1 (`m40.imd`), 3.2 and MDOS utilities. The copy of `M40MDO32.imd` in `LM40 da rep ceca/` is identical to this one |
+| `ese-mdos/` | `Ese L1/`: ESE, MDOS 3.0, the MDOS 3.1 utilities, and MDOSC 2.0 (`probejsf.imd`), 3.1 (`m40.imd`) and 3.2 (`M40MDO32.imd`), named as in `re/os/OS_boot_media_survey.md`. The copy of `M40MDO32.imd` in `LM40 da rep ceca/` is identical to this one |
 | `gardini/` | `Gardini/`: the Gardini utility disk (`gardini.TD0` is the same disk in Teledisk format) |
-| `mos/` | `Mos/`: the MOS ST506 starter and the DPC_ALLES volumes DPC51–55 and DPC71–77 |
+| `mos/` | `Mos/`: the MOS ST506 starter, DPC71–77 (the seven DPC_ALLES volumes the install used) and a further set DPC51–55 |
 
 ## Images converted from flux
 

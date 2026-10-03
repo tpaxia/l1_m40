@@ -2,8 +2,9 @@
 
 ## Purpose
 
-This note records a proposed MAME architecture for configuring an M30/M40 with
-different UC and governo boards. It is a design proposal, not an implementation.
+This note records the MAME architecture for configuring an M30/M40 with
+different UC and governo boards. It began as a proposal; the structural part is
+now implemented in the `olivetti_l1` bus (see "Current implementation status").
 
 The goals are:
 
@@ -368,7 +369,7 @@ The MAME `olivetti_l1` bus now implements the structural portion of this design:
 - fixed model-dependent CPU and first-RAM positions;
 - strict rejection of a populated governo beyond an empty outward-chain position;
 - card-owned I/O, memory, interrupt and DMA behavior;
-- automatic `-ramsize` decomposition into one or two documented board-capacity
+- automatic `-ram` decomposition into one or two documented board-capacity
   profiles, or additive explicit ME027-32/RA57 slot cards; the two modes are
   mutually exclusive;
 - L1A/L1B/L2 interrupt resolution with the documented per-level chain directions,
