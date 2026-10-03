@@ -198,7 +198,7 @@ This is distinct from HDC505 test 2, which checks that pending persists
 *between* VI acknowledgement and its explicit cleanup. A short rerun should
 show `0x4b` clear before the next command.
 
-The disposable rerun at `runs-archive/standard24-dcos-clear-20260925/` did show
+The disposable rerun at `runs-archive/standard24-dcos-clear-20260925/` ([screen](../re/evidence/screenshots/standard24-dcos-clear-20260925.png)) did show
 the next pre-command status read at `2158B6` return zero after `0x2100`.
 S24W25 then issued board command `0x1400` at `215960`, but the current model
 gave no completion; the screen reported `TIME OUT DURING I/O OPERATION` and
@@ -230,7 +230,7 @@ models that no-op without writing a track. The physical index delay is not
 yet modeled. This inference can be checked against the independent DCOS
 HDC505 format/read test and S24W25's next result/status checks.
 
-The fresh disposable run `runs-archive/standard24-nec-format-20260925/` passed
+The fresh disposable run `runs-archive/standard24-nec-format-20260925/` ([screen](../re/evidence/screenshots/standard24-nec-format-20260925.png)) passed
 the previous timeout and displayed `CERTIFYING PHASE`. The next log sequence
 at `215952`–`215960` sends the six-byte sector request to NEC port `0x01`,
 issues NEC `0xe0` (Verify Data) at `0x11`, then GO363 `0x1300` at `0x4c/0x4d`.
@@ -271,7 +271,7 @@ sector access must not be reported as normal command completion. The NEC
 manual's Read Data item 9 on printed page 6-23 (PDF page 21) assigns `ND`
 (no data) and abnormal termination when the sector cannot be found.
 
-The final fresh run `runs-archive/standard24-nec-physical-20260925/` completed
+The final fresh run `runs-archive/standard24-nec-physical-20260925/` ([screen](../re/evidence/screenshots/standard24-nec-physical-20260925.png)) completed
 S24W25 option 1 with zero errors. The screen says `STANDARD 24 RECORDED`
 and `FIRST USER SECTOR ON TRACK ZERO IS 17`. The disposable CHD grew from
 65,549 to 77,824 bytes. `chdman extractraw` showed nonzero data in track-0
@@ -290,7 +290,7 @@ unchanged, as requested. The CHD abstraction does not preserve per-sector
 logical ID fields independently of sector data.
 
 An independent readback run selected S24W25 option 2 on a **copy** of the
-installed CHD (`runs-archive/standard24-option2-20260925/`). DCOS reported
+installed CHD (`runs-archive/standard24-option2-20260925/` ([screen](../re/evidence/screenshots/standard24-option2-20260925.png))). DCOS reported
 `SECTOR 15 OF STD 24 REPLACED` with zero errors. Its extracted first track
 was byte-identical to the option-1 output; the relative data did not need to
 change. This confirms that the installer recognizes and reads the recorded

@@ -28,7 +28,7 @@ The observer captures the date prompt at 90 seconds; at 100 seconds it types
 map the emulated top-row legends as expected, and alpha RETURN is not the keypad
 terminator. Do not use Ctrl+J to bypass the date prompt. Screens and read-only
 keyboard logs go to the printed run directory; MAME exits at 160 seconds.
-Native-only run `runs-archive/bcos-boot.rcwPJZ/` reaches the date prompt, accepts the
+Native-only run `runs-archive/bcos-boot.rcwPJZ/` ([screen](../../evidence/screenshots/bcos-boot.rcwPJZ.png)) reaches the date prompt, accepts the
 keypad date and reaches SYS, still visible at 159 seconds. No status overrides
 remain in the script, and no Ctrl+J is used in this verification. Full configurator
 operations beyond this prompt are not yet validated.
@@ -106,7 +106,7 @@ Expected stable CPU state is the scheduler loop around `02:0912..091e`, with
 
 The September 9 READY-wiring correction also gets the 2048 KB configuration
 past the former `03:05c6` error path and through configuration initialization.
-Run `runs-archive/bcos-trace.ymwpJM/` preserves rr6=8300:5000 at 03:058c and
+Run `runs-archive/bcos-trace.ymwpJM/` ([screen](../../evidence/screenshots/bcos-trace.ymwpJM.png)) preserves rr6=8300:5000 at 03:058c and
 reads the valid count 7 at 03:0b64; its 74-second snapshot is in the scheduler.
 Neither scheduler observation proves arrival at the configurator UI.
 

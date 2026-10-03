@@ -58,7 +58,7 @@ from; LDAR and PC pushes emit it unchanged.
 ## Why the M40 needs it
 
 OSLEM 7.0+ (`oslem7+.imd`), `KIO0 MX82` initialisation, entered from the
-start-up task (trace `runs-archive/restore-hd-20260928/install/ldar4/`):
+start-up task (trace `runs-archive/restore-hd-20260928/install/ldar4/` ([screen](screenshots/restore-hd-20260928__install__ldar4.png))):
 
 ```
 22:01D4  xor  r0,r0

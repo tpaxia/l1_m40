@@ -39,7 +39,7 @@ fault (bit 3 is 0 in many bytes and the glyphs are intact).
    `011`) has a "CRT ROM PATTERN" step that writes every code `0x00`–`0xFF`
    for the operator to inspect, so the original ROM has 256 characters.
    With the dumped ROM the full set displays
-   (`runs-archive/chargen-20261002/crtan5-rom-pattern.png`); with the built-in
+   (`runs-archive/chargen-20261002/crtan5-rom-pattern.png` ([screen](screenshots/chargen-20261002__crtan5-rom-pattern.png))); with the built-in
    table everything outside `0x20`–`0x7F` was blank.
 4. **The built-in font was copied from this design.** Of its 96 glyphs, 69
    are identical to the ROM's apart from a one- or two-row downward shift;

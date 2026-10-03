@@ -46,10 +46,10 @@ or imply that hard-disk emulation is complete. If using another video view,
 select **Screen with IPL selector status** in Video Options. Restart MAME to
 load the rebuilt driver/layout.
 
-Headless panel test `runs-archive/ipl-panel.IaBFqA` verifies both switch states and
+Headless panel test `runs-archive/ipl-panel.IaBFqA` ([screen](../../evidence/screenshots/ipl-panel.IaBFqA.png)) verifies both switch states and
 captures the complete layout as `ipl-floppy.png` and `ipl-hd.png`.
 
-Fresh headless run `runs-archive/bcos-single-fd1.kO9Evf` asserts all four aliases
+Fresh headless run `runs-archive/bcos-single-fd1.kO9Evf` ([screen](../../evidence/screenshots/bcos-single-fd1.kO9Evf.png)) asserts all four aliases
 and reaches the SYS generator at 219 seconds after date and command entry.
 This boot-only test did not cover national-keyboard loading. The later user
 session and state-B replay below confirm successful USA-ASCII firmware copying.
@@ -157,10 +157,10 @@ K02733 currently loads KITA02.1; selecting KUSA inside BCOS remains unresolved.
 5. To exit the generator, type uppercase **E** (Shift+E), release Shift, then
    keypad Enter. BCOS returns to the SYS command prompt.
 
-Headless run `runs-archive/bcos-boot.2xKETx/` verifies date entry, command submission
+Headless run `runs-archive/bcos-boot.2xKETx/` ([screen](../../evidence/screenshots/bcos-boot.2xKETx.png)) verifies date entry, command submission
 and program loading: the generator is visible at 159 seconds. This does not
 establish completion of system generation or all keyboard editing functions.
-Run `runs-archive/bcos-boot.dZFDJG/` additionally verifies Exit back to SYS at
+Run `runs-archive/bcos-boot.dZFDJG/` ([screen](../../evidence/screenshots/bcos-boot.dZFDJG.png)) additionally verifies Exit back to SYS at
 159 seconds. Lowercase e is rejected: use uppercase E for that menu.
 
 ## Date-error recovery
@@ -294,7 +294,7 @@ This recovery sequence is based on replay of C, not recovery from D in place.
 
 The subsequent `BASIC` command alone returns SYSERR163; it is not evidence of
 a working BASIC session. CONF2 alone previously returned SYSERR153 on RUN.
-The independent headless replay `runs-archive/bcos-run-error.ZcmwFK/` also
+The independent headless replay `runs-archive/bcos-run-error.ZcmwFK/` ([screen](../../evidence/screenshots/bcos-run-error.ZcmwFK.png)) also
 returns SYSERR163 for bare `OCL`, using the relabelled RUN copy without
 a RAM override. Neither interpreter entry is a verified next instruction.
 The error is now traced to TR00's check of mask 0002 in the word at
@@ -414,7 +414,7 @@ State B replay confirms USA-ASCII13 displays "Firmware file copied" after
 reading K02741 on FD2. At the following "Press S bar" prompt, **main Enter**
 (physical35), not Space or an alias, advances to "Dismount firmware files
 diskette". If KE is present, first press keypad* once to clear it.
-Verified in disposable replay `runs-archive/bcos-space.HPzRky`; the interactive
+Verified in disposable replay `runs-archive/bcos-space.HPzRky` ([screen](../../evidence/screenshots/bcos-space.HPzRky.png)); the interactive
 session was not altered. Space replay `bcos-space.urGNq2` reproduces KE.
 
 Space correctly arrives as12 and translates to3120 (ASCII20). DRL1 at

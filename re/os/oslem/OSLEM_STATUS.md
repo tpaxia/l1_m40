@@ -54,7 +54,7 @@ Disk images (all disposable copies):
 
 - Formatted HD: `re/checkpoints/mos-install/wren2-formatted-hdc5f5.chd`
   (summary screen `hdc5f5-formatted-summary.png`)
-- Error-rate summary: `runs-archive/hdc5e-errorrate-20260926/hdc5e-summary.png`
+- Error-rate summary: `runs-archive/hdc5e-errorrate-20260926/hdc5e-summary.png` ([screen](../../evidence/screenshots/hdc5e-errorrate-20260926__hdc5e-summary.png))
 - Formatted + LDHSEL: `runs-archive/ldhsel-20260926/wren2-ldhsel.chd`
   (screen `ldhsel-summary.png`) — **current starting point**
 - Formatted + LDHSEL + restored FF/80 + SSID `1EX` entry:
@@ -90,7 +90,7 @@ the HD configuration name it references, not the configuration —, loader `JLDH
 tag `MX81`, resident modules `KER0 KIO0 MOD0 JPTC 1HDI 0FMU`) loads and stops
 on its status page `PUS= TIME OK== DISK`. Keyboard input is never enabled.
 
-Traced cause (`runs-archive/oslem-jx24-20260926/`: `bp.txt`, `sc1a.trace`,
+Traced cause (`runs-archive/oslem-jx24-20260926/` ([screen](../../evidence/screenshots/oslem-jx24-20260926.png)): `bp.txt`, `sc1a.trace`,
 `ctx*.bin`, `fdc.txt`):
 
 1. The DISK step (`22:0502`…`05B8`) reads the boot floppy's label (µPD765
@@ -246,7 +246,7 @@ problem. A floppy-loaded OSLEM release with `JLD0` selected by its IPL
 descriptor is still needed, or an equivalent BCOS system must be generated.
 
 With the populated HD (`wren2-restored.chd`, Issue 1D) the result is
-unchanged: `runs-archive/restore-hd-20260928/fd1/` stops at the same
+unchanged: `runs-archive/restore-hd-20260928/fd1/` ([screen](../../evidence/screenshots/restore-hd-20260928__fd1.png)) stops at the same
 `PUS= TIME OK== DISK` page with only 3 GO363 board-ID reads and no HD I/O.
 The blank HD was therefore not the cause of this stop.
 
@@ -257,7 +257,7 @@ layout as the generated system's password). Date `860909`. At `/SYS`:
 caps LOCK + Ctrl+J → `OX - COMMAND :`; type in lowercase with LOCK on
 (`exec jx24`). **JX24 runs** (`CREATE O UPDATE DESCRI.`), but its volume
 table is empty: this generation's modules are `KER0 KIO0 FMD MODR MODD`,
-floppy only, no HD driver. Harness: `runs-archive/bcos33res-utils-20260927/`.
+floppy only, no HD driver. Harness: `runs-archive/bcos33res-utils-20260927/` ([screen](../../evidence/screenshots/bcos33res-utils-20260927.png)).
 
 #### 1B follow-up: what ALL_RESIDENT has and lacks (2026-09-27)
 
@@ -353,7 +353,7 @@ tap on `0x0500`–`0x05ff` was on the wrong window and is disregarded.
 ### 1C: BCOS system generation — floppy-only
 
 The configurator `K02733` SYS generator was scripted end to end
-(`runs-archive/bcos-gen-hd-20260927/`, sequence in `steps.sh`). Output:
+(`runs-archive/bcos-gen-hd-20260927/` ([screen](../../evidence/screenshots/bcos-gen-hd-20260927.png)), sequence in `steps.sh`). Output:
 `gen-PASS-load.imd` / `gen-PASS-run.imd` (password `PASS`, M40, FDU,
 KEYB-CRT, PR 1350/1470, BASIC+OCL, USA-ASCII). Its hardware section offers
 only the standard configuration (FDU, no HDU).
@@ -365,7 +365,7 @@ images are rejected ("INCOMPATIBLE DISK"), copies of the earlier
 twice; Shift+M gives `?` (Italian table), so avoid M in passwords.
 
 `CONF2` (in `UTS233` on `K02737`) runs from the configurator
-(`runs-archive/bcos-conf2-20260927-B/`) but only sets an HDU data-set number.
+(`runs-archive/bcos-conf2-20260927-B/` ([screen](../../evidence/screenshots/bcos-conf2-20260927-B.png))) but only sets an HDU data-set number.
 The device configuration program with "HARD DISK UNITS" screens is `DECONF`
 in `BCS533` on `K02737`; the configurator cannot launch it (`ERR.153`).
 Grafting DECONF + HD drivers into the generated system with `PRDKDK` is a

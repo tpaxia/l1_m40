@@ -116,29 +116,6 @@ class TraceSummary:
         return any(event.data == 0xFF for event in self.console)
 
 
-@dataclass
-class ScreenState:
-    source: str
-    vram_writes: int
-    crtc_writes: int
-    cols: int
-    rows: int
-    start: int
-    text: str
-
-
-@dataclass
-class FduDecode:
-    source: str
-    lines: int
-    commands: dict[str, int]
-    timer_edges: int
-    fdc_irq_edges: int
-    rd1nt_reads: dict[str, int]
-    final_events: list[str]
-    timeline: list[str]
-
-
 def diag_disk(letter: str) -> Path:
     disk = DIAG_DIR / f"{letter.upper()}.IMD"
     if not disk.exists():
@@ -289,327 +266,6 @@ def print_summary(summary: TraceSummary) -> None:
             print(f"  {key}: {count}")
 
 
-def parse_vram_trace(path: Path, default_cols: int = 80, default_rows: int = 25) -> ScreenState:
-    # GO252 decodes a 4 KiB VRAM and mirrors it throughout FF0000-FFFFFF.
-    # Preserve the same low-12-bit folding used by the device model so traces
-    # from software choosing FF2xxx/FF3xxx reconstruct the displayed screen.
-    vram = bytearray(0x1000)
-    crtc = [0] * 32
-    vram_writes = 0
-    crtc_writes = 0
-
-    with path.open("r", errors="replace") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            m = VRAM_RE.match(line)
-            if m:
-                vram[int(m.group("off"), 16) & 0x0fff] = int(m.group("data"), 16) & 0xff
-                vram_writes += 1
-                continue
-            m = CRTC_RE.match(line)
-            if m:
-                crtc[int(m.group("reg"), 16) & 0x1f] = int(m.group("data"), 16) & 0xff
-                crtc_writes += 1
-
-    cols = crtc[1] or default_cols
-    rows = crtc[6] or default_rows
-    cols = max(1, min(cols, 132))
-    rows = max(1, min(rows, 50))
-    start = ((crtc[12] << 8) | crtc[13]) & 0x3fff
-
-    lines: list[str] = []
-    for row in range(rows):
-        chars: list[str] = []
-        for col in range(cols):
-            off = (((start + row * cols + col) << 1) + 1) & 0x0fff
-            ch = vram[off]
-            chars.append(chr(ch) if 0x20 <= ch < 0x7f else " ")
-        lines.append("".join(chars).rstrip())
-
-    return ScreenState(
-        source=str(path),
-        vram_writes=vram_writes,
-        crtc_writes=crtc_writes,
-        cols=cols,
-        rows=rows,
-        start=start,
-        text="\n".join(lines),
-    )
-
-
-def write_screen(path: Path, state: ScreenState) -> None:
-    path.write_text(
-        "\n".join(
-            [
-                f"source: {state.source}",
-                f"vram_writes: {state.vram_writes}",
-                f"crtc_writes: {state.crtc_writes}",
-                f"geometry: {state.cols}x{state.rows}",
-                f"start: 0x{state.start:04x}",
-                "",
-                state.text,
-                "",
-            ]
-        )
-    )
-
-
-def describe_contr(value: int) -> str:
-    names = [
-        ("EN100", 0),
-        ("RESFD", 1),
-        ("SCANO", 2),
-        ("MOTO1", 3),
-        ("DIAGN", 4),
-        ("ERRO1", 5),
-        ("SCRVO", 6),
-        ("MOTO2", 7),
-    ]
-    set_bits = [name for name, bit in names if value & (1 << bit)]
-    return ",".join(set_bits) if set_bits else "none"
-
-
-def describe_rd1nt(value: int) -> str:
-    names = [
-        ("INTMO", 0),
-        ("INTOO", 1),
-        ("PERRO", 2),
-        ("FUMEO", 3),
-    ]
-    set_bits = [name for name, bit in names if value & (1 << bit)]
-    return ",".join(set_bits) if set_bits else "none"
-
-
-def fdc_command_key(first: int) -> int:
-    # uPD765 command bits 7/6/5 are MT/MFM/SK flags for several commands.
-    return first & 0x1f
-
-
-def fdc_command_name(first: int) -> str:
-    key = fdc_command_key(first)
-    base = FDC_COMMANDS.get(key, (f"UNKNOWN_{key:02X}", 0, 0))[0]
-    flags: list[str] = []
-    if first & 0x80:
-        flags.append("MT")
-    if first & 0x40:
-        flags.append("MFM")
-    if first & 0x20:
-        flags.append("SK")
-    return base + (f" [{' '.join(flags)}]" if flags else "")
-
-
-def decode_st0(value: int) -> str:
-    ic = (value >> 6) & 3
-    ic_name = ["normal", "abnormal", "invalid", "poll"][ic]
-    flags = [ic_name]
-    for name, bit in (("SE", 5), ("EC", 4), ("NR", 3), ("HD", 2)):
-        if value & (1 << bit):
-            flags.append(name)
-    flags.append(f"US={value & 3}")
-    return ",".join(flags)
-
-
-def decode_st3(value: int) -> str:
-    flags = []
-    for name, bit in (("WP", 6), ("RY", 5), ("T0", 4), ("TS", 3), ("HD", 2)):
-        if value & (1 << bit):
-            flags.append(name)
-    flags.append(f"US={value & 3}")
-    return ",".join(flags)
-
-
-def summarize_result(command: list[int], result: list[int]) -> str:
-    if not command or not result:
-        return ""
-    key = fdc_command_key(command[0])
-    if key == 0x04 and len(result) >= 1:
-        return f"ST3={result[0]:02X}({decode_st3(result[0])})"
-    if key == 0x08 and len(result) >= 2:
-        return f"ST0={result[0]:02X}({decode_st0(result[0])}) PCN={result[1]:02X}"
-    if len(result) >= 7:
-        return (
-            f"ST0={result[0]:02X}({decode_st0(result[0])}) "
-            f"ST1={result[1]:02X} ST2={result[2]:02X} "
-            f"C/H/R/N={result[3]:02X}/{result[4]:02X}/{result[5]:02X}/{result[6]:02X}"
-        )
-    return ""
-
-
-def parse_fdu_trace(path: Path, max_timeline: int = 1200, tail_count: int = 80) -> FduDecode:
-    timeline: list[str] = []
-    tail: list[str] = []
-    commands: Counter[str] = Counter()
-    rd1nt_reads: Counter[str] = Counter()
-    timer_edges = 0
-    fdc_irq_edges = 0
-    current_cmd: list[int] = []
-    current_expected = 0
-    current_result: list[int] = []
-
-    def add(line: str) -> None:
-        if len(timeline) < max_timeline:
-            timeline.append(line)
-        if len(tail) >= tail_count:
-            tail.pop(0)
-        tail.append(line)
-
-    def close_result(lineno: int, pc: int) -> None:
-        nonlocal current_result
-        if current_cmd and current_result:
-            summary = summarize_result(current_cmd, current_result)
-            suffix = f" ; {summary}" if summary else ""
-            add(
-                f"{lineno:06d} pc={pc:08X} RESULT {fdc_command_name(current_cmd[0])} "
-                f"bytes={' '.join(f'{b:02X}' for b in current_result)}{suffix}"
-            )
-        current_result = []
-
-    lines = 0
-    with path.open("r", errors="replace") as f:
-        for lineno, line in enumerate(f, 1):
-            lines = lineno
-            m = FDU_RE.match(line.rstrip("\n"))
-            if not m:
-                continue
-            event = m.group("event")
-            pc = int(m.group("pc"), 16)
-            reg = int(m.group("reg"), 16)
-            data = int(m.group("data"), 16)
-            pending = int(m.group("pending"))
-            ien = int(m.group("ien"))
-            intmo_lat = int(m.group("intmo_lat"))
-            timer = int(m.group("timer"))
-            intoo_lat = int(m.group("intoo_lat"))
-            fdc = int(m.group("fdc"))
-            vec = int(m.group("vec"), 16)
-            dma_hi = int(m.group("dma_hi"), 16)
-            dma_ch1 = int(m.group("dma_ch1"), 16)
-            dma_byte = int(m.group("dma_byte"), 16)
-            state = (
-                f"pend={pending} ien={ien} intmo={intmo_lat}/{timer} "
-                f"intoo={intoo_lat}/{fdc} vec={vec:02X} dma={dma_hi:02X}:{dma_ch1:04X}+{dma_byte:06X}"
-            )
-
-            if event == "W" and reg == 0x1F:
-                if current_cmd and len(current_cmd) >= current_expected:
-                    close_result(lineno, pc)
-                    current_cmd = []
-                    current_expected = 0
-                if not current_cmd:
-                    key = fdc_command_key(data)
-                    current_expected = FDC_COMMANDS.get(key, (None, 1, 0))[1] or 1
-                    current_cmd = [data]
-                    name = fdc_command_name(data)
-                    commands[name] += 1
-                    add(f"{lineno:06d} pc={pc:08X} CMD {name} byte0={data:02X} expect={current_expected} ; {state}")
-                else:
-                    current_cmd.append(data)
-                    add(
-                        f"{lineno:06d} pc={pc:08X} CMDPARM {fdc_command_name(current_cmd[0])} "
-                        f"{len(current_cmd)}/{current_expected} data={data:02X} ; {state}"
-                    )
-                continue
-
-            if event == "R" and reg == 0x1F:
-                if current_cmd:
-                    current_result.append(data)
-                    key = fdc_command_key(current_cmd[0])
-                    expected_result = FDC_COMMANDS.get(key, (None, 0, 0))[2]
-                    if expected_result and len(current_result) >= expected_result:
-                        close_result(lineno, pc)
-                else:
-                    add(f"{lineno:06d} pc={pc:08X} RESULT-ORPHAN data={data:02X} ; {state}")
-                continue
-
-            if event == "W" and reg == 0xE7:
-                add(f"{lineno:06d} pc={pc:08X} CONTR={data:02X}({describe_contr(data)}) ; {state}")
-                continue
-
-            if event == "R" and reg == 0xF7:
-                rd1nt_reads[f"{data:02X} {describe_rd1nt(data)}"] += 1
-                add(f"{lineno:06d} pc={pc:08X} RD1NT={data:02X}({describe_rd1nt(data)}) ; {state}")
-                continue
-
-            if event == "W" and reg == 0xFF:
-                add(f"{lineno:06d} pc={pc:08X} E01NT strobe data={data:02X} ; {state}")
-                continue
-
-            if event == "TIMER":
-                if data:
-                    timer_edges += 1
-                add(f"{lineno:06d} pc={pc:08X} TIMER data={data:02X} ; {state}")
-                continue
-
-            if event == "FDCINT":
-                if data:
-                    fdc_irq_edges += 1
-                add(f"{lineno:06d} pc={pc:08X} FDCINT data={data:02X} ; {state}")
-                continue
-
-            if event == "VIACK":
-                add(f"{lineno:06d} pc={pc:08X} VIACK vector={data:02X} ; {state}")
-
-    close_result(lines, 0)
-    return FduDecode(
-        source=str(path),
-        lines=lines,
-        commands=dict(sorted(commands.items())),
-        timer_edges=timer_edges,
-        fdc_irq_edges=fdc_irq_edges,
-        rd1nt_reads=dict(sorted(rd1nt_reads.items())),
-        final_events=tail,
-        timeline=timeline,
-    )
-
-
-def write_fdu_timeline(path: Path, decode: FduDecode) -> None:
-    lines = [
-        f"source: {decode.source}",
-        f"lines: {decode.lines}",
-        f"timer rising edges: {decode.timer_edges}",
-        f"fdc irq rising edges: {decode.fdc_irq_edges}",
-        "",
-        "commands:",
-    ]
-    if decode.commands:
-        lines.extend(f"  {name}: {count}" for name, count in decode.commands.items())
-    else:
-        lines.append("  (none)")
-    lines.append("")
-    lines.append("RD1NT reads:")
-    if decode.rd1nt_reads:
-        lines.extend(f"  {value}: {count}" for value, count in decode.rd1nt_reads.items())
-    else:
-        lines.append("  (none)")
-    lines.append("")
-    lines.append("timeline:")
-    lines.extend(decode.timeline)
-    lines.append("")
-    lines.append("final events:")
-    lines.extend(decode.final_events)
-    lines.append("")
-    path.write_text("\n".join(lines))
-
-
-def print_fdu_summary(decode: FduDecode) -> None:
-    print(f"fdu source: {decode.source}")
-    print(f"fdu lines: {decode.lines}")
-    print(f"timer rising edges: {decode.timer_edges}")
-    print(f"fdc irq rising edges: {decode.fdc_irq_edges}")
-    if decode.commands:
-        print("fdc commands:")
-        for name, count in decode.commands.items():
-            print(f"  {name}: {count}")
-    if decode.rd1nt_reads:
-        print("rd1nt reads:")
-        for value, count in decode.rd1nt_reads.items():
-            print(f"  {value}: {count}")
-    if decode.final_events:
-        print("final fdu events:")
-        for line in decode.final_events[-12:]:
-            print(f"  {line}")
-
-
 def write_json(path: Path, summary: TraceSummary, metadata: dict[str, object]) -> None:
     data = {
         "metadata": metadata,
@@ -669,10 +325,6 @@ def cmd_run(args: argparse.Namespace) -> int:
     run_dir = args.out_root / f"{timestamp()}-{args.name}"
     run_dir.mkdir(parents=True, exist_ok=False)
     trace_path = run_dir / "trace.log"
-    vram_path = run_dir / "vram.log"
-    fdu_path = run_dir / "fdu.log"
-    fdu_timeline_path = run_dir / "fdu_timeline.txt"
-    screen_path = run_dir / "screen.txt"
     stdout_path = run_dir / "mame.stdout"
     summary_path = run_dir / "summary.json"
     command_path = run_dir / "command.txt"
@@ -687,10 +339,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         env["M40_INTER_KEY_DELAY"] = str(args.inter_key_delay)
     if args.screen_interval is not None:
         env["M40_SCREEN_INTERVAL"] = str(args.screen_interval)
-    if args.vram_trace:
-        env["M40_VRAM_TRACE"] = str(vram_path)
-    if args.fdu_trace:
-        env["M40_FDU_TRACE"] = str(fdu_path)
 
     if args.headless:
         env.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -724,42 +372,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         "returncode": rc,
         "command": cmd,
     }
-    if args.vram_trace:
-        metadata["vram_trace"] = str(vram_path)
-        metadata["screen"] = str(screen_path)
-        if vram_path.exists():
-            screen = parse_vram_trace(vram_path)
-            write_screen(screen_path, screen)
-            metadata["screen_state"] = asdict(screen)
-            print(f"vram trace: {vram_path}")
-            print(f"screen text: {screen_path}")
-            visible = [line for line in screen.text.splitlines() if line.strip()]
-            if visible:
-                print("screen nonblank lines:")
-                for line in visible[:12]:
-                    print(f"  {line}")
-            else:
-                print("screen nonblank lines: (none)")
-        else:
-            print(f"vram trace was not created: {vram_path}", file=sys.stderr)
-    if args.fdu_trace:
-        metadata["fdu_trace"] = str(fdu_path)
-        metadata["fdu_timeline"] = str(fdu_timeline_path)
-        if fdu_path.exists():
-            print(f"fdu trace: {fdu_path}")
-            fdu_decode = parse_fdu_trace(fdu_path)
-            write_fdu_timeline(fdu_timeline_path, fdu_decode)
-            metadata["fdu_decode"] = {
-                "commands": fdu_decode.commands,
-                "timer_edges": fdu_decode.timer_edges,
-                "fdc_irq_edges": fdu_decode.fdc_irq_edges,
-                "rd1nt_reads": fdu_decode.rd1nt_reads,
-                "final_events": fdu_decode.final_events,
-            }
-            print(f"fdu timeline: {fdu_timeline_path}")
-            print_fdu_summary(fdu_decode)
-        else:
-            print(f"fdu trace was not created: {fdu_path}", file=sys.stderr)
     write_json(summary_path, summary, metadata)
     print_summary(summary)
     return rc
@@ -810,28 +422,6 @@ def cmd_parse(args: argparse.Namespace) -> int:
     print_summary(summary)
     if args.json:
         write_json(args.json, summary, {"kind": "parse", "trace": str(args.trace)})
-    return 0
-
-
-def cmd_screen(args: argparse.Namespace) -> int:
-    screen = parse_vram_trace(args.vram_trace, args.cols, args.rows)
-    if args.output:
-        write_screen(args.output, screen)
-        print(f"wrote {args.output}")
-    print(f"source: {screen.source}")
-    print(f"vram writes: {screen.vram_writes}")
-    print(f"crtc writes: {screen.crtc_writes}")
-    print(f"geometry: {screen.cols}x{screen.rows} start=0x{screen.start:04x}")
-    print(screen.text)
-    return 0
-
-
-def cmd_fdu(args: argparse.Namespace) -> int:
-    decode = parse_fdu_trace(args.fdu_trace, args.max_timeline, args.tail)
-    if args.output:
-        write_fdu_timeline(args.output, decode)
-        print(f"wrote {args.output}")
-    print_fdu_summary(decode)
     return 0
 
 
@@ -942,8 +532,6 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--key-delay", type=float)
     p_run.add_argument("--inter-key-delay", type=float)
     p_run.add_argument("--screen-interval", type=float)
-    p_run.add_argument("--vram-trace", action="store_true", help="enable driver-side M40_VRAM_TRACE and reconstruct screen.txt")
-    p_run.add_argument("--fdu-trace", action="store_true", help="enable driver-side M40_FDU_TRACE for FDC/DMA register activity")
     p_run.set_defaults(func=cmd_run)
 
     p_dump = sub.add_parser("dump", help="run MAME with the segment dump Lua script")
@@ -961,20 +549,6 @@ def main(argv: list[str] | None = None) -> int:
     p_parse.add_argument("--json", type=Path)
     p_parse.set_defaults(func=cmd_parse)
 
-    p_screen = sub.add_parser("screen", help="reconstruct text screen from an M40_VRAM_TRACE log")
-    p_screen.add_argument("vram_trace", type=Path)
-    p_screen.add_argument("--output", type=Path)
-    p_screen.add_argument("--cols", type=int, default=80)
-    p_screen.add_argument("--rows", type=int, default=25)
-    p_screen.set_defaults(func=cmd_screen)
-
-    p_fdu = sub.add_parser("fdu", help="decode a driver-side M40_FDU_TRACE fdu.log")
-    p_fdu.add_argument("fdu_trace", type=Path)
-    p_fdu.add_argument("--output", type=Path)
-    p_fdu.add_argument("--max-timeline", type=int, default=1200)
-    p_fdu.add_argument("--tail", type=int, default=80)
-    p_fdu.set_defaults(func=cmd_fdu)
-
     p_tests = sub.add_parser("tests", help="list cataloged diagnostic programs")
     p_tests.add_argument("--diag", choices=list("ABCDEFGHR"), help="limit to one diagnostic disk")
     p_tests.add_argument("--json", type=Path, help="write the selected inventory as JSON")
@@ -989,8 +563,6 @@ def main(argv: list[str] | None = None) -> int:
     p_run_test.add_argument("--key-delay", type=float, default=70.0)
     p_run_test.add_argument("--inter-key-delay", type=float, default=8.0)
     p_run_test.add_argument("--screen-interval", type=float)
-    p_run_test.add_argument("--vram-trace", action=argparse.BooleanOptionalAction, default=True)
-    p_run_test.add_argument("--fdu-trace", action=argparse.BooleanOptionalAction, default=True)
     p_run_test.set_defaults(func=cmd_run_test)
 
     p_disks = sub.add_parser("disks", help="list known DCOS 8.4 diagnostic disks")

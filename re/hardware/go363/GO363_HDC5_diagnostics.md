@@ -8,6 +8,23 @@ DMA protocol. See `re/hardware/go363/GO363_DOCUMENTATION.md` for the documented 
 current Standard 24 experiments. Unlike GO280, no GO363 schematic or
 register-level functional description has been found yet.
 
+## Conclusions (October 2026)
+
+- **Board.** GO363 answers board ID `65`; the gate array is a thin command
+  translator in front of the uPD7261, with word-addressed DMA, a vectored
+  interrupt and a 20 MHz 8253 (divider unknown). The register protocol recovered
+  from these diagnostics is written up in `doc/GO363_DCOS_RECOVERY.md`.
+- **Results on the emulated WREN2** (1024 × 9 × 32 × 256): S24W25 writes and reads
+  back Standard 24; HDC5X3 writes ERMAP at cylinder 924; HDC5F5 formats the disk
+  (`DISK CORRECTLY FORMATTED`); HDC5E9 reports `RELIABLE SUBSYSTEM`. BCOS II and
+  MOS are installed on it and boot.
+- **HDC505** passed tests 1–4 on the old HD branch; on the current build it fails
+  test 2 (3 October 2026, `doc/MAME_DRIVER.md` §9).
+- The MAME changes these runs led to are listed in `re/evidence/README.md`.
+
+The rest of this note is the investigation record; sections such as "Current
+implementation boundary" describe the model at the time they were written.
+
 ## Board photo
 
 Photo index:
@@ -986,6 +1003,8 @@ initial CHS-to-CHD read/DMA path.  In particular:
   `ff02`-controlled timer interrupt latch are modelled; the exact oscillator
   divider remains provisional;
 - HDC505 tests 1–4 pass; test 5 is the next implementation/debugging boundary.
+- **3 October 2026:** on the current build HDC505 fails test 2 (`UNSE0`, `SKEN0`,
+  `UPR00` stuck at 1 after the run command); see `doc/MAME_DRIVER.md` §9.
 
 The next useful step is to trace the first boot read after the successful unit
 enumeration, then implement the uPD7261 data path and board SRAM/DMA rather than

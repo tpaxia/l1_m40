@@ -112,7 +112,7 @@ the page 6-17 data-rate bound above.
 ## Results (2026-09-26, rebuilt `m40`)
 
 1. **HDC5F5**, disposable copy of `wren2-synthetic-etf.chd`
-   (`runs-archive/hdc5f5-timeout-20260926/`): the seek-ISR's `0x21a58a` returns
+   (`runs-archive/hdc5f5-timeout-20260926/` ([screen](screenshots/hdc5f5-timeout-20260926.png))): the seek-ISR's `0x21a58a` returns
    725 CPU cycles after the `0xb0` write, and the read completes 4,147 cycles
    after it. `0xf6aa` is set to 1 before the completion clears it, and the
    wait exits normally. The formatter passes `ETF READ PHASE ...` and prints
@@ -122,7 +122,7 @@ the page 6-17 data-rate bound above.
    and Verify ID `0x80`. The CHD is unchanged. This format-phase failure is
    a separate, not-yet-analyzed issue. It is identical to the
    debugger-forced experiment above.
-2. **ERMAP option 1** (`runs-archive/readtiming-regression-20260926/opt1/`,
+2. **ERMAP option 1** (`runs-archive/readtiming-regression-20260926/opt1/` ([screen](screenshots/readtiming-regression-20260926__opt1.png)),
    copy of `wren2-service-finalcheck.chd`): all cycles complete and it
    returns to `HIT "ENTER" TO GO BACK TO MENU`. The resulting CHD is
    byte-identical to `wren2-service-finalcheck.chd`.

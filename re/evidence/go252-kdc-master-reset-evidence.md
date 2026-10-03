@@ -50,7 +50,7 @@ write discard the queued bytes and the pending-receive state.
    later reader is at most what the host's receive register holds. MAME
    keeps both bytes queued, and after the driver's reset delivers `FB F1`;
    `F1` has bit 0 set.
-4. **Trace** (`runs-archive/restore-hd-20260928/install/hd65-kbio/`, patched ROM,
+4. **Trace** (`runs-archive/restore-hd-20260928/install/hd65-kbio/` ([screen](screenshots/restore-hd-20260928__install__hd65-kbio.png)), patched ROM,
    baseline disk):
 
    ```

@@ -61,10 +61,6 @@ optionally GO), `tests`, `disks`, `dump`, `parse`. Used by
 `scripts/test-m40-uc.sh` and `scripts/test-m40-fdu.sh`; details in
 `re/mame/MAME_diagnostic_trace_harness.md`.
 
-The `--vram-trace` and `--fdu-trace` options and the `screen` and `fdu`
-subcommands rely on trace output that the MAME driver no longer produces
-(removed in the September instrumentation cleanup). Use screenshots instead.
-
 `diagnostic_tests/collect_tests.py` regenerates the per-disk program
 inventories in `diagnostic_tests/` (`catalogs.json`, `monitor_map_*.txt`,
 `disk_*.md`). The `disk_*.md` pages embed screen captures from runs in

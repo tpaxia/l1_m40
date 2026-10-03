@@ -8,7 +8,7 @@ The implementation notes are in [`../../doc/MAME_DRIVER.md`](../../doc/MAME_DRIV
 
 | Note | Contents | Status |
 |---|---|---|
-| [MAME_diagnostic_trace_harness.md](MAME_diagnostic_trace_harness.md) | Running the DCOS diagnostic disks under MAME: operator input, I/O tracing, overlay dumps (`tools/m40_harness.py`) | Current; the screen and FDU trace options no longer work |
+| [MAME_diagnostic_trace_harness.md](MAME_diagnostic_trace_harness.md) | Running the DCOS diagnostic disks under MAME: operator input, I/O tracing, overlay dumps (`tools/m40_harness.py`) | Current |
 | [MAME_diagnostic_disk_trace_plan.md](MAME_diagnostic_disk_trace_plan.md) | The plan that led to the harness: pinning down the DCOS disk format and the monitor's overlay model | Historical (carried out) |
 
 ## Branch history

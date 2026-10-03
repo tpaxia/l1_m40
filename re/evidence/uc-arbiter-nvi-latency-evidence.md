@@ -69,7 +69,7 @@ inconsistencies in the kernel data area", MOS Message Book, AUTODIAG/SYS-5).
 
 ## Test without changing MAME
 
-`runs-archive/restore-hd-20260928/mos9/`: a debugger breakpoint at `04:0F4A`
+`runs-archive/restore-hd-20260928/mos9/` ([screen](screenshots/restore-hd-20260928__mos9.png)): a debugger breakpoint at `04:0F4A`
 re-executes the `EI NVI` at most 60 times per request (reset at `04:0F44`),
 which keeps the window open for the 50 µs the model takes. Nothing else is
 altered. The starter then runs to `ENTER DATE (MM/DD/YY) :`

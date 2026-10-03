@@ -77,7 +77,8 @@ taught it.
 
 - Run the same set before and after each change, and compare every
   screenshot pixel for pixel: UC3003 and UCG304, the floppy diagnostic, BCOS
-  II 3.3 from floppy, OSLEM 7+, BCOS II and MOS from the hard disk.
+  II 3.3 from floppy, OSLEM 7+, BCOS II and MOS from the hard disk
+  (`scripts/test-m40-hd.sh` does the last two automatically).
 - Keep the binary from before the change (`m40.pre-…`) so "before" can be
   rerun at any time.
 

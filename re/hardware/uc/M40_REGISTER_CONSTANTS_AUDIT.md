@@ -118,6 +118,6 @@ checks that only naming changed, including all 23 affected case labels.
 `git diff --check` passed, and the existing chip directories have no diff.
 Runtime: all 210 keyboard/UI tests passed (`runs-archive/host-keymap.QsidgM/result.log`).
 BCOS LOAD-to-RUN reached the password prompt on disposable disks
-(`runs-archive/bcos-generated-boot.SegswC/159.png`). Both headless processes exited
+(`runs-archive/bcos-generated-boot.SegswC/159.png` ([screen](../../evidence/screenshots/bcos-generated-boot.SegswC__159.png))). Both headless processes exited
 successfully. No BASIC or full RAM-suite rerun was performed for this naming-only
 change; the prior regression results remain separate.

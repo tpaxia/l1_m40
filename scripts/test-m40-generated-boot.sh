@@ -11,6 +11,6 @@ export M40_SERIES_DIR="$run_dir" BCOS_KEYPAD=1
 printf '%s\n' "$run_dir"
 exec "${M40_KDC_BINARY:-/Users/paxia/Projects/mame_latest/mame/m40}" m40 \
   -rompath /Users/paxia/Projects/mame_latest/mame/roms -flop1 "$run_dir/load.imd" \
-  -ram 2m -cfg_directory "$run_dir/cfg" -nvram_directory "$run_dir/nvram" \
+  -ram 2m -cfg_directory "$run_dir/cfg" -snapshot_directory "$run_dir/snap" -nvram_directory "$run_dir/nvram" \
   -autoboot_script scripts/lua/mame_bcos_generated_boot.lua \
   -video none -sound none -nomouse -nothrottle -seconds_to_run "${BCOS_GENERATED_SECONDS:-120}"

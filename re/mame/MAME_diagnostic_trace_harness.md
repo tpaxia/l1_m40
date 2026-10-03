@@ -145,51 +145,16 @@ Add experimental logical text snapshots:
 M40_SCREEN_INTERVAL=1.0
 ```
 
-For reliable screen reconstruction, prefer the driver-side VRAM trace through
-the Python harness:
-
-```sh
-python3 tools/m40_harness.py run --diag B --name monitor-menu \
-  --keys '\n' --key-delay 70 --seconds 120 --vram-trace
-```
-
-This writes:
-
-```text
-runs-archive/<timestamp>-monitor-menu/trace.log
-runs-archive/<timestamp>-monitor-menu/vram.log
-runs-archive/<timestamp>-monitor-menu/screen.txt
-runs-archive/<timestamp>-monitor-menu/summary.json
-```
-
-The logical `M40_SCREEN_INTERVAL` snapshots are still useful for quick probes,
-but they read a chosen logical segment and can be blank once diagnostics change
-MMU mappings. `--vram-trace` reconstructs the actual GO252 framebuffer writes.
-
-Use compact FDU tracing only when chasing loader/FDC behavior:
-
-```sh
-python3 tools/m40_harness.py run --diag B --name load-keyte1-013-fdu \
-  --keys '\n1\n013\n' --key-delay 70 --inter-key-delay 8 \
-  --seconds 420 --vram-trace --fdu-trace
-```
-
-The current FDU trace records command/result/status, interrupt, timer, and DMA
-setup events. It still logs DRQ transitions and can be large, but it no longer
-needs to log every DMA byte to answer most loader questions.
-
-The Python harness now decodes `M40_FDU_TRACE` logs into a grouped µPD765
-timeline. Existing logs can be decoded without rerunning MAME:
-
-```sh
-python3 tools/m40_harness.py fdu runs-archive/<run>/fdu.log \
-  --output runs-archive/<run>/fdu_timeline.txt
-```
-
-For `--fdu-trace` runs the harness writes `fdu_timeline.txt` automatically. The
-decoder groups command bytes, result bytes, `CONTR`, `RD1NT`, `E01NT`, timer
-edges, FDC interrupt edges, VIACKs, and the DMA address context. It labels only
-unambiguous µPD765 fields; raw bytes remain visible in the output.
+The harness once offered driver-side traces (`--vram-trace` to rebuild the
+screen from GO252 framebuffer writes, `--fdu-trace` for a µPD765/DMA timeline,
+and the `screen` and `fdu` subcommands to decode them). They depended on trace
+hooks that were removed from the driver in September 2026, and the options were
+removed from the harness in October; the runs that used them are in the run
+archive. For screens, use the periodic snapshots above, or run with
+`--trace-script scripts/lua/mame_m40_timed_keys.lua` and `M40_FINAL_SNAPSHOT`
+for a real screenshot, as `scripts/test-m40-uc.sh` and `test-m40-fdu.sh` do.
+For controller activity, use MAME debugger breakpoints or Lua I/O write taps
+(`DEBUGGING_STRATEGY.md`).
 
 The first diagnostic prompt wants Enter. Therefore scripted monitor/test runs
 should start their `M40_KEYS` sequence with `\n` unless the target disk has been
@@ -228,7 +193,7 @@ The monitor sequence for MAP is:
 ```sh
 python3 tools/m40_harness.py run --diag B --name map-option2 \
   --keys '\n2\n' --key-delay 70 --inter-key-delay 8 \
-  --seconds 430 --vram-trace
+  --seconds 430
 ```
 
 The disk-resident library path is now operational. The historical `ac_mmulogfi: 02`

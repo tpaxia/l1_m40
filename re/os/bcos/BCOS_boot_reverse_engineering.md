@@ -102,7 +102,7 @@ SYS=  0 X      IPL= E100      JLD0 A.02 PDB= .440 NDB= .540 1DB= .700 SRA= .6D5
 With corrected GO280 interrupt masking it advances to the complete load-time status
 page (`PUS=DISK OK`, `LDK=E100`, `TIMEOK==KEYB`) and remains in the normal scheduler.
 It does not yet advance into the On-Line Generator pages whose text is present on
-K02733. Evidence is in `runs-archive/20260903-k02733-ens00-fix/`.
+K02733. Evidence is in `runs-archive/20260903-k02733-ens00-fix/` ([screen](../../evidence/screenshots/20260903-k02733-ens00-fix.png)).
 
 A physical Ctrl+J chord was then driven through the matrix inputs. The recovered
 8049 firmware and KEYTE1 tables establish the byte sequence as CONTROL make `70`,
@@ -171,8 +171,8 @@ loop, this is not evidence that BCOS rejected the key.  It is evidence of a real
 BCOS/8049 protocol mismatch that must be understood before using keys to start the
 generator.
 
-Current evidence is under `runs-archive/20260903-k02733-ens00-fix/` and
-`runs-archive/20260904-k02733-keypad-fixed-headless/`.  The exact unattended invocation
+Current evidence is under `runs-archive/20260903-k02733-ens00-fix/` ([screen](../../evidence/screenshots/20260903-k02733-ens00-fix.png)) and
+`runs-archive/20260904-k02733-keypad-fixed-headless/` ([screen](../../evidence/screenshots/20260904-k02733-keypad-fixed-headless.png)).  The exact unattended invocation
 and its pitfalls are recorded in `re/os/bcos/K02733_BCOS_headless_boot.md`.
 
 ## What the surviving 3.3 media set contains
@@ -233,7 +233,7 @@ trace is in `runs-archive/20260904-k02733-2m-305c6-wait/` (run September 8).
 Removing the CONTR-enable promotion of already-high source levels prevents
 this nested interrupt. `rr6` stays `8300:5000`, the library lookup succeeds,
 and the loader reaches configuration-table initialization. Evidence:
-`runs-archive/bcos-trace.Kxo2uO/`.
+`runs-archive/bcos-trace.Kxo2uO/` ([screen](../../evidence/screenshots/bcos-trace.Kxo2uO.png)).
 
 That run is **not a successful boot**: at `03:0b64`, the count in `r1` is zero;
 subtracting four yields `fffc`. The fill loop at `03:0bbc..0bc0` then overruns
@@ -262,7 +262,7 @@ This does **not** establish the position of the enable gate relative to
 edge detection. Do not infer that enabling a high source must be ignored.
 
 Repeated the no-unmask-promotion experiment, rebuilt, and ran both BCOS and
-the DCOS disk-D loader. BCOS evidence: `runs-archive/bcos-trace.ItaQog/`.
+the DCOS disk-D loader. BCOS evidence: `runs-archive/bcos-trace.ItaQog/` ([screen](../../evidence/screenshots/bcos-trace.ItaQog.png)).
 The library pointer remains `8300:5000` at `03:058c`. The later failure is
 precisely `03:0b62` loading zero from `03:411a`, then `03:0b64` subtracting
 four, producing `fffc` and overrunning the fill table at `03:0bbc`.
@@ -303,7 +303,7 @@ and `7AC32` in `re/disassembly/diagnostics/diskD_6030T6_6d900_7c780.dis`.
 
 Promoting both captured FDC and timer causes on enable was also tested:
 `runs-archive/fdu-validation.LZXeFb/20260908-234036-fdu/` failed to reach
-the diagnostic parameters (blank screen), and `runs-archive/bcos-trace.lREEdE/`
+the diagnostic parameters (blank screen), and `runs-archive/bcos-trace.lREEdE/` ([screen](../../evidence/screenshots/bcos-trace.lREEdE.png))
 still returned with rr6=FA00:0000. It is not a valid general fix either.
 
 Isolating captured timer promotion while retaining live FDC promotion:
@@ -321,7 +321,7 @@ source. Same-harness A/B diagnostic runs confirm test 3 stops with the old
 live-timer behavior and advances to test 4 and beyond with the change.
 There is a later interrupt-disable warning and test-7 exchange failure;
 this is not a full diagnostic pass. BCOS still fails with rr6=FA00:0000
-in `runs-archive/bcos-trace.UpiUQI/`. See the September 9 section in
+in `runs-archive/bcos-trace.UpiUQI/` ([screen](../../evidence/screenshots/bcos-trace.UpiUQI.png)). See the September 9 section in
 `re/hardware/go280/GO280_FDU_diagnostics.md` for traces and precise limitations.
 
 The diagnostic harness now schedules keys on frame callbacks, avoiding both
@@ -337,10 +337,10 @@ with the corrected code complete the full diagnostic interrupt-vector sweep,
 DMA test and tests 5/6, without the interrupt-disable warning. Details and
 manual limitations are in `re/hardware/go280/GO280_FDU_diagnostics.md`.
 
-BCOS evidence: `runs-archive/bcos-trace.ymwpJM/` (normal two-drive configuration).
+BCOS evidence: `runs-archive/bcos-trace.ymwpJM/` ([screen](../../evidence/screenshots/bcos-trace.ymwpJM.png)) (normal two-drive configuration).
 rr6=8300:5000 at 03:058c, r1=7 at 03:0b64, no configuration-table underflow,
 and the 74-second CPU snapshot is in the scheduler. The four-drive control
-`runs-archive/bcos-trace.A7JlYp/` produces the same improvement without the READY
+`runs-archive/bcos-trace.A7JlYp/` ([screen](../../evidence/screenshots/bcos-trace.A7JlYp.png)) produces the same improvement without the READY
 code change, isolating the artificial unused-unit attention interrupts.
 No configurator UI success is claimed. No keyboard injection was needed to
 remove the traced register corruption.
@@ -373,12 +373,12 @@ Validation:
 - Isolated pending-source fixtures confirm masked FDU requests survive and are
   exposed on re-enable; GO252 level 1b remains enabled. The test allows deferred
   CPU pin updates to synchronize before checking them.
-- UC3003 run `runs-archive/uc-validation.D80ueX/` passes VIENO, all timer counters and
+- UC3003 run `runs-archive/uc-validation.D80ueX/` ([screen](../../evidence/screenshots/uc-validation.D80ueX.png)) passes VIENO, all timer counters and
   ACIA, then reports test 5 NV2 INTERRUPT MASK FAULT. Same fault occurred before
   the level-2 correction. It is not an all-tests pass.
-- FDU `runs-archive/fdu-validation.TMV3vw/` advances through interrupt/DMA tests to
+- FDU `runs-archive/fdu-validation.TMV3vw/` ([screen](../../evidence/screenshots/fdu-validation.TMV3vw.png)) advances through interrupt/DMA tests to
   speed measurement, no displayed interrupt fault.
-- BCOS `runs-archive/bcos-boot.nP9IdK/` has rr2=0000:12F8 at 119 seconds. The screen
+- BCOS `runs-archive/bcos-boot.nP9IdK/` ([screen](../../evidence/screenshots/bcos-boot.nP9IdK.png)) has rr2=0000:12F8 at 119 seconds. The screen
   has cleared except for the bottom-right MOF marker, not a configurator prompt.
 
 Keyboard trace `runs-archive/bcos-boot.dDJtvH/keyboard.log` supersedes the earlier

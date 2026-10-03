@@ -16,6 +16,6 @@ printf '%s\n' "$run_dir"
 exec /Users/paxia/Projects/mame_latest/mame/m40 m40 \
   -rompath /Users/paxia/Projects/mame_latest/mame/roms \
   "$drive" "$run_dir/boot.imd" -ram 2m \
-  -nvram_directory "$run_dir/nvram" -cfg_directory "$run_dir/cfg" \
+  -nvram_directory "$run_dir/nvram" -cfg_directory "$run_dir/cfg" -snapshot_directory "$run_dir/snap" \
   -autoboot_script "${BCOS_BOOT_SCRIPT:-scripts/lua/mame_bcos_state.lua}" \
   -nomouse -video none -sound none -nothrottle -seconds_to_run 220

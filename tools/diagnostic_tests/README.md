@@ -22,7 +22,7 @@ the Diagnostic Monitor menu.
 
 ## Collection Status
 
-- MAME was run for disks A, B, C, D, E, F, G, H, and R with `--vram-trace`.
+- MAME was run for disks A, B, C, D, E, F, G, H, and R with `--vram-trace` (an option since removed from the harness).
 - Each run reached console sequence `01 02 44 55 21 FF` and displayed the common prompt.
 - Enter is delivered as KDC byte `0x52`, which the monitor accepts as the prompt key.
 - Verified post-Enter monitor-menu dumps are present as `monitor_menu_A.txt` through `monitor_menu_H.txt`, plus `monitor_menu_R.txt`.

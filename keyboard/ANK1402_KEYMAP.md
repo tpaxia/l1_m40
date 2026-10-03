@@ -91,7 +91,7 @@ CLEAR **49** translates to **609E**. The error loop at **12:22D8–22E6** repeat
 reads a key and compares its low byte with **9E**, ignoring other keys until it
 matches. RES-labelled position **51 on the ANK1426 is not that key**.
 
-Headless run `runs-archive/bcos-boot.EeDOUV/` tested:
+Headless run `runs-archive/bcos-boot.EeDOUV/` ([screen](../re/evidence/screenshots/bcos-boot.EeDOUV.png)) tested:
 
 `keypad 86 → keypad Enter → physical 49 → keypad 0909 → keypad Enter`
 

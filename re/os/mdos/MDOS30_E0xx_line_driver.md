@@ -209,7 +209,7 @@ Earlier E0xx run form:
 python3 tools/m40_harness.py run \
   --mame-bin /Users/paxia/Projects/mame_latest/mame/olivetti \
   --disk 'reference/Disk Images (Stefano Marinelli + others)/Ese L1/MDOS30.IMD' \
-  --name mdos30-post-fixes --seconds 240 --vram-trace --fdu-trace
+  --name mdos30-post-fixes --seconds 240 --vram-trace --fdu-trace   # options since removed
 ```
 
 The final FDU event is a successful `READ DATA` completion:

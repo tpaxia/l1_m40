@@ -4,6 +4,25 @@ This note collects the disk/manual evidence and the useful disassembly anchors f
 reverse engineering the communication between the CPU and the FDU/MFDU governo
 board (GO280/G0280 family).
 
+## Conclusions (October 2026)
+
+- **Protocol.** The CPU reaches the board through its slot window: uPD765 at
+  `0x1d`/`0x1f`, AM9517 DMA at `0x40`–`0x5e` with high-address latch `0xf6`,
+  control at `0xe7`, interrupt status at `0xf7`, ID/acknowledge at `0xff`, the
+  board 8253 at `0x99`–`0x9f` ("Current protocol model" below).
+- **READY.** Normal FDU READY stays wired to the selected drive; the old global
+  READY override from control bit 4 was wrong and is removed ("2026-09-09 final
+  result").
+- **6030T6** passes its FDU tests 1, 2, 3 and 5; its other tests need an
+  MFDU-jumpered board with a 5.25-inch drive. Physical units 1–3 identify
+  correctly; unit 4 wraps in the uPD765's two-bit unit field and is not proven
+  ("Four-unit numbering audit").
+- **DMA.** The word-addressed two-channel scheme is in `doc/MAME_DRIVER.md` §5; the
+  DREQ1/DACK1 race found during the MOS install is in
+  `re/evidence/uc-arbiter-nvi-latency-evidence.md`.
+
+The rest of this note is the investigation record.
+
 ## Relevant manual tests
 
 ### Four-unit numbering audit (2026-09-10)
@@ -289,7 +308,7 @@ the normal FDU configuration tested here, and does not suppress genuine drive
 READY transitions or FDC interrupt callbacks.
 
 BCOS with the corrected **two-drive** configuration:
-`runs-archive/bcos-trace.ymwpJM/`. At 03:058c, rr6 remains 8300:5000. At 03:0b64,
+`runs-archive/bcos-trace.ymwpJM/` ([screen](../../evidence/screenshots/bcos-trace.ymwpJM.png)). At 03:058c, rr6 remains 8300:5000. At 03:0b64,
 r1=7 (not zero), so initialization subtracts four correctly and completes
 instead of overrunning memory. At 74 seconds PC is in the 02:09xx scheduler.
 This resolves the traced register corruption, but does not establish arrival
@@ -328,7 +347,7 @@ Same frame-scheduled input harness, unchanged disk copies and slot parameters:
   speed tests. It prints `interrupt not disabled!!!!` around the test-4/5
   transition and eventually stops at test 7, FDC CHARACTER EXCHANGE ERROR.
   Do not call this an all-pass diagnostic run.
-- BCOS: `runs-archive/bcos-trace.UpiUQI/` still returns to `03:058c` with
+- BCOS: `runs-archive/bcos-trace.UpiUQI/` ([screen](../../evidence/screenshots/bcos-trace.UpiUQI.png)) still returns to `03:058c` with
   rr6=FA00:0000. This change does not fix the BCOS boot.
 
 The old SIGSEGV is not a valid hardware-test result: the macOS crash report

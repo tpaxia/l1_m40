@@ -540,7 +540,14 @@ instructions describe the pre-cleanup build. **[EMU]**
 - MB15652 arbitration has no delay: NVI follows the grant immediately, which the MOS
   kernel needs; there is no timing data (`re/evidence/uc-arbiter-nvi-latency-evidence.md`).
 - The GO363 8253 is clocked from the photographed 20 MHz oscillator; the divider is
-  unknown, and HDC505 test 4 (board timer) is not confirmed on the current build.
+  unknown.
+- **Regression:** on the current build (3 October 2026) the DCOS GO363 board test
+  HDC505 fails test 2, "generate interrupt and test vectors": `'STATUS' ERROR AFTER
+  RUN-COMMAND`, `UNSE0`, `SKEN0` and `UPR00` stuck at 1, with a blank or a formatted
+  disk ([screen](../re/evidence/screenshots/hdc505-20261003-test2-failure.png)).
+  On 20 September tests 1–3 passed and test 4 stopped at step 3. The GO363 changes
+  since then (`2eef3161383`, `f7144257e16`) are the candidates; HDC5F5, Standard 24
+  and the BCOS and MOS hard-disk systems work.
 - GO280 collapses the FUMEO no-READY timeout to an immediate missing-responder fault;
   RAM parity/PERRO and the exact DAW02 diagnostic waveform are not modeled. The
   external MASKO/IDXC0 index mux is also pending; channel 2 receives its documented

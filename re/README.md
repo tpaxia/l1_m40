@@ -22,5 +22,10 @@ evidence for each emulator change, and the disassembled sources.
   project has moved past. Its conclusions are carried by a current document.
 - **Superseded**: replaced by another note; kept for its detail.
 
+Many notes cite runs as `runs-archive/<run>/`. That folder is the local run
+archive (git-ignored; backed up as described in
+[evidence/screenshots/](evidence/screenshots/README.md)). The final screen of
+each cited run is copied there and linked from the citation as `[screen]`.
+
 Each note is dated in its own text; where a note and a `doc/` page
 disagree, the `doc/` page is newer.

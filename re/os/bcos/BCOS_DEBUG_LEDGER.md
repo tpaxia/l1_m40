@@ -5,6 +5,19 @@
 > `m40-test-interactive-start.lua`) were removed; their states no longer load
 > in the current build. The findings are recorded here and in `re/os/bcos/BCOS_BOOT.md`.
 
+## Where the results are
+
+This is the chronological log of the BCOS investigation (July–September 2026).
+Its settled results are kept elsewhere:
+
+- `re/os/bcos/BCOS_BOOT.md`: drive numbering and the IPL panel, the key-operated
+  switches, the verified operating sequence, date-error recovery, the generated
+  LOAD/RUN media change (`SYS ERR.006`), and the generator's error states.
+- `doc/KDC.md`: the GO252 keyboard receive status and interrupt enables that
+  BCOS needed (`83`, control bit 7; bit 4 removed).
+- `doc/MAME_DRIVER.md` §7: the UC arbiter's word strobes and mask latches.
+- `keyboard/BCOS_TEST_mode_and_keyboard_LEDs.md`: TEST mode and the keyboard LEDs.
+
 User permits temporary debug code provided it is tracked (2026-09-09).
 
 ## UC native trace removal (2026-09-15)
@@ -302,7 +315,7 @@ ISL1; zVBWoF reached the real swap prompt with ISL2 at90/119s. Earlier
 
 ### Explicit media-change recovery test (2026-09-11)
 
-Run `runs-archive/bcos-run-error.bac21z`, state C, unmodified-label RUN copy.
+Run `runs-archive/bcos-run-error.bac21z` ([screen](../../evidence/screenshots/bcos-run-error.bac21z.png)), state C, unmodified-label RUN copy.
 Command: `BCOS_MEDIA_SWAP=1 BCOS_RUN_FRAMES=600 BCOS_RUN_KEY='Keypad top-left (49)' BCOS_RUN_RETRY=1 sh scripts/trace-m40-bcos-run.sh`.
 Headless, separate process, original images/state and live session untouched.
 At frame 10 insert disposable LOAD; frame 70 eject; remain empty for 120
@@ -594,7 +607,7 @@ added to the external observer for command-prompt tests; no emulated RAM writes.
   at 70, 74 and 90 seconds, with CPU registers and screenshots. No emulated memory
   accesses, memory taps, or MAME source changes. Remove the `-autoboot_script`
   argument to disable it. Normal `scripts/boot-m40-bcos.sh` does not load it.
-  Initial run: `runs-archive/bcos-state.Zezct8/`, bounded to 92 emulated seconds,
+  Initial run: `runs-archive/bcos-state.Zezct8/` ([screen](../../evidence/screenshots/bcos-state.Zezct8.png)), bounded to 92 emulated seconds,
   fresh NVRAM, disposable K02733/K02737 images, 2048 KB, background-only SDL.
   Limitation: GO252 `device.items` is empty in this build; do not interpret that
   as an empty keyboard FIFO. RAM, MMU, UC and GO280 captures are present.
@@ -667,7 +680,7 @@ tests 1–6 and retains the known test-7 ROM fault. Only native change since pus
 commit d45e8448447 is the GO252 receive status fix; not committed or pushed yet.
 
 - REMOVED `go252.cpp/go252.h` latency experiment (`BCOS_KBD_REPLY_US`).
-  Run `runs-archive/bcos-boot.CnGP8m/` delayed command 01's FA reply by 1000 us.
+  Run `runs-archive/bcos-boot.CnGP8m/` ([screen](../../evidence/screenshots/bcos-boot.CnGP8m.png)) delayed command 01's FA reply by 1000 us.
   Replies were consumed about 1030 us after the command, but initialization
   retries, received Ctrl+J bytes and the blank/MOF screen at 119 seconds were
   unchanged. This does not establish the correct serial timing; it gives no
@@ -724,7 +737,7 @@ the diagnostic. Reverted the entire candidate (including readback and timer
 cancellation), preserving the previously validated alias/VIENO changes.
 Reconcile ROM reset/status expectations before retrying; see `re/hardware/uc/UC3003_NVI.md`.
 After reversion, rebuild and both focused alias/level-2 gate tests pass.
-Restored-baseline BCOS run: `runs-archive/bcos-boot.oT9AsS/`, 120 seconds, no
+Restored-baseline BCOS run: `runs-archive/bcos-boot.oT9AsS/` ([screen](../../evidence/screenshots/bcos-boot.oT9AsS.png)), 120 seconds, no
 latency environment variable, observer and Ctrl+J at 95 seconds. Process exits
 normally; retain this capture separately from the rejected candidate run.
 
@@ -738,7 +751,7 @@ re-entry at 85.2034115 s (3B:1AAE -> 3B:0D28) despite VIENO being masked.
 The earlier timer-only interpretation of VIENO was incomplete.
 
 Regression evidence before the level-2 correction: the exhaustive 16x16 alias
-test passes; UC3003 `runs-archive/uc-validation.dQEC8W/` advances through VIENO,
+test passes; UC3003 `runs-archive/uc-validation.dQEC8W/` ([screen](../../evidence/screenshots/uc-validation.dQEC8W.png)) advances through VIENO,
 all three timer counters and ACIA, stopping at test 5 NV2 INTERRUPT MASK FAULT.
 This is not an all-tests pass. A shell default-expression issue appended stray
 keys after execution had started; fixed in `scripts/test-m40-uc.sh` before rerun.
@@ -756,7 +769,7 @@ diagram labels bits 11-8 NON UTILIZZATI. Scope caveat: this is the governo
 selection chapter, not a UC042 gate-level schematic. BCOS's paired F084/F08C
 and FF84/FF8C usage independently supports applying the same aliases to UC.
 
-First corrected run: `runs-archive/bcos-boot.NifpkN/`, 100 seconds. At 99 seconds
+First corrected run: `runs-archive/bcos-boot.NifpkN/` ([screen](../../evidence/screenshots/bcos-boot.NifpkN.png)), 100 seconds. At 99 seconds
 the old environment page has cleared; screen is blank except bottom-right MOF.
 This is changed startup behavior, not a claimed interactive configurator boot.
 
@@ -791,7 +804,7 @@ in this keyboard control block, including its initialization before state C.
 
 Read-only saved-state replay with a disposable copy of
 `BCOS_RUN_LABEL_LOAD_TEST.imd`, CLEAR then F8, followed by `ocl` and
-keypad Enter: `runs-archive/bcos-run-error.ZcmwFK/after.png` shows SYS ERR.163.
+keypad Enter: `runs-archive/bcos-run-error.ZcmwFK/after.png` ([screen](../../evidence/screenshots/bcos-run-error.ZcmwFK__after.png)) shows SYS ERR.163.
 No RAM override, native-code edits, or changes to the live user session.
 This matches the previous bare BASIC result, but the meaning of 163 and
 the correct interpreter invocation remain unverified. The MOS BASIC guide
