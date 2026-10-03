@@ -202,7 +202,7 @@ regardless of RAM size (verified at 448K and 1024K).
 - **RAMVID (B-010)**: "*TEST RAM-VIDEO BY MARCH*". Prints the static banner
   "MARCH BANK 1B0000 1B0FFF" then never completes cycle 1 (2500 emulated s), no
   errors, not a keyboard wait (ENTER pacing didn't help). Established facts
-  (disasm `re/disassembly/diagnostics/runtime/seg20/21_ramvid_loaded.dis`; code in **seg 0x21**,
+  (disasm `re/disassembly/diagnostics/runtime/seg20_ramvid_loaded.dis` and `seg21_ramvid_loaded.dis`; code in **seg 0x21**,
   strings/descriptor in seg 0x20):
   - Marches logical **<<0x1B>>0x0000-0x0FFF** (one 4KB bank = the real board's
     2×TMM2016); seg 0x1B verified mapped to the VRAM (dump shows 00/20 cell pairs).

@@ -4,7 +4,7 @@ For the current user-facing M40 diagrams, see the
 [M40 keyboard reference](maps/README.md).
 
 For the current operating map, including photographed legends versus actual
-MAME bindings, see [the Windows BCOS guide](../installation/BCOS_WINDOWS_BASIC.md#keys-to-use-in-bcos).
+MAME bindings, see [the Windows BCOS guide](https://github.com/tpaxia/mame_disks/blob/main/m40/BCOS_WINDOWS_BASIC.md#keys).
 The historical tables below are not a current MAME input profile; in particular
 they predate the Alt layer. Use F12 for UI with `-uimodekey F12 -ctrlr m40-ui`,
 F8 for BCOS RUN, and Alt+C to clear E/KE. Scroll Lock is not an M40 key.

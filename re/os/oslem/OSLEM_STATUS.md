@@ -1,8 +1,20 @@
-# OSLEM / BCOS hard-disk installation status (2026-10-01)
+# OSLEM / BCOS hard-disk installation status (2026-10-02)
 
 Goal: install BCOS II on the emulated WREN2 hard disk (GO363, M40) following
 the Olivetti restore procedure in
 `reference/Disk Images (Stefano Marinelli + others)/Ripristino_HD/Procedura di salvataggio e ripristino di un sistema Olivetti L1 M30.docx`.
+
+## Outcome (2026-10-02)
+
+The install is complete and the hard disk boots. Steps 1–9 ran under DCOS and
+`oslem7+` (below); step 10, the boot from the hard disk, uses a patched REL 6.0
+ROM, `m40rom-6.0-hd65.bin` (`tools/mkrom_hd65.py`), that adds the GO363 IPL and
+the M44 service-table entries LDHSEL calls (Issue 2, "Resolution"). The keyboard
+map was then changed from `KITA` to `KUSA` with `COS#`; that disk is published as
+`m40-bcos-hd-kusa.chd` in `mame_disks` and boots to `/SYS`. Still open: why the
+unmodified `oslem7+` needs the two debugger patches (Issue 1).
+
+The rest of this note is the record of how it was done.
 
 ## Two independent blockers
 
@@ -36,7 +48,7 @@ Issue 1 has priority; Issue 2 is a later, independent improvement.
 | 7 | OSLEM: `EXEC JX24`, reboot, `EXEC MX24` (65 MB: MNR `0003EA00`, TK0 `0120`) | **Done** under `oslem7+` with debugger hacks (1E, 1F) |
 | 8 | `TOC£`: re-enter dataset FF parameters | **Done** (1F), values from the FF backup (1D) |
 | 9 | `DKC£`: copy datasets FF (`ff1`,`ff2`) and 80 (`80-1`…`80-4`) to HD | **Done** (1F); image identical to the offline restore (1D) |
-| 10 | Boot from HD → BCOS II | **Blocked** by Issue 2 (ROM cannot IPL from GO363); floppy IPL + HD system blocked by Issue 1 |
+| 10 | Boot from HD → BCOS II | **Done** with the patched hd65 ROM (Issue 2, Resolution) |
 
 Disk images (all disposable copies):
 
@@ -843,6 +855,26 @@ configuration entries).
 - Add GO363 IPL support to MAME, modelled on the M44 ROM's
   `0x120A`/`0x1880` code; AGENTS.md requires hardware documentation first
   (`reference/ArchiviOlivetti/M30-M40_HDC.pdf` is the unread candidate).
+- Patch the REL 6.0 ROM image itself, outside MAME.
+
+### Resolution: a patched REL 6.0 ROM
+
+The last option was taken. `tools/mkrom_hd65.py` edits the round-trippable
+REL 6.0 source (`re/disassembly/m40-rom/`) and rebuilds it as
+`reference/roms/m40rom-6.0-hd65.bin`:
+
+1. the service table is extended to `0x8C`–`0x9F` as on the M44 REL B.1 ROM,
+   so LDHSEL's and HDU1ST24's `<<63>>0x94`/`0x9C` calls reach a routine (the VI
+   dispatcher that occupied `0x8C` moves to `0xA0`);
+2. type `E4` in the HDU-first IPL list is replaced by `65`, with a new handler;
+3. a polled GO363/uPD7261 sector read is added in free space, using the
+   register sequence the OSLEM 7+ driver `H65R` issues;
+4. the ROM checksum is recomputed.
+
+Geometry is fixed at 9 heads × 32 sectors (WREN2). This ROM never existed; it
+is an emulation aid, and MAME needs no change for it (it is loaded with
+`-rompath`). With it the installed disk IPLs, LDHSEL loads, and BCOS II runs
+to `/SYS`; MOS boots from its own disk the same way.
 
 ## Keyboard notes (current MAME mapping)
 
@@ -853,10 +885,7 @@ for drive numbers (`FD2` = Shift+F, Shift+D, keypad 2).
 
 ## Next
 
-1. **Step 10 / Issue 2:** the installed `re/checkpoints/bcos-hd/hd.chd` cannot IPL on REL
-   6.0; one of the ROM options above is needed for a floppy-less boot.
-   Untested meanwhile: booting `oslem7+` (with the hacks) against the
-   installed `hd.chd` and running BCOS from the HD data sets.
+1. ~~Step 10 / Issue 2~~: done with the patched hd65 ROM (Issue 2, Resolution).
 2. **Issue 1 (understanding, not blocking):** why `oslem7+` needs the
    unit-3 flag patch and the `03:2956` range-check override. The hacks only
    bypass checks; the root cause (the `0x83` value, 1E) is still open.

@@ -118,7 +118,7 @@ disk-analyse 'reference/Disk Images/K02737_BCOS_II_3.3_BCS433-BCS533-BCS633-BCS8
   'reference/Disk Images/K02737_BCOS_II_3.3.imd'
 ```
 
-For isolated 2 MB trace runs, `scripts/trace-bcos-boot.sh 0003075E 70` copies both
+For isolated 2 MB trace runs, `scripts/trace-bcos-boot.sh 0003075E 70` (since removed) copied both
 images into a fresh run directory and creates new NVRAM. On this macOS host,
 SDL initialization requires running outside the filesystem sandbox even with
 video disabled; otherwise it reports that the video driver added no displays.

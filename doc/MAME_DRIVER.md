@@ -1,7 +1,8 @@
 # MAME M40/M44 driver — implementation and reverse-engineering notes
 
 This document records the hardware knowledge, diagnostic discoveries and deliberate
-emulation choices embodied in `src/mame/olivetti/m40.cpp`. It complements
+emulation choices embodied in `src/mame/olivetti/m40.cpp` and the boards in
+`src/devices/bus/olivetti_l1/` (branch `m40_z8010_sup_test` of `tpaxia/mame`). It complements
 [`doc/HARDWARE.md`](HARDWARE.md), which is the hardware/ROM reference,
 [`doc/KDC.md`](KDC.md), which owns the keyboard/video protocol, and
 [`doc/DIAGNOSTICS.md`](DIAGNOSTICS.md), which owns the diagnostic-disk workflow.
@@ -22,24 +23,27 @@ an **[EMU]** presentation choice, not a proven physical jumper truth table.
 Start fresh rather than loading states made with the former connector topology.
 
 The current driver models the single-MMU M40 sufficiently to pass the resident
-self-test, boot the DCOS 8.4 diagnostic disks, reach the Diagnostic Monitor and run
-the M40-applicable standalone tests. It instantiates:
+self-test, run the M40-applicable DCOS 8.4 diagnostics, and run ESE, MDOS, BCOS II
+(floppy and hard disk) and MOS (hard disk). It instantiates:
 
 - Z8001 at 4 MHz (`32 MHz / 8`) and one Z8010 MMU;
 - 16 KB REL 6.0 ROM, RAM beginning at physical `0x010000`, and the GO252 video
   window at physical `0xFF0000`;
 - UC 8253, EF68B50P/6850 ACIA, MB15652 bus arbiter and UC glue latches;
 - GO252 KDC with MC6845, keyboard protocol, ANK 1426 matrix and text renderer;
-- GO280 FDU with µPD765, AM9517 DMA, on-board 8253 and four 8-inch connectors.
+- GO280 FDU with µPD765, AM9517 DMA, on-board 8253 and four 8-inch connectors;
+- optionally (`-slot5 go363`), the GO363 hard-disk board around MAME's µPD7261, with
+  two CHD drives. Booting from it needs the patched `m40rom-6.0-hd65.bin`
+  (`doc/HARDWARE.md` §10).
 
 The M44 ROM set is kept with this driver because it belongs to the same M30/M40/M44
 hardware family, not to the M20 driver. The M44 currently reuses the M40 machine
 configuration as a bring-up approximation; its different UC048/two-MMU hardware is
 not yet modeled. **[EMU]**
 
-The direct hard-disk governo GO363 is not yet instantiated. MAME already supplies a
-µPD7261 core; the open work is the Olivetti wrapper, DMA, VI and disk geometry
-described in `doc/HARDWARE.md` §6.4. **[EMU]**
+The GO363 wrapper translates the board's command protocol, recovered from DCOS
+([GO363_DCOS_RECOVERY.md](GO363_DCOS_RECOVERY.md)), onto the existing µPD7261 device,
+and adds the board's word-addressed DMA, VI and ID buffer. **[EMU]**
 
 ## 2. CPU, MMU and physical memory
 
@@ -137,33 +141,33 @@ the `ME027-32` plus all five `RA57` variants:
 
 There are two mutually exclusive configuration modes:
 
-1. Supplying `-ramsize` makes MAME populate the required physical board profile(s).
+1. Supplying `-ram` makes MAME populate the required physical board profile(s).
 2. Selecting ME/RA57 cards in slots makes installed RAM equal to the sum of those
-   cards. In this mode `-ramsize` must not be supplied.
+   cards. In this mode `-ram` must not be supplied.
 
 The default is the first mode's 512 KB ME027-32 profile. Automatic totals are split
 as follows; the first board occupies the required first M40 RAM position (`slot2`),
 and a second board occupies `slot5` after the default GO252 and GO280:
 
-| `-ramsize` | Automatic physical population |
+| `-ram` | Automatic physical population |
 |---:|---|
-| `256K` | ME027-32 256 KB |
-| `384K` | ME027-32 384 KB |
-| `512K` | ME027-32 512 KB |
-| `640K` | ME027-32 384 KB + ME027-32 256 KB |
-| `768K` | ME027-32 512 KB + ME027-32 256 KB |
-| `896K` | ME027-32 512 KB + ME027-32 384 KB |
-| `1024K` | RA57/C 1 MB |
-| `1536K` | RA57/B 1.5 MB |
-| `2048K` | RA57/A 2 MB |
+| `256k` | ME027-32 256 KB |
+| `384k` | ME027-32 384 KB |
+| `512k` | ME027-32 512 KB |
+| `640k` | ME027-32 384 KB + ME027-32 256 KB |
+| `768k` | ME027-32 512 KB + ME027-32 256 KB |
+| `896k` | ME027-32 512 KB + ME027-32 384 KB |
+| `1m` | RA57/C 1 MB |
+| `1536k` | RA57/B 1.5 MB |
+| `2m` | RA57/A 2 MB |
 
 Examples:
 
 ```sh
 ./m40 m40
-./m40 m40 -ramsize 1024K
-./m40 m40 -ramsize 1536K
-./m40 m40 -ramsize 2048K
+./m40 m40 -ram 1m
+./m40 m40 -ram 1536k
+./m40 m40 -ram 2m
 ```
 
 With explicit slot cards, each card owns storage of its real capacity. Multiple
@@ -184,7 +188,7 @@ order, and the first explicit RAM card must be in `slot2`. For example:
 This is rejected rather than silently choosing one configuration source:
 
 ```sh
-./m40 m40 -ramsize 640K -slot2 me384k -slot5 me256k
+./m40 m40 -ram 640k -slot2 me384k -slot5 me256k
 ```
 
 The available card choices and current defaults can be inspected with:
@@ -193,7 +197,7 @@ The available card choices and current defaults can be inspected with:
 ./m40 m40 -listslots
 ```
 
-Internally, two hidden automatic devices let the runtime `-ramsize` option configure
+Internally, two hidden automatic devices let the RAM size option (`-ram`) configure
 one or two board profiles after MAME has constructed the slot tree. They use one
 contiguous backing allocation but expose the physical boundaries above. With
 explicit card options they contribute no memory. **[EMU]**
@@ -531,11 +535,44 @@ instructions describe the pre-cleanup build. **[EMU]**
 
 - GO252 monitor type/config registers other than the implemented status paths return
   all ones; this is why CRTAN5's automatic video-type check remains open.
-- The attribute low-four-bit ordering remains provisional, and the original
-  character-generator ROM is missing.
-- MB15652 arbitration latency is chosen behaviorally, not from timing data.
+- The attribute low-four-bit ordering remains provisional. The character generator
+  is the dumped GI 9428DS-2067, but the dump's origin is undocumented.
+- MB15652 arbitration has no delay: NVI follows the grant immediately, which the MOS
+  kernel needs; there is no timing data (`re/evidence/uc-arbiter-nvi-latency-evidence.md`).
+- The GO363 8253 is clocked from the photographed 20 MHz oscillator; the divider is
+  unknown, and HDC505 test 4 (board timer) is not confirmed on the current build.
 - GO280 collapses the FUMEO no-READY timeout to an immediate missing-responder fault;
   RAM parity/PERRO and the exact DAW02 diagnostic waveform are not modeled. The
   external MASKO/IDXC0 index mux is also pending; channel 2 receives its documented
   head-load-gated clock, but physical index currently reaches the FDC directly.
 - M44 currently shares the M40 configuration and is not a faithful M44 model.
+
+## 10. Building, and the branch history
+
+Build on macOS (Homebrew SDL3):
+
+```sh
+make SUBTARGET=m40 SOURCES=src/mame/olivetti/m40.cpp \
+  OSD=sdl3 USE_LIBSDL=1 SDL_INSTALL_ROOT=/opt/homebrew REGENIE=1 -j8
+```
+
+How the branch got to its present form:
+
+- **14 September 2026.** The MAME UI toggle was moved off Scroll Lock, which
+  Windows users need; the published commands now use `-uimodekey F12 -ctrlr m40-ui`
+  ([installation/M40_UI_CONTROLS.md](../installation/M40_UI_CONTROLS.md)).
+- **15 September.** The branch (`olivetti_m40`) was rebased onto mamedev master;
+  all 51 commits replayed unchanged. Upstream had turned the RAM device into a
+  slot, so `-ramsize 2048K` became `-ram 2m` (§2). The experimental GO363 was split
+  into its own branch, `olivetti_m40_hd`. Three `invalidate_caches()` calls on MMU
+  mode writes were removed: MAME's memory-access cache holds handler lookups, not
+  Z8010 translations, and the M40 handlers translate on every access. The keyboard
+  map, RAM configurations and BCOS boots were regression-tested after each step.
+- **20 September.** GO363 was ported onto `m40_z8010_sup_test`, the branch with the
+  current Z8010 bus-cycle model, as an ordinary L1 slot card (`-slot5 go363`).
+  ESE and BCOS II regressions were unchanged. On this build HDC505 stopped at
+  test 4 step 3 (board timer), the same as the old HD branch, so the earlier
+  "test 4 passes" result was not reproduced.
+- **25 September – 2 October.** uPD7261 and GO363 work for DCOS formatting and
+  the hard-disk installs, then the arbiter, GO280 DMA, Z8001 and GO252 fixes; each
+  has an evidence note in `re/evidence/` (indexed in its README).

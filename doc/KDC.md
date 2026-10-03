@@ -1,17 +1,12 @@
 # KDC — GO252 video / keyboard governo (behavioral & emulation model)
 
-> 2026-09-15 correction: the legacy control-bit-4 workaround has been removed
-> after paired BCOS, KEYTE1 and Gardini regression tests. The bit-4 meanings
-> asserted in the historical model below are withdrawn, not hardware facts.
-> Receive VI is now gated by control bit 7; TX VI remains gated by bit 5.
-> See [the ablation and regression results](../re/hardware/go252/GO252_BIT4_ABLATION.md).
-
-> 2026-09-10 keyboard clarification: retain the diagnostic-derived KUSA/QWERTY
-> mapping. Photographed keycaps can be customized; ANK1402/ANK1426 photo legends
-> alone do not prove different protocols or fixed model-specific functions.
-> K02733 loads KITA02.1: code 49 translates to its error-reset event 609E,
-> whereas the current RES label at 51 does not. See keyboard/ANK1402_KEYMAP.md for the
-> evidence and withdrawn photo-driven mapping proposal.
+> Current as of October 2026: the model below runs the DCOS diagnostics, ESE,
+> MDOS, BCOS II and MOS. Receive interrupts are gated by control bit 7 and
+> transmit/completion by bit 5; control bit 4 has no receive meaning (the earlier
+> bit-4 path was removed after [an ablation test](../re/hardware/go252/GO252_BIT4_ABLATION.md)).
+> Text is drawn from the dumped `GI 9428DS-2067` character ROM (§6). The key
+> mapping keeps the diagnostic-derived KUSA/QWERTY baseline; keycap photos alone
+> do not establish a different layout ([keyboard/](../keyboard/README.md)).
 
 The **GO252** (nome logico **`FE`**) is the standard L1 alphanumeric video + keyboard
 board — the *KDC* (keyboard/display controller). [HARDWARE.md §5](HARDWARE.md) covers
@@ -36,7 +31,7 @@ side is:
 | Reg (low byte) | Dir | Function |
 |---|---|---|
 | `0x00/0x01` | R | **status** — in RX-interrupt mode: bit0 = RDRF, bit1 = TX ready, bit7 = receive IRQ; bit2 is a status-change/reset event, not ordinary data **[DISK]** |
-| `0x01` | W | **control** — bit4 = normal/BCOS RX IRQ enable, bit5 = TX/completion IRQ enable, bit6 = direct-send handshake, bit7 = diagnostic RX IRQ enable **[DISK]** |
+| `0x01` | W | **control** — MC6850-style control word: bit5 = TX/completion IRQ enable, bit6 = direct-send handshake, bit7 = RX IRQ enable (BCOS and diagnostics) **[DISK]**; bits 1-0 = `11` is the master reset, which discards pending receive data **[EMU, provisional]** ([evidence](../re/evidence/go252-kdc-master-reset-evidence.md)) |
 | `0x02/0x03` | R/W | **data** — keyboard byte in / command byte out **[DISK]** |
 | `0x20/0x21` | W | **interrupt vector** latch (value returned on VI-ACK) **[EMU]/[DISK]** |
 | `0x41/0x43` | W | MC6845 address / data (HARDWARE.md §5.1) |
@@ -48,12 +43,10 @@ resident direct-send helper tests TX-ready before writing a command even when a 
 byte is queued; returning RX *instead of* TX+RX produces diagnostic error `0x8006`.
 Reading status with RX available arms the following data-register read. **[DISK]/[EMU]**
 
-2026-09-09 correction: control bit 7 is used by BCOS too, not just diagnostics.
-Pending normal input in that mode now reads as `83`. The earlier `06` made
-IKYB restart initialization on every byte; `03` completed initialization but
-made runtime 1KYB interpret received data as completion events. `83` permits
-the date prompt and keypad input. The bit-4-only legacy path remains modeled
-as before and is not a fully established hardware interpretation. **[DISK]/[EMU]**
+Control bit 7 is used by BCOS too, not just diagnostics. Pending normal input
+in that mode reads as `83`: `06` made IKYB restart initialization on every byte,
+and `03` completed initialization but made runtime 1KYB interpret received data
+as completion events. `83` permits the date prompt and keypad input. **[DISK]/[EMU]**
 
 The resident FE/KDC keyboard handler also uses the UC-side interface at **`0xFF20`**
 (status/control) and **`0xFF22`** (data) — now identified as the **UC EF68B50P ACIA**
@@ -72,13 +65,10 @@ handler's byte-ready trigger (bit 2) on the status port. **[DISK]/[EMU]**
 ## 2. Interrupt model — vectored interrupt (VI)
 
 The KDC drives the Z8001 **VI** line (vectored interrupt, line 1) — the **same line the
-FDU governo uses**. Three interrupt enables have now been observed in control register
-`0x01`:
+FDU governo uses**. Two interrupt enables are used in control register
+`0x01` (bit 4, once modelled as a normal/BCOS receive enable, turned out to be
+unnecessary and has no receive meaning):
 
-- **bit 4 = normal/BCOS RX interrupt enable** → BCOS writes control `0x16`; a queued
-  key then raises VI, status reports `0x06`, and the handler reads the key from data.
-  Without bit 4, BCOS remains in its valid scheduler idle loop and never consumes host
-  keys. **[DISK]/[EMU]**
 - **bit 5 = TX / completion interrupt enable** → raise VI when the transmitter is empty
   (command accepted / completion), so a send handshake can post its completion.
 - **bit 7 = RX interrupt enable** → BCOS and diagnostic services use controls
@@ -96,8 +86,7 @@ otherwise → TX/completion). **[DISK]/[EMU]**
 1. **The interrupt must be gated on the hardware enable bits**, not on a software flag.
    An early model armed the KDC IRQ from the *vector write*; that is wrong — real
    hardware raises an interrupt purely from register state / a bus side-effect. The
-   correct gates observed so far are `control(0x01).bit4` (normal RX), `.bit7`
-   (diagnostic RX), or `.bit5` (TX). **[EMU]**
+   correct gates are `control(0x01).bit7` (RX) and `.bit5` (TX). **[EMU]**
 2. **KDC and FDU share the VI line**, so the VI-ACK handler must return the KDC vector
    **only when a KDC source is enabled *and* pending**, otherwise fall through to the
    FDU. A missing check let the KDC hijack the FDU's vector and stall the floppy path.
@@ -305,13 +294,13 @@ light) and a frame-counter blink phase. The **LOW LINE** attribute must be drawn
 the cell's *true* last scanline, taken from **MC6845 R9** (the firmware programs
 `R9 = 0x10`, i.e. 17-line cells) — a hardcoded line 15 leaves the bottom edge one
 scanline high, where it no longer meets the LEFT/RIGHT verticals at the corners.
-Visible on any boxed diagnostic screen. **[EMU]** The **character generator `GI 9428DS-2067`** is
-a mask ROM, **not yet dumped**; the emulator currently renders text with the **Olivetti
-M20/L1 house font** (a 5×7 dot-matrix set, ASCII `0x20`–`0x7E`). The M20 is the same L1
-product line, and a photo of a live **L1/ESE** console shows the same font — matching
-slashed zero (`Ø`) and glyph shapes — so this is very likely the GO252 char set, pending
-a ROM dump or a CRTAN5 CRT-ROM-pattern capture to confirm glyph-exact. Codes outside
-`0x20`–`0x7E` (graphics/special) still render blank. **[EMU]/[PHOTO]**
+Visible on any boxed diagnostic screen. **[EMU]** The **character generator `GI 9428DS-2067`**, the board's only ROM, is
+dumped (`reference/roms/9428ds-2067.bin`, 4 KB: 256 characters × 16 rows, 8 pixels
+wide, stored inverted) and drives the display: control symbols at `0x00`–`0x1F`,
+ASCII, block and line graphics at `0x80`–`0x9F`, accented, Greek and Cyrillic letters
+above. It replaced a hand-drawn font copied from the M20/L1 house style; CRTAN5's
+CRT-ROM pattern step now shows all 256 codes. The dump's origin is not documented
+(see [the evidence](../re/evidence/go252-chargen-evidence.md)). **[EMU]/[PHOTO]**
 
 ---
 
@@ -335,12 +324,12 @@ of the keypress. Fixing it needs the exact type register + value from CRTAN5's c
 ## 8. Emulation status
 
 **Implemented:** type-ID `0xFE`; MC6845 text video; keyboard VI (gated on control
-bits 4/5/7) + serial status/data protocol + read-ID response; positional scancode matrix
+bits 5/7) with the control-word master reset + serial status/data protocol + read-ID response; positional scancode matrix
 with PS/2 mapping (Esc = EXIT); character-attribute rendering (reverse / high light /
-blink / four lines) with a 3-level palette; the M20/L1 house font as the char generator. **Open:** confirm
+blink / four lines) with a 3-level palette; the dumped `GI 9428DS-2067` character
+generator. **Open:** confirm
 the attribute bit map and the CRTAN5 video-type register against the seg-0x21
-disassembly; verify the font glyph-exact (CRTAN5 CRT-ROM pattern) or dump the
-`GI 9428DS` mask ROM; add the graphics/special glyphs above `0x7E`; replace the
+disassembly; replace the
 remaining keyboard HLE omissions with firmware-derived behavior (scan modes,
 beeper timing and `0x80` repeat). Startup/identification commands and five
 host-commanded LED outputs are implemented. BCOS TEST is verified as left

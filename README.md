@@ -14,7 +14,7 @@ floppy and from the hard disk, and MOS from the hard disk.
 | Software | Result | How it was checked |
 |---|---|---|
 | ROM REL 6.0 self-test and IPL | Passes; boots from floppy or hard disk | ROM disassembly and every board's power-on test |
-| DCOS 8.4 field diagnostics | Central unit, memory, video and keyboard tests pass (UC3003, UCV305, MEM813, RAMVID, CRTAN5, KEYTE1); the floppy test 6030T6 passes its FDU tests; the GO363 programs HDC505, HDC5F5 and Standard 24 format and verify the emulated hard disk | [doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md), [tools/diagnostic_tests/](tools/diagnostic_tests/README.md) |
+| DCOS 8.4 field diagnostics | Central unit, memory, video and keyboard tests pass (UC3003, UCV305, MEM813, RAMVID, CRTAN5, KEYTE1); the floppy test 6030T6 passes its FDU tests; on the GO363, HDC505 passes its controller tests 1–3, HDC5F5 formats the disk (`DISK CORRECTLY FORMATTED`) and S24W25 writes and reads back Standard 24 | [doc/DIAGNOSTICS.md](doc/DIAGNOSTICS.md), [tools/diagnostic_tests/](tools/diagnostic_tests/README.md) |
 | ESE 3.1, MDOS 3.0, MDOS 3.1 utilities | Boot to `READY` | [re/os/OS_boot_media_survey.md](re/os/OS_boot_media_survey.md) |
 | BCOS II 3.3 from floppy | All-resident system, configurator, system generation and the generated LOAD/RUN pair | [re/os/bcos/BCOS_BOOT.md](re/os/bcos/BCOS_BOOT.md) |
 | BCOS II 3.3 on the hard disk | Installed with the Olivetti restore procedure (OSLEM 7+, JX24, MX24, TOC£, DKC£); boots to `/SYS` | [re/os/oslem/OSLEM_STATUS.md](re/os/oslem/OSLEM_STATUS.md) |
@@ -103,7 +103,7 @@ Behaviour that the original software depends on and that had to be found
 | [doc/](doc/) | The hardware reference, the MAME driver notes, GO252, GO363 and the diagnostics |
 | [re/](re/) | The reverse engineering: `disassembly/` (round-trippable ROM and bootloader sources, diagnostic listings), `hardware/` (per board), `os/` (per operating system), `evidence/` (one note per emulator change, written before it), `mame/` (driver history and the trace harness), `checkpoints/` (saved states and disk images, local only) |
 | [keyboard/](keyboard/README.md) | Everything about the ANK keyboards: firmware, scancodes, key maps, photos |
-| [installation/](installation/) | Windows guides for running BCOS, and the MAME UI controls |
+| [installation/](installation/README.md) | Pointers to the published run instructions in `mame_disks`, and the MAME UI controls |
 | [reference/](reference/) | ROM images, datasheets and digests of the manuals; the disk images and scanned manuals are kept locally |
 | [scripts/](scripts/README.md) | Launchers and regression tests; the hard-disk harness and MOS install stages |
 | [tools/](tools/README.md) | ROM disassembly and rebuild, the patched-ROM builder, floppy-image tools, the diagnostic-disk harness |

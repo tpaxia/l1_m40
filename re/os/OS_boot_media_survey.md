@@ -1,5 +1,17 @@
 # M30/M40 operating-system media boot survey
 
+## Current state (October 2026)
+
+Since this survey, BCOS II 3.3 and MOS 5.2 have been installed on the GO363
+hard disk and boot from it with the patched hd65 ROM
+([OSLEM_STATUS.md](oslem/OSLEM_STATUS.md)); MOS no longer fails as in the
+table below. The install used the MOS starter with its empty cylinder 77 removed
+(`tools/imd_trim_empty_tail.py`) and a WREN2 formatted by HDC5F5. The other
+results still stand: ESE, MDOS 3.0, the MDOS 3.1 utilities and BCOS II 3.3
+boot from floppy; MDOSC 2.0, 3.1 and 3.2 stop with `ERROR 172/173`; BCOS II
+5.0 boots only partway. The published images and instructions are in
+[mame_disks/m40](https://github.com/tpaxia/mame_disks/tree/main/m40).
+
 ## 2026-09-20 cross-version retest on MAME 8920b132a11
 
 Fresh 160-second probes used the same clean `m40_z8010_sup_test` executable as

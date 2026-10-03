@@ -41,5 +41,4 @@ The keyboard itself is documented in [`../../keyboard/`](../../keyboard/README.m
 |---|---|---|
 | [GO363_HDC5_diagnostics.md](go363/GO363_HDC5_diagnostics.md) | The disk-G hard-disk programs (HDC505, HDC5F5, HDC5X3, Standard 24) and the board protocol they show | Current; summarised in `doc/GO363_DCOS_RECOVERY.md` |
 | [GO363_DOCUMENTATION.md](go363/GO363_DOCUMENTATION.md) | What the Olivetti documents say about the GO363 and Standard 24, and where they stop | Current |
-| [upd7261_GROUND_TRUTH.md](go363/upd7261_GROUND_TRUTH.md) | MAME already has a uPD7261 device; what it does and what the GO363 needs from it (16 July) | Historical |
-| [upd7261ad_mame.md](go363/upd7261ad_mame.md), [upd7261_implementation_plan.md](go363/upd7261_implementation_plan.md), [upd7261_mame_analogues.md](go363/upd7261_mame_analogues.md) | Early plans to write a uPD7261 device | Superseded by `upd7261_GROUND_TRUTH.md`: they assume no device exists |
+| [upd7261_GROUND_TRUTH.md](go363/upd7261_GROUND_TRUTH.md) | MAME already has a uPD7261 device; what it does, how MG-1 wires it, and the GO363 gate-array command protocol (16 July) | Historical; the protocol is current in `doc/GO363_DCOS_RECOVERY.md` |

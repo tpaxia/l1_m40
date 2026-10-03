@@ -6,7 +6,7 @@ For running them, see the published guide in
 
 | Note | Contents | Status |
 |---|---|---|
-| [OS_boot_media_survey.md](OS_boot_media_survey.md) | Boot test of every OS image from floppy (20 September): ESE, MDOS, MDOSC, BCOS II 3.3 and 5.0, MOS | Historical: predates the hard-disk installs; MOS now boots from the hard disk |
+| [OS_boot_media_survey.md](OS_boot_media_survey.md) | Boot test of every OS image from floppy (20 September): ESE, MDOS, MDOSC, BCOS II 3.3 and 5.0, MOS | Historical table; its opening summarises the current state |
 
 ## `bcos/`: BCOS II
 
@@ -21,7 +21,7 @@ For running them, see the published guide in
 
 | Note | Contents | Status |
 |---|---|---|
-| [OSLEM_STATUS.md](oslem/OSLEM_STATUS.md) | Installing BCOS II on the GO363 hard disk with the Olivetti restore procedure: the OSLEM 7+ boot, JX24, MX24, TOC£, DKC£, and why REL 6.0 cannot IPL the hard disk (Issue 2) | Current to 1 October; the hard-disk boot was then solved with the hd65 ROM |
+| [OSLEM_STATUS.md](oslem/OSLEM_STATUS.md) | Installing BCOS II on the GO363 hard disk with the Olivetti restore procedure: the OSLEM 7+ boot, JX24, MX24, TOC£, DKC£, and why REL 6.0 cannot IPL the hard disk (Issue 2) | Current: opens with the outcome; the rest is the install record |
 
 The disk and library formats found on the way are in
 [`../../tools/L1_DISK_FORMATS.md`](../../tools/L1_DISK_FORMATS.md).

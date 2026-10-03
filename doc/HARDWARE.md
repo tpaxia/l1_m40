@@ -4,13 +4,14 @@ A structured hardware description of the M40 (and its M30 sibling). It is synthe
 from the boot-ROM disassembly and the Olivetti service manuals. This document is
 **separate from the project goals** (`README.md`).
 
-**This is no longer just a spec — the MAME driver exists.** `src/mame/olivetti/m40.cpp`
-implements the model below and **boots the DCOS 8.4 diagnostic disk to its interactive
-monitor**, running the KEYTE1 (keyboard) and CRTAN5 (video/attribute) diagnostics. The
-Z8010 MMU (`machine/z8010.cpp`) and the M40 FDC/DMA glue were written for this project;
-the µPD7261 HDC already existed in MAME. What remains is the GO363 hard-disk wrapper
-(M4). The sections below are now both the spec **and** the as-built reference — where
-an item is implemented it is tagged **[EMU]** or noted in §10.
+**The MAME driver implements everything below.** `src/mame/olivetti/m40.cpp` and
+the boards in `src/devices/bus/olivetti_l1/` (branch `m40_z8010_sup_test` of
+`tpaxia/mame`) run the DCOS 8.4 diagnostics, ESE, MDOS, BCOS II from floppy and
+from the GO363 hard disk, and MOS from the hard disk. The Z8010 MMU
+(`machine/z8010.cpp`), the board models and the GO363 wrapper were written for this
+project; the µPD7261 HDC already existed in MAME. The sections below are both the
+spec **and** the as-built reference — where an item is implemented it is tagged
+**[EMU]** or noted in §10.
 
 ### Confidence tags
 
@@ -954,8 +955,8 @@ longer blockers.)*
 
 ## 10. MAME model — as-built status
 
-Target board: single-MMU M40, `REL 6.0` ROM, FDU (GO280) + direct ST506 HDU (GO363).
-Driver: `src/mame/olivetti/m40.cpp`. **✅ = implemented and working; 🔶 = partial/open.**
+Target board: single-MMU M40, `REL 6.0` ROM (patched `hd65` for hard-disk boot), FDU (GO280) + direct ST506 HDU (GO363).
+Driver: `src/mame/olivetti/m40.cpp`; boards in `src/devices/bus/olivetti_l1/`. **✅ = implemented and working; 🔶 = partial/open.**
 Device cores now in MAME: `z8001`, **`z8010`** (`machine/z8010.cpp`, written for this
 project), `pit8253`, `upd765` (M40 variant), `i8237`/`am9517`, `mc6845`, and **`upd7261`**
 (`machine/upd7261.cpp`, pre-existing). Nothing on the M1–M3 path is still a to-write core.
@@ -1002,11 +1003,28 @@ changes when changing the boot device.
 - ✅ DMA path: governo **word-addressed** DMA → system RAM, gated by the arbiter `0xFF84`(open)/`0xFF8C`(close).
 - ✅ **Floppy image** plumbing (IMD; track0 = 26×128 FM, tracks 1+ = 26×256 MFM; 500 kbps).
 
-### M4 — detect + boot the ST506 hard disk — 🔶 in progress
-- 🔶 **HDU governo (GO363)** — wrapper exists with the verified `65` board ID. HDC505 tests 1–4 pass. Test 2 established `PRIN0` (`4b.5`), post-command status `28`, PROINT data `0003`, gated VI, and the handler's `xx02` acknowledge. Test 3 programs the uPD7261 through ports `01`/`10`/`11`, passes `HDC5.CONTRINIZ`, and verifies six-byte FIFO commands `45`/`44`. Test 4 established that loading the cascaded 8253 starts its count before the later `4000`/`4100` diagnostic command, and that `ff02` enables its VI while `0002` selects polled completion. The long case now acknowledges vector `30` at PC `210f76`, preserves `ffff` instead of the rejected `0f0f` sentinel, and advances to test 5. The test also exposed a separate UC-8253 VI-enable refresh bug, now fixed. Remaining: exact oscillator divider, local SRAM/DMA registers, timed bus-master DMA, write/verify modes, and tests 5 onward.
+### M4 — detect + boot the ST506 hard disk — ✅ done (October 2026)
+
+BCOS II and MOS are installed on an emulated 65 MB WREN2 (1024 × 9 × 32, 256-byte
+sectors) and boot from it. DCOS HDC5F5 formats the disk (`DISK CORRECTLY
+FORMATTED`) and S24W25 writes and reads back Standard 24. The uPD7261 changes
+behind this (per-sector data time, buffered seeks, the `0x0e00` ID buffer for
+Verify ID, register `0x41` for the ninth head, DMA at sector boundaries) are
+listed with their evidence in `re/evidence/README.md`; the register protocol is
+in [GO363_DCOS_RECOVERY.md](GO363_DCOS_RECOVERY.md).
+
+REL 6.0 cannot IPL the GO363: its hard-disk entry (type `E4`, handler `0x1e58`)
+is for the older GO230. Booting uses `m40rom-6.0-hd65.bin`, a patched REL 6.0
+that adds a GO363 (`65`) sector-read routine and the M44 service-table entries
+the LDHSEL loader calls (`tools/mkrom_hd65.py`; `re/os/oslem/OSLEM_STATUS.md`,
+Issue 2).
+
+The record of how the board was brought up, test by test:
+
+- ✅ **HDU governo (GO363)** — wrapper with the verified `65` board ID. HDC505 tests 1–3 pass; test 4 passed on the old HD branch but stopped at step 3 after the 20 September port (`doc/MAME_DRIVER.md` §10) and has not been rerun since. Test 2 established `PRIN0` (`4b.5`), post-command status `28`, PROINT data `0003`, gated VI, and the handler's `xx02` acknowledge. Test 3 programs the uPD7261 through ports `01`/`10`/`11`, passes `HDC5.CONTRINIZ`, and verifies six-byte FIFO commands `45`/`44`. Test 4 established that loading the cascaded 8253 starts its count before the later `4000`/`4100` diagnostic command, and that `ff02` enables its VI while `0002` selects polled completion. The long case now acknowledges vector `30` at PC `210f76`, preserves `ffff` instead of the rejected `0f0f` sentinel, and advances to test 5. The test also exposed a separate UC-8253 VI-enable refresh bug, now fixed. Remaining: exact oscillator divider, local SRAM/DMA registers, timed bus-master DMA, write/verify modes, and tests 5 onward.
 - ✅ **Interrupt vectoring scaffold** — completion is **VI-driven** (§6.5): GO363 has a writable vector and asserts the backplane VI; acknowledge clears it. The diagnostic pending state is kept separate from the PROINT-controlled VI output.
-- ✅ **ST506 hard-disk image plumbing** — two CHD image slots; confirmed logical geometry is 425×12×32 with 256-byte sectors for the 40 MB class. A bootable/install-populated image is still needed.
-- ⚠️ IPL type `E4` → handler `0x1e58` is traced, but belongs to GO230, not GO363. A native GO363 (`65`) boot route has not yet been demonstrated.
+- ✅ **ST506 hard-disk image plumbing** — two CHD image slots; 425×12×32 with 256-byte sectors for the 40 MB class; the installed BCOS and MOS disks are 65 MB WREN2 images (1024×9×32).
+- ✅ IPL: type `E4` → handler `0x1e58` belongs to GO230, not GO363; the GO363 boot uses the patched hd65 ROM described above.
 
 ### Not needed for this target
 GIPO governo (§6.6, IEEE-488 — out of scope), the S3000SV **cache** (`0xFFD0–DB`, optional board),

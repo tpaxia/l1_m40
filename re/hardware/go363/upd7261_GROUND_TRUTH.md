@@ -1,9 +1,10 @@
 # µPD7261 in MAME — Ground Truth (supersedes the implementation plan)
 
 **Bottom line:** the µPD7261 is **already fully emulated in the current MAME tree**. Do **not**
-write a new device. `re/hardware/go363/upd7261_implementation_plan.md` and `re/hardware/go363/upd7261ad_mame.md` ("Status: Not
-Emulated in MAME") are based on an out-of-date premise — verified false against the tree on
-2026-07-16.
+write a new device. Three earlier plans written on the opposite premise (a device skeleton, a
+phased implementation plan, and a derivation from MAME's other hard-disk controllers) were
+verified wrong against the tree on 2026-07-16 and removed in October 2026; they remain in git
+history.
 
 ## The existing device
 
@@ -174,11 +175,3 @@ Host writes {opcode-nibble word to `0xb0`, params to `0xe0/e1`, DMA addr to `0x8
 runs the SRAM-buffered word-addressed DMA. A GO363 wrapper device that does exactly this translation,
 sitting in front of the existing `upd7261_device`, is the correct model — and every hard part (DMA
 word-addressing, governo VI latch) is already implemented for the FDU.
-
-## Corrections to fold back into the other notes
-- `re/hardware/go363/upd7261ad_mame.md` §"Status: Not Emulated" → **wrong**; it is emulated.
-- `re/hardware/go363/upd7261_implementation_plan.md` Phases 1–4 (write skeleton → FSM → data path → drive
-  backend) → **already implemented** by Mackinlay's device; skip to the equivalent of Phase 5
-  (host/board integration) using `mg1` as the pattern.
-- `re/hardware/go363/upd7261_mame_analogues.md` (derive from xt_hdc/pdc/wd2010) → moot; the direct analogue **is
-  the µPD7261 device itself**.

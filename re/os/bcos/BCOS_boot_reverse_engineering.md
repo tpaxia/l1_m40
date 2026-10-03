@@ -247,11 +247,11 @@ by itself justify suppressing these units or their status changes. Section
 settle source-edge versus enable-edge behavior. The latch experiment was
 reverted and MAME rebuilt; the pre-existing GO280 changes were preserved.
 
-For reproducible future traces use `scripts/trace-bcos-boot.sh`. It uses fresh
-NVRAM, copies both media per run, disables video output, and applies the macOS
-background hint. Its optional arguments are trace-start PC (hex) and earliest
-emulated second. It prints the generated run directory. Screen capture is
-observation-only and does not open an emulated display window.
+The trace script used here, `scripts/trace-bcos-boot.sh`, was removed when the
+driver's native trace hooks were (September 2026). For reproducible boots use
+`scripts/boot-m40-bcos.sh` (fresh NVRAM, disposable media copies, timed
+screenshots); for tracing, the MAME debugger and Lua techniques in
+`DEBUGGING_STRATEGY.md`.
 
 ## 2026-09-08: manual-guided interrupt A/B regression
 
