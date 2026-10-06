@@ -64,3 +64,12 @@ uc042-a5-go363-fb-diagnostics.txt audit. The next diagnostic discrepancy is
 quantitative timer timing; do not change hardware clocks just to match a test.
 External timer/common-status source was left untouched under AGENTS.md's
 primary-evidence rule. The provisional working path remains in this project.
+Compiled-fix follow-up, 2026-10-06:
+The user explicitly requested including the regression-tested fixes in MAME.
+Both UC042 low-OUT1 clearing and GO363 F9/FB zero returns are now compiled
+into the driver. Original A.5 MOS completes root login without modifying Lua
+taps; its root menu is pixel-identical to the reference. The 18 published
+M40 software boot checks also pass. See compiled-regression-20261006/README.txt
+and verification.json. The launcher now uses observe-keys.lua, without the
+old interventions. Full GO363 common-status behavior and HDC505 test 4 remain
+separate open investigations.

@@ -1,0 +1,28 @@
+t=20.01 shot
+t=40.01 shot
+t=60.00 shot
+t=80.01 shot
+t=90.01 image floppydisk1=-
+t=93.02 shot k01__floppydisk1__
+t=93.02 image floppydisk1=/Users/paxia/Projects/L1_M30_M40/reference/roms/compiled-regression-20261006/bcos-generated/run.imd
+t=96.00 shot k02__floppydisk1__Users_paxia_Projects_L1_M30_M40_reference_roms_compiled_regression_20261006_bcos_generated_run_imd
+t=97.21 RETURN down
+t=97.51 RETURN up
+t=100.01 shot k03__RETURN
+t=100.01 shot
+t=120.00 shot
+t=130.02 type SPAM
+t=133.00 shot k04__SPAM
+t=135.22 Keypad ENTER down
+t=135.52 Keypad ENTER up
+t=138.01 shot k05__Keypad_ENTER
+t=140.01 shot
+t=155.00 type 860909
+t=158.00 shot k06__860909
+t=160.01 shot
+t=162.20 Keypad ENTER down
+t=162.50 Keypad ENTER up
+t=165.01 shot k07__Keypad_ENTER
+t=180.00 shot
+t=200.01 shot
+t=220.01 shot

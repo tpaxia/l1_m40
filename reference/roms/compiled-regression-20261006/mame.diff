@@ -1,0 +1,34 @@
+diff --git a/src/devices/bus/olivetti_l1/go363.cpp b/src/devices/bus/olivetti_l1/go363.cpp
+index afcf77e77ee..3034f5970a1 100644
+--- a/src/devices/bus/olivetti_l1/go363.cpp
++++ b/src/devices/bus/olivetti_l1/go363.cpp
+@@ -201,6 +201,12 @@ u8 olivetti_l1_go363_device::io_r(offs_t offset)
+ 			|| !m_drive[m_selected_unit - 1] || !m_drive[m_selected_unit - 1]->exists())
+ 			data |= 0x01;
+ 		break;
++	case 0xf9:
++	case 0xfb:
++		// Healthy-board approximation for the native A.5/B.1 boot helpers.
++		// TODO: recover the complete common-register protocol.
++		data = 0x00;
++		break;
+ 	case 0xff: data = 0x65; break;
+ 	}
+ 
+diff --git a/src/devices/bus/olivetti_l1/uc.cpp b/src/devices/bus/olivetti_l1/uc.cpp
+index b0835c16cea..75dc6c761da 100644
+--- a/src/devices/bus/olivetti_l1/uc.cpp
++++ b/src/devices/bus/olivetti_l1/uc.cpp
+@@ -363,8 +363,10 @@ u16 olivetti_l1_uc042_device::nmiack_r()
+ 
+ void olivetti_l1_uc042_device::pit_out1_w(int state)
+ {
+-	// OUT1 is edge-latched as the UC timer VI source and gated by VIENO.
+-	if (state && !m_timer_out1)
++	// OUT1 drives the UC timer VI request, gated by VIENO.
++	if (!state)
++		m_timer_pending = false;
++	else if (!m_timer_out1)
+ 		m_timer_pending = true;
+ 	m_timer_out1 = bool(state);
+ 	update_vi();

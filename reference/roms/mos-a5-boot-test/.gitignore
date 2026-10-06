@@ -1,0 +1,6 @@
+*.chd
+*.imd
+cfg/
+nvram/
+roms/
+intel-8253-datasheet.pdf

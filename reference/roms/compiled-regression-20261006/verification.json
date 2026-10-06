@@ -1,0 +1,23 @@
+{
+  "bcos-hd": true,
+  "mos-hd": true,
+  "a5-mos-hd": true,
+  "ese": true,
+  "mdos30": true,
+  "mdosutil": true,
+  "bcos-resident": true,
+  "bcos-config": true,
+  "bcos-generated": true,
+  "gardini": true,
+  "dcos-A": true,
+  "dcos-B": true,
+  "dcos-C": true,
+  "dcos-D": true,
+  "dcos-E": true,
+  "dcos-F": true,
+  "dcos-G": true,
+  "dcos-H": true,
+  "dcos-R": true,
+  "source_media_unchanged": true,
+  "no_lua_interventions": true
+}

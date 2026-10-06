@@ -1,0 +1,5 @@
+*.chd
+*.imd
+cfg/
+nvram/
+roms/

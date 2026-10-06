@@ -1,0 +1,25 @@
+Compiled UC042 timer and GO363 status boot fixes — 2026-10-06
+
+Committed to MAME as beb6847b123 on m40_z8010_sup_test.
+All 19 compiled-build boot checks pass without modifying Lua probes;
+see compiled-regression-20261006/verification.json and README.txt.
+
+The user explicitly requested committing and pushing the fixes that were
+regression tested, including the previously local provisional changes.
+This instruction supersedes the earlier requirement to leave these particular
+provisional fixes outside the external MAME source until fully corroborated.
+
+Apply the two existing tested patches without extending their behavior:
+- UC042 pit_out1_w: clear m_timer_pending when OUT1 becomes low; retain
+  rising-edge setting and VIENO gating. See uc042-a5-timer-investigation.txt
+  for the Intel 8253 mode-0 evidence and original A.5/6.0/DCOS paths.
+- GO363 io_r F9 and FB: return zero as the healthy-board approximation.
+  See uc042-a5-go363-fb-diagnostics.txt, uc042-a5-fb-zero-result.txt and
+  uc042-a5-m44-hd65-comparison.txt for exact software paths and limitations.
+
+These fixes already boot the original A.5 MOS system under Lua interventions,
+and the published 6.0 software regression set passes with the interventions.
+The compiled implementation must be retested without the modifying Lua taps.
+F9/FB zero returns remain a provisional register model, and the independent
+HDC505 timer measurement failure remains unresolved; neither is concealed
+by committing the boot fixes.
