@@ -1,0 +1,70 @@
+GO363 common register FB: diagnostic evidence audit
+===================================================
+2026-10-06
+
+Result
+------
+The available DCOS diagnostics partially characterize FB on other HD governo
+backends, but this investigation has not found an independently confirmed
+GO363/type-65 FB definition. Do not copy those backends into GO363 or claim
+that HDC5_STATUSFLAG necessarily accesses FB.
+A.5 itself establishes the startup behavior required by its generic scanner:
+bit 6 is polled during startup; bit 7 causes exclusion; a healthy controller
+must clear both. Full register meaning and reset/command behavior remain open.
+No external MAME source changed.
+
+Original sources and reproducibility
+------------------------------------
+reference/Disk Images (Stefano Marinelli + others)/diagnostici l1 dcos 8.4/
+A.IMD, D.IMD, G.IMD, extracted with tools/imd.py.
+Offsets below are flat extracted image byte offsets, not emulated PC addresses.
+A common-library duplicate is not an independent test.
+Extracted A: 1005056 bytes; SHA256 e7cf2f2a578560a16fb8a4ac2c0834738db62d0dbd6a066a6521515e1c267988
+Extracted D: 589056 bytes; SHA256 2690d5b596c23c1548140cf3894cfdc1bb6df91240fdd95f40974f0dbae4317c
+Extracted G: 1008384 bytes; SHA256 5d49e4559ff619759dfdf004c2a257f66344f7471f9e2eac259878d261676289
+
+DCOS evidence inspected
+-----------------------
+G:1ae32-1ae6c: initialization explicitly requires ID word FF62. It programs
+8253 control F1 with 34/70/B0; writes 8E then 8F to F9; reads FB and requires
+bit 3 set. This is not type 65.
+G:1af4a-1af86: F9 command 82 requires FB bit 0 clear; command 83 requires
+bit 0 set. G:1af90-1afb6 tests FB bit 5 clear, writes 85 to F9 and requires
+bit 5 set. G:1b23c-1b254 writes 84 and requires FB bit 5 clear. These are in
+the same older backend family, not a verified type-65 common-status protocol.
+G:1c4ac-1c4b8: the other private backend explicitly requires ID 60.
+G:1c8c2-1c8d2: reads FB and E1, combines them and requires mask 2201 == 2200.
+G:1c8b0-1c8b8 polls FB bit 1 until clear. These private tests do not establish
+the GO363/type-65 FB reset byte.
+G:2d0e4 contains CAFB but searches the board table for board ID FB, not a
+read of status register FB. It is a false positive.
+A:5373c-53776 independently inspected at the byte/instruction level: another
+copy of the FF62 initialization. A:53854-538c0 likewise copies the command
+82/83 and bit-5 test. These duplicates are not independent corroboration.
+Direct immediate FB port-load searches in A's UC3003/UCG304/UCV305/UCY805
+catalogue ranges did not identify another FB test; this negative search does
+not exclude computed-port accesses.
+G:5d32-5d4e identifies board ID 65 as backend index 7, distinct from 60
+(index 4) and 62 (index 6). The library contains multiple HD backends.
+
+A.5 generic startup contract
+---------------------------
+1c6c-1c76: operation 1 for non-memory board IDs reads byte FB.
+0546-057e: enumerates IDs, calls operation 1; bit 6 means keep polling while
+startup timer R3 < 0028; bit 7 takes the unavailable path; with bit 7 clear,
+bit 4 sets an NSP flag (not yet named). Thus bit 6 is consistent with startup
+busy and bit 7 with failed/unavailable status, but those labels are inferences.
+1d62-1d88: stores FB as R6. Bit 6 or bit 7 retains a nonzero board status;
+otherwise it clears R6 after handling bit 4.
+0992-09f6: a nonzero stored board status causes boot rejection without entering
+the type-65 boot handler. This establishes the causal problem with FF and why
+healthy startup needs bits 6/7 clear; it does not establish that every other
+FB bit is zero or that FB is unaffected by commands.
+
+Recommendation
+--------------
+Recover the GO363 common status/reset interface from a type-65-specific DCOS
+path or contemporary interface documentation before external implementation.
+A limited healthy-status diagnostic probe can test progression but cannot
+establish the full register protocol. The earlier boot-search report's causal
+finding stands; the complete hardware meaning of FB remains provisional.

@@ -1,0 +1,74 @@
+A.5 after the Z8010 wrap correction -- 2026-10-06
+
+Applied change
+--------------
+External MAME src/devices/machine/z8010.cpp now increments SAR modulo 64.
+INC_DSC_SAR resets DSC at the end of the field and carries into SAR even when
+SAR was 63. Hardware evidence and pre-change analysis are recorded in
+uc042-a5-mmu-comparison.txt (Zilog product specification pp.563-566).
+The previously added UC042 32 KiB ROM window and A.5 BIOS remain in place.
+No timer, GO363, or other behavior was changed in this step.
+
+Validation
+----------
+- MAME rebuild succeeded; git diff --check passed.
+- mos-a5-boot-test/mmu-boundaries/launch.out: PASS, 16 read/write cases for
+  commands 0C/0D/0E/0F at SAR 62 and 63; two distinct full-table patterns with
+  no manual rewind; command 0B wraps DSC without advancing SAR.
+- mos-a5-boot-test/hd65-core-wrap: patched 6.0 boots MOS 5.2.15, completes the
+  scripted root/date/time/root sequence, final s_0480.0.png exactly matches
+  scripts/expected/hd-mos.png in RGB pixels.
+- mos-a5-boot-test/a5-core-wrap: original A.5 passes MMU/RAM stages with the
+  actual core correction. No ROM patch, register override, or workaround Lua.
+  The normal observation scripts only log CPU/device state and take screenshots.
+- Each OS run uses a separate copy of the known-working MOS CHD and fresh NVRAM.
+- A.5 SHA-256 remains f28bef7a01597e8aef1a724f3188cae771b272532a578473407cab0197b399bc.
+
+Next failure: stale UC timer interrupt before vector/handler installation
+----------------------------------------------------------------------
+Source-confirming run: mos-a5-boot-test/a5-irq-source/failure.txt.
+At 25.588952 s, immediately before EI VI at ROM 0738:
+  UC m_timer_pending=1, m_timer_vector=0, m_timer_out1=0, m_arb_vieno=0;
+  ACIA IRQ=0 and bus m_vi_state=0 (no peripheral request).
+At 073a, OUTB FF8C enables VIENO. By 25.588959 s the CPU is at the common
+VI dispatcher 07e6 with IRQV=0000. Timer pending has been cleared by the
+UC's acknowledge; VIENO is now 1. This identifies the UC timer as the source.
+It is a retained request, not a presently high OUT1 level.
+
+A.5 order:
+  0714-0726: fill all 16 software vector slots with default handler 080e.
+  0738: EI VI.
+  073a: OUTB FF8C (enable UC/bus level-2 interrupts).
+  073e-0740: set timer vector to 2 via OUTB FF01.
+  0746-074c: install timer handler 16d8 in software vector slot 2.
+  0752-0776: initialize flag/program counters/wait for timer interrupt.
+Execution never reaches the FF01 write or handler installation: the pending
+vector-zero interrupt arrives immediately after the FF8C enable.
+
+The common dispatcher sees an even vector zero and dispatches through software
+slot zero to its default handler 080e. This is NOT the odd-vector rejection
+branch (R1=0 in the trace). At 080e: R7=3, RH6=7, then generic error handling.
+At 28.118088 s it executes HALT at 0858; reported halted PC=085a, R7=0702.
+The screen shows a single '3'. MOS and the GO363 loader have not been reached.
+
+Relevant emulator code:
+uc.cpp pit_out1_w latches m_timer_pending on every OUT1 rising edge, even while
+VIENO is disabled. local_vi_pending gates that retained request with VIENO;
+local_viack_r clears the pending flag and returns m_timer_vector (still zero).
+Thus a timer event from earlier initialization survives until A.5's enable.
+The exact edge that originally latched the request was not traced in this run.
+
+Status
+------
+The Z8010 defect is corrected and regression-tested as above. A.5 still does
+not boot MOS because of this next UC timer/interrupt-latch issue. The observed
+ordering narrows the problem, but does not establish the physical UC042 latch's
+reset/gating behavior. Hardware documentation or corroborating original
+hardware/diagnostic evidence is needed before changing that external behavior.
+No timer workaround was applied and no clean MOS/A.5 boot is claimed.
+
+Follow-up investigation: uc042-a5-timer-investigation.txt identifies the
+retained event at 0.242768 s and the mode-set/OUT-low at 0.2427875 s. Two
+controlled probes eliminate this blocker and reach boot-device search, but
+not MOS. A timer-clear-on-low candidate is local and unapplied pending UC042
+interrupt-glue documentation.

@@ -1,0 +1,38 @@
+{
+  "argv": [
+    "/Users/paxia/Projects/mame_latest/mame/m40",
+    "m40",
+    "-bios",
+    "m40-60",
+    "-rompath",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/roms/hd65",
+    "-ram",
+    "2m",
+    "-slot5",
+    "go363",
+    "-hard1",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mos-hd/hd.chd",
+    "-nvram_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mos-hd/nvram",
+    "-cfg_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mos-hd/cfg",
+    "-snapshot_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mos-hd/snap",
+    "-autoboot_script",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/probe.lua",
+    "-nomouse",
+    "-video",
+    "none",
+    "-sound",
+    "none",
+    "-nothrottle",
+    "-seconds_to_run",
+    "480"
+  ],
+  "environment": {
+    "STEPS": "203:=root\n;262:=10;264:@? (29);266:=02;268:@? (29);270:=87;272:=\n;280:=10;282:@? (29);284:=30;286:@? (29);288:=00;290:=\n;402:=root\n",
+    "ISL": "hd",
+    "PROVISIONAL": "1",
+    "RUN_SECONDS": "480"
+  }
+}

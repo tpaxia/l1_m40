@@ -1,0 +1,19 @@
+{
+  "bcos-hd": {
+    "screenshot": "bcos-hd/s_0300.0.png",
+    "matches_reference": true
+  },
+  "mos-hd": {
+    "screenshot": "mos-hd/s_0480.0.png",
+    "matches_reference": true
+  },
+  "bcos-hd-baseline": {
+    "screenshot": "bcos-hd-baseline/s_0300.0.png",
+    "matches_reference": true
+  },
+  "mos-hd-baseline": {
+    "screenshot": "mos-hd-baseline/s_0480.0.png",
+    "matches_reference": true
+  },
+  "original_media_unchanged": true
+}

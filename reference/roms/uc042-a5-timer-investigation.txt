@@ -1,0 +1,92 @@
+UC042 A.5 timer interrupt investigation -- 2026-10-06
+
+Finding
+-------
+The unexpected vector-zero interrupt is a request retained from the ROM's
+polled timer test 25 seconds earlier. The 8253 core correctly lowers OUT1 when
+reprogrammed. The UC wrapper retains its independent m_timer_pending flag,
+which is the direct cause of the premature interrupt. This localizes the issue
+to UC interrupt-request lifetime, not the 8253 counter waveform or GO363.
+
+Read-only origin trace
+---------------------
+mos-a5-boot-test/a5-timer-origin/timer-origin.txt:
+0.241807250: final byte loads counter 1 with 03c0; counter 0 is 0002.
+0.242768000: counter 1 reaches terminal count; OUT1=1, pending=1, VIENO=0.
+0.242787500: A.5's OUTB FFC7,70 at 1824 selects mode 0 again.
+             OUT1 correctly becomes 0, but pending incorrectly survives for
+             the software's subsequent sequence (hardware glue still unknown).
+25.588952: A.5 about to execute EI VI at 0738; pending=1, OUT1=0, VIENO=0,
+           timer vector=0, no ACIA/peripheral request.
+25.588959: immediately after FF8C enable, timer vector zero is acknowledged.
+            Default handler 080e eventually halts at 0858.
+The origin run also logs FF84-FF8F arbiter gating transitions: these do not
+clear the retained timer request in the current model.
+
+Why REL 6.0 passes
+-----------------
+REL 6.0 writes vector 2 to FF01 at 0574 and installs handler 0e2e at 0580.
+Only later does it enable VIENO at 0650. A.5 instead enables interrupts/VIENO
+at 0738/073a before the vector write at 0740 and handler install at 074c.
+Thus 6.0's success does not validate retention of an old, already-reset timer
+request: its vector and handler are ready when it enables the source.
+
+Primary component documentation
+-------------------------------
+Intel 8253/8253-5 datasheet, PDF page 4, printed page 3-54, Control Word Format
+and MODE 0: Interrupt on Terminal Count. Source:
+https://www.futurlec.com/Datasheet/80Series/8253.pdf
+Local copy: mos-a5-boot-test/intel-8253-datasheet.pdf.
+Visually inspected pages 3-54 and 3-55.
+Control word 70 selects counter 1, LSB/MSB loading, binary mode 0. In mode 0,
+OUT is low after a mode set; terminal count makes it high; reprogramming the
+mode or count removes that high condition. The trace agrees with this.
+This datasheet DOES NOT specify the external UC042 interrupt latch. It cannot
+by itself justify a particular reset/acknowledge circuit inside the UC glue.
+
+Independent original software corroboration
+------------------------------------------
+re/disassembly/diagnostics/runtime/seg21_uc3003_loaded.dis:
+- Timer ISR 21:3a40-3a5a records the vector, writes 70 to FFC7 at 3a4e,
+  writes 34 to FFC7 at 3a54, then IRET.
+- Setup at 3a7c programs FF01; 3a9e selects mode 0; 3aa6/3aaa loads the
+  counter; 3ab2 enables VIENO; 3ab6 enables VI.
+re/disassembly/diagnostics/runtime/seg21_ucv305_loaded.dis:
+- ISR 21:5c20-5c44 records vector and FF41 status, writes 70 to FFC7 at 5c38,
+  then 34 at 5c3e and IRET.
+- Its 5cba check inspects captured counter-output bit 4.
+A.5's own ISR 16d8 writes 70 to FFC7 at 16dc before servicing its flags.
+All three software paths reset counter 1 through its control word. They are
+consistent with OUT-low cancelling the request, but do not distinguish all
+possible physical latch/gating designs.
+
+Controlled experiments (unchanged ROM and external timer source)
+---------------------------------------------------------------
+1. a5-clear-stale-timer: timer-stale-probe.lua clears ONLY the existing UC
+pending flag at 0738, once, after asserting OUT1=0 and VIENO=0.
+   The genuine subsequent timer event arrives with vector 2; ROM reaches
+   0780 at 25.596558 and the boot stage at 07d2 at 25.617265. No later timer
+   event is modified, no instruction is skipped, and no ROM byte is patched.
+2. a5-timer-low-model: timer-low-probe.lua provisionally cancels pending when
+OUT1 is low, using read-fetch observation points. It makes exactly ONE change:
+   t=0.242787500, PC=1828, VIENO=0, matching the original mode-set operation.
+   It produces the same successful later timer test and entry into boot search.
+These are diagnostic interventions, not clean boots. Neither loads MOS: the
+ROM subsequently cycles in boot-device search with screen "1 2 1  REL A.5".
+No claim about the cause of that later device-search error is made here.
+
+Proposed correction and uncertainty
+-----------------------------------
+uc042-timer-clear-on-low-provisional.patch retains rising-edge/acknowledge
+behavior but cancels m_timer_pending whenever OUT1 becomes low. It alters
+only the local UC timer; it does not discard pending GO280/GO363 interrupts
+when global VIENO is disabled.
+This is a candidate consistent with the traces, the Intel-defined waveform,
+and independent ROM/diagnostic software. It is not yet a proven schematic-
+level description of UC042. Other possible circuits, such as gated request
+capture or a separate reset strobe, have not been excluded.
+
+Per AGENTS.md's requirement for primary hardware documentation supporting the
+specific external-MAME behavior, the candidate is retained IN THIS PROJECT
+and was NOT applied to external uc.cpp. The existing PIT waveform is already
+correct. No external MAME source was modified in this investigation.

@@ -1,0 +1,66 @@
+A.5 boot search: screen 1 2 1
+=============================
+2026-10-06
+
+The current hard-disk boot blocker is the unimplemented GO363 common board
+status register FB, before HDC initialization or disk-sector reads.
+Runs use the unchanged A.5 ROM and a disposable copy of the MOS HD, with
+only the previously documented diagnostic cancellation of the stale UC timer
+request. External MAME source was not changed for this investigation.
+
+Evidence
+--------
+mos-a5-boot-test/a5-boot-config/boot-search.txt:
+- t=2.295515: ID read at 3fff returns 65.
+- t=2.295547750: the read at 1c74 from 3ffb returns FF (R2=00ff
+  observed at 1c76). The earlier startup wait repeatedly sees this value.
+- t=25.615666750: board enumeration at 1d6e has R1=3fff, R0=6500,
+  R4=000c, R6=00ff.
+- t=25.615685500: instruction 1dc2 stores R6=00ff to segment 1 offset
+  0232+000c = 023e, the GO363 entry's board-status word.
+- t=25.618147250 and subsequent cycles: 09f2 is taken for type 65.
+  This sets R7=1 instead of invoking its boot handler.
+
+ROM paths
+---------
+1c4c common board helper, operation 1:
+  1c72 LDB RL3,FB; 1c74 INB RL2,@R3; 1c76 JP @RR10.
+1d12 enumeration:
+  1d62 LD R6,R2; 1d6e tests bit 6, 1d76 tests bit 7.
+  FF retains a nonzero status. 1dc2 stores it in the board table.
+0992 boot search:
+  accepted boot types at 140e include 65 (at 1410).
+  09ba TEST segment 1:0232(R2); nonzero branches to 09f2 LDK R7,1.
+  The type-65 boot handler at 0f34, and HDC5 init at 20a8, are not entered.
+Current go363.cpp io_r() handles FF=65 but has no FB case, so its default FF
+is returned. This is the immediate emulation omission, not a MOS filesystem
+or boot-sector rejection.
+ROM 6.0 enumeration at 05b8 explicitly sets R0=0 for non-display boards and
+stores that at 05be. Thus it does not expose this missing board-status read.
+
+Meaning of displayed digits
+--------------------------
+mos-a5-boot-test/a5-boot-code/boot-search.txt captures 1af8 with R0=f121.
+1ab4-1af8 constructs F/error/slot/unit; 1b18-1b4a prints the lower three
+nibbles, suppressing F. Thus 1 2 1 is error 1, logical slot 2, unit 1.
+This address is misleading in this particular scan: the type-65 status-fault
+shortcut at 09f2 does not update current selector 1:0302; it retains 2f from
+the preceding type-E1 floppy attempt. The best-error helper 11d4 then records
+that stale selector. The formatter retains unit 1 from the floppy attempt.
+It is not three progress-stage numbers, and does not prove the HD was read.
+
+Repeated activity
+-----------------
+The floppy boot handler 0d08 invokes its initialization 3fd2. Its 403e
+instruction is DJNZ R7,403e after clearing R7: a finite 65536-iteration delay,
+not a permanent wait. It returns to the boot scan, which repeats roughly
+every 0.304 seconds. With no floppy media attached, that fallback cannot boot.
+The ROM search returns error 1 after choosing it over the floppy error 2.
+
+Evidence boundary
+-----------------
+The trace proves FF causes exclusion of GO363. It does not prove the complete
+hardware meaning or reset value of FB, nor justify simply returning zero for
+all cases. Recover common status/reset protocol from original diagnostics and
+contemporary documentation before applying an external GO363 correction,
+following AGENTS.md. No external source changes were made here.

@@ -1,0 +1,78 @@
+UC042 A.5 ROM capacity evidence -- 2026-10-06, before MAME edits
+
+Proposed change: expose the UC042 PD23/PD24 pair through physical addresses
+000000-007fff, and add a selectable M40 A.5 BIOS, leaving 6.0 the default.
+
+Primary component documentation: STMicroelectronics M27128A datasheet,
+November 2000, page 1, Description and Figure 1; page 2, Figure 2 and Read Mode.
+https://www.futurlec.com/Datasheet/Memory/27128.pdf
+Page 1 specifies 16,384 x 8 bits, with fourteen address inputs A0-A13 and
+8 data outputs Q0-Q7. Page 2 identifies the address pins and explains address-
+selected reads gated by chip/output enable. A pair on the two byte lanes
+therefore supplies 16,384 16-bit words (32 KiB), not 16 KiB.
+
+Primary board observation: reference/Pictures (M40 + spares)/
+IMG_20251217_115338.jpg shows UC042 P001 A COD.339136, and PD23/PD24 labels on
+the two 27128 EPROMs. This identifies the component documentation's relevance.
+
+Corroborating original firmware: m40-rom-A.5 has a Z8001 reset vector at zero,
+REL A.5 / 16 APR. 85, valid checksum 1db7d5b7 at 7ffc. Its self-check routine
+17c4-17f2 reads count 3ffe at 0024 and sequentially reads 0000-7fff. The ROM
+service table at 142a dispatches controllers 61 and 60 into executable code
+above 4000; this is not merely unused chip capacity. Deinterleaving reproduces
+PD24 (even bytes) and PD23 (odd bytes) exactly.
+
+Reasoning: retain the already modelled base-zero, two-byte-lane arrangement,
+but allow all fourteen EPROM address inputs to select words: a byte offset
+less than 8000, indexed as address >> 1. This models the documented component
+capacity on the photographed board, corroborated by the unmodified firmware's
+own memory layout. It adds no mirrors, bank switches, timing, or aliases.
+Full UC042 chip-select circuitry remains undocumented; no claims are made
+about addresses outside this minimal window or other board revisions.
+
+Implementation: expand m40's ROM region to 8000, erase unpopulated space to FF,
+add BIOS m40-a5 loading the original 32768 bytes (MAME staging filename
+m40-rom-a.5 must be lowercase; source m40-rom-A.5 is unchanged), and change memory_claims'
+ROM bound from 4000 to 8000. m44's existing region is already larger than 8000.
+The external MAME tree was clean before these edits.
+
+Test result, 2026-10-06:
+Built external MAME successfully with the ROM-window/BIOS patch only.
+No GO363, CPU-core, or MMU-core changes. Default BIOS remains m40-60.
+MAME filename validation required lowercase m40-rom-a.5 in the staging set.
+
+A.5: FAIL to boot MOS. Run mos-a5-boot-test/a5-final used m40 -bios m40-a5,
+UC042, 2 MiB RAM, GO363 in slot5, ISL1 hard-disk boot, no floppy, fresh NVRAM
+and a writable COPY of re/checkpoints/mos-install/mos-hd-bootable.chd.
+180 emulated seconds, unchanged ROM, observation-only Lua taps/screenshots.
+CPU halts at 0x0534 (reported PC=0x0536) with NSPOFF=0x8004: MMU self-test
+error, before entering the disk loader. This does not test the GO363 driver.
+
+The first observed MMU mismatch occurs at 0x18a6 (cpb rh1,rh2).
+After 256 command-0f writes of 01, SAR reads 3f and DSC reads 03. The ROM
+reads 01, rewrites that location to fe, then reads the SAME location as fe
+when it expects another 01. This produces a mismatch on iteration two.
+Trace: mos-a5-boot-test/a5-final/mmu.txt; earlier complete trace also at
+mos-a5-boot-test/a5-mmu-trace2/mmu.txt. No debugger or ROM patch was used.
+The subsequent xxfa test follows the same pattern because the current UC042
+special-I/O map aliases those port addresses to the same MMU.
+
+Current z8010.cpp INC_DSC_SAR only increments when SAR < 63, freezing both
+counters at SAR=63, DSC=3. A.5 requires circular descriptor-file traversal.
+The Z8010 reference describes a six-bit SAR and two-bit DSC plus increment
+commands; the exact overflow case has not yet been independently established
+from primary hardware documentation in this investigation. Per AGENTS.md,
+no external Z8010 behavior was changed solely to satisfy this ROM. A candidate
+wrap patch is retained locally as z8010-a5-wrap-provisional.patch, UNAPPLIED
+and UNTESTED. The xxfa/xxfc board-select behavior also needs hardware evidence
+before altering it. A boot workaround is not being presented as a clean boot.
+
+Control: mos-a5-boot-test/hd65-baseline, same rebuilt MAME/hardware, patched
+6.0 BIOS and a separate copy of the same MOS CHD, ran 480 emulated seconds.
+Existing scripted root/date/time/root login sequence completed. Final screen
+s_0480.0.png equals scripts/expected/hd-mos.png pixel for pixel (RGB).
+Thus this test preserved the previously working MOS boot on patched 6.0.
+
+Follow-up: see uc042-a5-mmu-comparison.txt for the exact 6.0/A.5 comparison,
+visually checked Zilog datasheet pages, and successful MMU-only wrap experiment.
+The proposed core patch remains unapplied; A.5 still has a later boot failure.

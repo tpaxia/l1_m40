@@ -1,0 +1,14 @@
+pd30.128.c06 WRONG CHECKSUMS:
+    EXPECTED: CRC(8155dc69) SHA1(ed65f842e2857ad10170c697d945745fd7d47f9c)
+       FOUND: CRC(98b340b9) SHA1(8703238628e8caf698f748e2bf14731786dd0e1f)
+pd29.128.a06 WRONG CHECKSUMS:
+    EXPECTED: CRC(74d7de4b) SHA1(dd3a69ff29a2f1292f3a7db73bd2447bd664e54b)
+       FOUND: CRC(0bd30d8d) SHA1(d91b35a33541c62e6c0a3d1e454359155933c00e)
+pl46.j09 NOT FOUND (NO GOOD DUMP KNOWN) (tried in m44)
+WARNING: the machine might not run correctly.
+Ignoring MAME exception: Error running autoboot script /Users/paxia/Projects/L1_M30_M40/reference/roms/mos-a5-boot-test/observe.lua: runtime error
+...s/L1_M30_M40/reference/roms/mos-a5-boot-test/observe.lua:7: attempt to index a nil value (field 'io')
+
+Fatal error: Error running autoboot script /Users/paxia/Projects/L1_M30_M40/reference/roms/mos-a5-boot-test/observe.lua: runtime error
+...s/L1_M30_M40/reference/roms/mos-a5-boot-test/observe.lua:7: attempt to index a nil value (field 'io')
+

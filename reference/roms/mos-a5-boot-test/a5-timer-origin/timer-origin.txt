@@ -1,0 +1,87 @@
+t=0.000000000 pc=000000 fetch pending=0 out1=0 vieno=0 vector=00 lastio=none
+WRITE 0.000039000 pc=000372 addr=ffc6 data=3434 mask=00ff
+WRITE 0.000043250 pc=000378 addr=ffc6 data=7070 mask=00ff
+WRITE 0.000047500 pc=00037e addr=ffc6 data=b6b6 mask=00ff
+WRITE 0.241796500 pc=0017fc addr=ffc0 data=0202 mask=00ff
+WRITE 0.241799500 pc=001800 addr=ffc0 data=0000 mask=00ff
+WRITE 0.241804250 pc=001808 addr=ffc2 data=c0c0 mask=00ff
+WRITE 0.241807250 pc=00180c addr=ffc2 data=0303 mask=00ff
+t=0.242768000 pc=00180c fetch pending=1 out1=1 vieno=0 vector=00 lastio=0.242757000 pc=001812 addr=ffc6 data=4040 mask=00ff
+WRITE 0.242787500 pc=001828 addr=ffc6 data=7070 mask=00ff
+t=0.242787500 pc=001828 fetch pending=1 out1=0 vieno=0 vector=00 lastio=0.242787500 pc=001828 addr=ffc6 data=7070 mask=00ff
+WRITE 0.242799000 pc=00183a addr=ffc0 data=6262 mask=00ff
+WRITE 0.242802000 pc=00183e addr=ffc0 data=f0f0 mask=00ff
+WRITE 0.242806750 pc=001844 addr=ffc2 data=ffff mask=00ff
+WRITE 0.242809750 pc=001848 addr=ffc2 data=ffff mask=00ff
+WRITE 0.273607250 pc=001bc0 addr=ffc6 data=b6b6 mask=00ff
+WRITE 0.273612000 pc=001bc8 addr=ffc4 data=0808 mask=00ff
+WRITE 0.273615000 pc=001bcc addr=ffc4 data=0000 mask=00ff
+WRITE 1.565946500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566082500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566099000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566115500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566132000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566148500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566165000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566181500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566198000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566214500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566231000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 1.566247500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.295437250 pc=000876 addr=ff40 data=c0c0 mask=00ff
+WRITE 2.735158250 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735175500 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735192750 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735210000 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735227250 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735244500 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735261750 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735279000 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735296250 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735313500 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735330750 pc=000876 addr=ff40 data=0101 mask=00ff
+WRITE 2.735392250 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754217500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754237750 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754258000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754278250 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754298500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754318750 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754339000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754359250 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754379500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754399750 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754420000 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 2.754451250 pc=001938 addr=ff80 data=00ff mask=ffff
+WRITE 2.754454250 pc=00193c addr=ff88 data=ff00 mask=ffff
+WRITE 2.754457250 pc=001940 addr=ff8a data=00ff mask=ffff
+WRITE 2.754460250 pc=001944 addr=ff8a data=ff00 mask=ffff
+WRITE 2.754463250 pc=001948 addr=ff84 data=ff00 mask=ffff
+WRITE 2.754469750 pc=001950 addr=ff80 data=ff00 mask=ffff
+WRITE 2.754472750 pc=001954 addr=ff86 data=00ff mask=ffff
+WRITE 2.754475750 pc=001958 addr=ff8c data=ff00 mask=ffff
+t=2.754475750 pc=001958 fetch pending=1 out1=0 vieno=1 vector=00 lastio=2.754475750 pc=001958 addr=ff8c data=ff00 mask=ffff
+WRITE 2.754480500 pc=00195e addr=ff82 data=00ff mask=ffff
+WRITE 2.754483500 pc=001962 addr=ff86 data=ff00 mask=ffff
+t=2.754483500 pc=001962 fetch pending=1 out1=0 vieno=0 vector=00 lastio=2.754483500 pc=001962 addr=ff86 data=ff00 mask=ffff
+WRITE 2.754486500 pc=001966 addr=ff8e data=00ff mask=ffff
+t=2.754486500 pc=001966 fetch pending=1 out1=0 vieno=1 vector=00 lastio=2.754486500 pc=001966 addr=ff8e data=00ff mask=ffff
+WRITE 2.754491250 pc=00196c addr=ff82 data=ff00 mask=ffff
+WRITE 2.754494250 pc=001970 addr=ff8e data=ff00 mask=ffff
+WRITE 2.754502750 pc=00197a addr=ff8a data=ff00 mask=ffff
+WRITE 2.754513000 pc=001984 addr=ff8a data=00ff mask=ffff
+WRITE 2.754516000 pc=001988 addr=ff86 data=ff00 mask=ffff
+t=2.754516000 pc=001988 fetch pending=1 out1=0 vieno=0 vector=00 lastio=2.754516000 pc=001988 addr=ff86 data=ff00 mask=ffff
+WRITE 2.754528000 pc=001994 addr=ff88 data=ff00 mask=ffff
+WRITE 2.754531000 pc=001998 addr=ff86 data=00ff mask=ffff
+WRITE 2.754543000 pc=0019a4 addr=ff88 data=00ff mask=ffff
+WRITE 2.754546000 pc=0019a8 addr=ff84 data=ff00 mask=ffff
+WRITE 2.754554250 pc=0019b0 addr=ff80 data=00ff mask=ffff
+WRITE 2.754557250 pc=0019b4 addr=ff80 data=ff00 mask=ffff
+WRITE 2.754560250 pc=0019b8 addr=ff82 data=00ff mask=ffff
+WRITE 2.754563250 pc=0019bc addr=ff82 data=ff00 mask=ffff
+WRITE 2.756493500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 25.588543500 pc=000876 addr=ff40 data=ffff mask=00ff
+WRITE 25.588956750 pc=00073e addr=ff8c data=0000 mask=ff00
+t=25.588956750 pc=000000 fetch pending=0 out1=0 vieno=1 vector=00 lastio=25.588956750 pc=00073e addr=ff8c data=0000 mask=ff00
+WRITE 25.589006000 pc=000818 addr=ffc2 data=7070 mask=00ff

@@ -1,0 +1,66 @@
+Native A.5 MOS boot and HDC505 follow-up, 2026-10-06
+===================================================
+
+Boot achieved
+-------------
+Unmodified m40-rom-A.5 boots MOS5.2.15 from the known installed hard disk.
+Run a5-common-zero reaches ENTER USER-NAME. Run a5-mos-login (480s) completes
+root login, date/time entry, and returns to the root menu.
+mos-a5-boot-test/a5-mos-login/s_0480.0.png is pixel-identical to
+scripts/expected/hd-mos.png after RGB conversion; sizes both match.
+No ROM bytes or installed source CHD changed; each run uses a disposable copy.
+
+Experimental interventions
+--------------------------
+External MAME retains the already applied documented ROM mapping and MMU wrap
+changes. The following are Lua diagnostic interventions:
+- cancel stale pending UC timer when OUT1 has become low: exactly once,
+  t=0.242787500, PC1828, VIENO0.
+- return zero for GO363 FB and F9 byte reads (ports3ffb and3ff9).
+No other controller register response, instruction or OS memory is overridden.
+The successful MOS run logged FB at2.295548,25.184885,25.206419 and F9 at
+25.202621,25.206382. Its native HDC5 initializes and reads SYS0 before handoff.
+These are working healthy-state approximations, not a complete verified model.
+
+Repeatable launcher
+-------------------
+mos-a5-boot-test/boot-a5-mos.sh [unique-run-name] [emulated-seconds]
+uses existing run.py with common-zero-probe.lua, native A.5,2MB,GO363 and copy
+of installed MOS CHD. It is headless and saves screenshots in the run folder.
+Optional STEPS env controls keyboard input, as documented in observe-keys.lua.
+Candidate source changes are retained in go363-common-status-zero-provisional.patch
+and uc042-timer-clear-on-low-provisional.patch; not applied externally.
+
+Diagnostic run
+--------------
+a5-hdc505-slot3 boots DCOS8.4 G from logical floppy drive4 with A.5 and the
+same three interventions, loads006.HDC505, accepts slot3/PU0/default options,
+then executes tests beginning1. Both mounted floppy images and HD are copies.
+- Test1 SLOT TEST-CHECK TYPE & BOARD ADDRESS advances.
+- Test2 GENERATE INTERRUPT AND TEST VECTORS advances.
+- Test3 PROGRAM NEC & WRITE/READ FIFO advances.
+- Test4 TEST8253 TIMER & DMA TRANSFER LOGIC fails step3 at HDC5.TIMREND:
+  measured012716; expected07af00..07b100; diagnostic code CmdStart40 End1c.
+  Screenshot s_0240.0.png records exactly this failure. Tests5-16 were not run.
+Loaded original diagnostic PCs and I/O are recorded in hd-io.txt.
+Observed timer programming:
+211146 writes control36 to3857;21114c/21114e load counter0=0004 at3846;
+211154 writes70 to3857;211158/21115a load counter1=0001 (then0002);
+long case loads counter0=fffe,counter1=000f. These match original HDC5P
+CONTIMER/CONTMREND paths discussed in re/hardware/go363/GO363_HDC5_diagnostics.md
+section HDC505 test4, with contemporary Functional Checks manual17.5.
+
+Register recovery result and remaining uncertainty
+--------------------------------------------------
+The FB/F9 override log has only five reads, all at startup before27s. No later
+FB/F9 reads were observed by the unlimited dedicated override tap during this
+240s diagnostic run. The broad I/O trace stops at10000 events, so it must not
+be used to claim absence of every other register after that limit.
+Tests1-3 support the existing GO363 ID,interrupt/vector,FIFO behavior. They do
+not independently establish FB/F9 semantics. Returningzero is compatible with
+native A.5 startup and MOS boot, but full status bits,reset values,command86
+semantics, and fault transitions are still unconfirmed, per the earlier
+uc042-a5-go363-fb-diagnostics.txt audit. The next diagnostic discrepancy is
+quantitative timer timing; do not change hardware clocks just to match a test.
+External timer/common-status source was left untouched under AGENTS.md's
+primary-evidence rule. The provisional working path remains in this project.

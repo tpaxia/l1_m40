@@ -1,0 +1,48 @@
+lamp t=0.0000 addr=ffe0 data=0 mask=ffff
+lamp t=0.0000 addr=ffe2 data=0 mask=ffff
+lamp t=0.0001 addr=ffe0 data=f1f1 mask=ff00
+lamp t=1.5663 addr=ffe0 data=fdfd mask=ff00
+lamp t=2.7546 addr=ffe0 data=f2f2 mask=ff00
+t=5.02 PC=00001aa4 FCW=c080
+R0=5555 R1=aaaa R2=0200 R7=1698 NSPOFF=8000
+t=15.01 PC=00001a44 FCW=c040
+R0=5555 R1=aaaa R2=0200 R7=0540 NSPOFF=8000
+t=25.01 PC=00001aa6 FCW=c080
+R0=0000 R1=0000 R2=0200 R7=1c18 NSPOFF=8000
+lamp t=25.5888 addr=ffe0 data=4444 mask=ff00
+lamp t=25.6170 addr=ffe0 data=f5f5 mask=ff00
+lamp t=25.9211 addr=ffe0 data=2121 mask=ff00
+lamp t=26.5429 addr=ffe0 data=1f1f mask=ff00
+lamp t=27.1644 addr=ffe0 data=f1f1 mask=ff00
+lamp t=27.7859 addr=ffe0 data=1212 mask=ff00
+lamp t=28.4074 addr=ffe0 data=2121 mask=ff00
+lamp t=29.0289 addr=ffe0 data=1f1f mask=ff00
+lamp t=29.6504 addr=ffe0 data=f1f1 mask=ff00
+lamp t=30.2719 addr=ffe0 data=1212 mask=ff00
+lamp t=30.8934 addr=ffe0 data=2121 mask=ff00
+lamp t=31.5149 addr=ffe0 data=1f1f mask=ff00
+lamp t=32.1364 addr=ffe0 data=f1f1 mask=ff00
+lamp t=32.7579 addr=ffe0 data=1212 mask=ff00
+lamp t=33.3794 addr=ffe0 data=2121 mask=ff00
+lamp t=34.0009 addr=ffe0 data=1f1f mask=ff00
+lamp t=34.6224 addr=ffe0 data=f1f1 mask=ff00
+t=35.01 PC=0000403e FCW=d000
+R0=0000 R1=2f1f R2=d000 R7=0cd8 NSPOFF=01c0
+lamp t=35.2439 addr=ffe0 data=1212 mask=ff00
+lamp t=35.8654 addr=ffe0 data=2121 mask=ff00
+lamp t=36.4869 addr=ffe0 data=1f1f mask=ff00
+lamp t=37.1084 addr=ffe0 data=f1f1 mask=ff00
+lamp t=37.7299 addr=ffe0 data=1212 mask=ff00
+lamp t=38.3514 addr=ffe0 data=2121 mask=ff00
+lamp t=38.9736 addr=ffe0 data=1f1f mask=ff00
+lamp t=39.5967 addr=ffe0 data=f1f1 mask=ff00
+lamp t=40.2181 addr=ffe0 data=1212 mask=ff00
+lamp t=40.8374 addr=ffe0 data=2121 mask=ff00
+lamp t=41.4589 addr=ffe0 data=1f1f mask=ff00
+lamp t=42.0804 addr=ffe0 data=f1f1 mask=ff00
+lamp t=42.7019 addr=ffe0 data=1212 mask=ff00
+lamp t=43.3235 addr=ffe0 data=2121 mask=ff00
+lamp t=43.9450 addr=ffe0 data=1f1f mask=ff00
+lamp t=44.5665 addr=ffe0 data=f1f1 mask=ff00
+t=45.01 PC=0000403e FCW=d000
+R0=0000 R1=2f1f R2=d000 R7=3c79 NSPOFF=01c0

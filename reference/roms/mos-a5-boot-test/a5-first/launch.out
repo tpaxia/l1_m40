@@ -1,0 +1,5 @@
+Driver m40 (file m40.cpp): 1 errors, 0 warnings
+Errors:
+   ROM label m40-rom-A.5 contains invalid characters
+
+Average speed: 2865.23% (179 seconds)

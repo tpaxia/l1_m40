@@ -1,0 +1,23 @@
+lamp t=0.0000 addr=ffe0 data=0 mask=ffff
+lamp t=0.0000 addr=ffe2 data=0 mask=ffff
+lamp t=0.0001 addr=ffe0 data=f1f1 mask=ff00
+lamp t=1.5663 addr=ffe0 data=fdfd mask=ff00
+lamp t=2.7546 addr=ffe0 data=f2f2 mask=ff00
+t=5.02 PC=00001aa4 FCW=c080
+R0=5555 R1=aaaa R2=0200 R7=1698 NSPOFF=8000
+t=15.01 PC=00001a44 FCW=c040
+R0=5555 R1=aaaa R2=0200 R7=0540 NSPOFF=8000
+t=25.01 PC=00001aa6 FCW=c080
+R0=0000 R1=0000 R2=0200 R7=1c18 NSPOFF=8000
+lamp t=25.5888 addr=ffe0 data=4444 mask=ff00
+lamp t=25.6170 addr=ffe0 data=f5f5 mask=ff00
+lamp t=25.9211 addr=ffe0 data=2121 mask=ff00
+lamp t=26.5429 addr=ffe0 data=1f1f mask=ff00
+lamp t=27.1644 addr=ffe0 data=f1f1 mask=ff00
+lamp t=27.7859 addr=ffe0 data=1212 mask=ff00
+lamp t=28.4074 addr=ffe0 data=2121 mask=ff00
+lamp t=29.0289 addr=ffe0 data=1f1f mask=ff00
+lamp t=29.6504 addr=ffe0 data=f1f1 mask=ff00
+lamp t=30.2719 addr=ffe0 data=1212 mask=ff00
+lamp t=30.8934 addr=ffe0 data=2121 mask=ff00
+lamp t=31.5149 addr=ffe0 data=1f1f mask=ff00

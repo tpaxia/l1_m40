@@ -1,0 +1,25 @@
+--- a/src/devices/machine/z8010.cpp
++++ b/src/devices/machine/z8010.cpp
+@@ -37,8 +37,7 @@
+ 
+ inline void z8010_device::INC_SAR()
+ {
+-	if (m_sar < (SDR_MAX_SEGMENTS-1))
+-		++m_sar;
++	m_sar = (m_sar + 1) & (SDR_MAX_SEGMENTS - 1);
+ }
+ 
+ //-------------------------------------------------
+@@ -63,10 +62,10 @@
+ 	{
+ 		++m_dsc;
+ 	}
+-	else if (m_sar < (SDR_MAX_SEGMENTS-1))
++	else
+ 	{
+ 		m_dsc = DSC_SDR_BAH;
+-		++m_sar;
++		INC_SAR();
+ 	}
+ }
+ 

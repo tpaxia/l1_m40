@@ -1,0 +1,25 @@
+{
+  "branch": "m40_z8010_sup_test",
+  "commit": "8b508304acb9c9e04e50910d6edf0aba40bb1944",
+  "binary_sha256": "7a690f08b56593e1b2daa9c4fde1dbef06a978282fd6fd1b9539e7d444e56ff9",
+  "media": {
+    "ESE.IMD": "edb0e96de4f42e315316e0432e957cd1193ecb2b584fdeb4252b21ce1b05dfd9",
+    "MDOS30.IMD": "26e9c0e0e924d97aa6cbecf80911e4ca15eca026d085219e5a43b124705f5907",
+    "MDOSUTIL.IMD": "484883f936e0caa57de46f069fdb51532f95c7606630d2ad81351252fb466d1e",
+    "BCOS_II_3.3_FD_ALL_RESIDENT.imd": "17a3384650c434e365c32f9cc673385eef0751ca7929a36571a6dfb5cb21003a",
+    "K02733_BCOS_II_3.3_CONFIGURATOR.imd": "c5373c469504ec0ee24946ef0af4a9a4b8369a7b3f88959af939851b33a68e94",
+    "Gardini_Utilities.imd": "0ad953162a113e1407320a3a9cfe107e1987d7c0b56c275d1df35f1e92caf865",
+    "BCOS_LOAD.imd": "b6f8f3758596a3e9575d83c840f067c25da3656d5b4d036de9eb65c953dc2f24",
+    "diagnostics/A.IMD": "cc3712382102d5277f605c6bb1951d8a4d18d8807013d23cb44c21e1877f6dd1",
+    "diagnostics/B.IMD": "b738837aec6950517c2712399e27b74ea512b394a8d4af7960b22fec53e29d90",
+    "diagnostics/C.IMD": "80f6ad73bf6a3c7c05ba9a34bf6306aa4d87b5bbb6b55aeb704e97c07f9c3f3d",
+    "diagnostics/D.IMD": "a50197a6b9d23163b71e1b26baed3761f942af0133106c7a59d59ba8036a5787",
+    "diagnostics/E.IMD": "764749aa18dfe85f7c9e9eeef7b92d98bf53ce7018638750ee407f9e6d5dbe1c",
+    "diagnostics/F.IMD": "19ec59a5131e2b331c0522260eec3cdd524412cde7bd08a397cc371a1d46e2b6",
+    "diagnostics/G.IMD": "158eed04d297d2a05dcbca5714a94950cc4ead0b9346037a3ffc4dc888d0d1f3",
+    "diagnostics/H.IMD": "52c56f768f7947da550bf6c88ae32199d91e8fca1b155492ca385b42d4c38c50",
+    "diagnostics/R.IMD": "0b7285010c3197d074cf8078b6d2894f1fa0e1a69c2c38d118420c45934bd934",
+    "m40-bcos-hd-kusa.chd": "984c87f492e456ce83ddc5447925e47fabbcaf49cf4b9944a329a9e88cc70230",
+    "m40-mos-hd.chd": "fc65d0a3693dfb64cd01569705945bb30ed7359d5e6009ee14e1b52ac2d4f5a7"
+  }
+}

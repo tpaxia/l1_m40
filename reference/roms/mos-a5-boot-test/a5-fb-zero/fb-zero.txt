@@ -1,0 +1,2 @@
+t=2.295547750 PC=001c76 original=ffff mask=00ff return=ff00
+t=25.184885000 PC=001c76 original=ffff mask=00ff return=ff00

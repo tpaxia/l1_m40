@@ -1,0 +1,121 @@
+A.5 versus REL 6.0: Z8010 descriptor-pointer failure
+2026-10-06
+
+Conclusion
+----------
+Strong evidence of an emulation defect in descriptor-pointer auto-increment,
+not evidence against the UC042 identification. A diagnostic intervention that
+changes only the MMU counters makes the original A.5 MMU test finish; it does
+not patch the ROM, skip a test, or force a successful return code. A later boot
+failure remains, so this experiment does not establish a successful MOS boot.
+
+Original hardware documentation (visually inspected)
+----------------------------------------------------
+Zilog, Z8010 Z8000 MMU Memory Management Unit Product Specification, April 1985.
+Local source: /Users/paxia/Projects/Z8000_FPGA/z8000_doc/z8010_mmu_zilog_apr1985.pdf
+- PDF page 5 / printed p.563, Figure 7: SAR bits 5..0 hold the descriptor number;
+  bits 7..6 are zero. DSC bits 1..0 select the byte; higher bits are zero.
+- PDF page 6 / printed p.564: SAR selects one of 64 descriptors and supports
+  auto-increment; DSC is a two-bit counter selecting base-high, base-low, limit,
+  attribute in that order.
+- PDF page 8 / printed p.566, MMU Commands: SAR auto-increments at the end of
+  the field; entire-descriptor accesses traverse base, limit, attribute.
+  Command 0F is Read/Write Descriptor; Increment SAR.
+
+Inference, distinguished from literal wording: incrementing these finite-width
+counters implies (SAR,DSC)=(63,3) -> (0,0). No saturation exception is described.
+The datasheet does not spell out that particular numeric transition explicitly.
+The unmodified production ROM's repeated whole-table algorithm and the controlled
+experiment below corroborate this interpretation. This is not a silicon test.
+
+REL 6.0 (also identical here in 4.1)
+-----------------------------------
+Actual bytes were decoded again with tools/z8kdisrom and checked against
+re/disassembly/m40-rom/m40rom-6.0.s, offsets 0220-0240:
+0222 / 0226: explicitly clear SAR and DSC.
+022a / 022e: write via command 0F, decrement RL0 and repeat 256 times.
+0230 / 0234: EXPLICITLY CLEAR SAR AND DSC AGAIN before reading.
+0238 / 023c / 0240: read via command 0F and compare against RL0, 256 times.
+The sequence written/read is 00, ff, fe, ... 02, 01. After the final read,
+the pointer's resulting value is unused; the next initialization resets it.
+Thus a saturating pointer passes: all 256 actual bytes are accessed correctly,
+and the faulty pointer advancement AFTER byte 256 is never tested.
+
+Annotation correction: the older hand annotations in m40rom-4.1.s claim the
+first loop writes zero to every byte. That is incorrect: DBJNZ decrements RL0,
+which is also the data register. It is a descending pattern, not uniform zero.
+The 6.0 source's raw instructions agree with the binary.
+
+A.5
+---
+1878-188c: set R7=3; SAR=DSC=0; fill 256 bytes with 01 using command 0F.
+188e-18b4: without resetting the pointer after that fill, repeatedly:
+  read SAR and DSC, read the selected byte with command 0F, restore its old
+  SAR/DSC, overwrite that byte with FE (first pass), compare the read value
+  against 01, and continue to the next byte. Further passes change patterns.
+18b6 clears the first-test failure bit only after those passes succeed.
+18b8-18f2 repeats the test through xxFA rather than xxFC ports.
+The current UC042 map aliases those selections to the one MMU; that separate
+board-select question is not resolved by this counter experiment.
+
+MAME defect and baseline trace
+-----------------------------
+src/devices/machine/z8010.cpp:
+INC_SAR() increments only if SAR < 63.
+INC_DSC_SAR() resets DSC and increments SAR only if SAR < 63.
+At SAR=63 and DSC=3 it therefore leaves BOTH counters unchanged.
+
+mos-a5-boot-test/a5-final/mmu.txt records:
+  after the initial fill: SAR=3f, DSC=03
+  first read: 01; write FE to descriptor 63, byte 3
+  next SAR/DSC: still 3f/03
+  next read: FE, while A.5 expects 01
+The comparison at 18a6 fails. The eventual HALT at 0534 reports PC=0536.
+
+Controlled causal experiment
+----------------------------
+mos-a5-boot-test/wrap-probe.lua installs temporary MAME Lua taps and accesses
+only the saved MMU counter items. For command-0F accesses at SAR=63, DSC=3,
+it changes the resulting counters to zero. Writes are corrected at the next
+program-memory fetch, after the write has happened; read accesses are corrected
+after the read. It preserves the actual descriptor data and CPU registers.
+No changes to MAME source, ROM bytes, or instruction flow were made for this test.
+
+Run: mos-a5-boot-test/a5-wrap-probe (100 emulated seconds, disposable MOS CHD).
+The A.5 MMU tests finish. The last second-test wraps occur at time 2.2938 s;
+initialization at 1908/1928 follows at 2.2953/2.2954 s. At 5 s and 15 s the CPU
+is in RAM testing at 1aa4/1a44, with NSPOFF=8000 (MMU failure flag cleared).
+Later it halts at 0858 (reported PC=085a, R7=0702); this later error was not
+investigated in this comparison. The experiment is NOT a clean MOS boot.
+
+Already completed control from the preceding boot investigation:
+patched 6.0 boots MOS on the same rebuilt MAME and disk, completing scripted
+login with a pixel-identical scripts/expected/hd-mos.png final screen.
+
+Status
+------
+The external MAME changes remain only the previously authorized 32 KiB ROM
+window and selectable A.5 BIOS. No Z8010 source change has been applied.
+z8010-a5-wrap-provisional.patch remains an unapplied candidate; the Lua probe
+has now tested its whole-descriptor boundary interpretation, not every command
+or every machine sharing the Z8010 core. In particular INC_SAR's standalone
+command-0D/0E paths have not been independently tested by this experiment.
+
+Implementation authorization and evidence, before source edit:
+User explicitly requested applying the change and investigating the next failure.
+Apply z8010-a5-wrap-provisional.patch to the external core. The common SAR
+helper now increments modulo 64; DSC resets at the end of the selected field
+and always carries into SAR, including SAR=63. This applies the finite-width
+register and auto-increment semantics documented on pp.563-566 cited above.
+The original A.5 test plus the isolated counter intervention corroborate the
+boundary interpretation. Existing ROM mapping/BIOS edits will be preserved.
+
+Applied and tested (subsequent user-authorized step):
+The core change is now applied in external src/devices/machine/z8010.cpp and
+MAME has been rebuilt. Final core patch: z8010-a5-wrap.patch.
+Read-only observation run a5-core-wrap completes the MMU and RAM tests without
+the wrap-probe.lua intervention, then encounters a stale UC timer interrupt.
+Isolated register-interface tests pass 16 read/write/boundary cases across
+commands 0C/0D/0E/0F, two full-table data patterns, and command 0B without SAR
+increment. MOS on patched 6.0 still reaches the expected final login screen
+pixel for pixel. See uc042-a5-next-failure.txt for the next boot blocker.

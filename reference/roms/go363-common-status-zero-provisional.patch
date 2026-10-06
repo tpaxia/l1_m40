@@ -1,0 +1,13 @@
+diff --git a/src/devices/bus/olivetti_l1/go363.cpp b/src/devices/bus/olivetti_l1/go363.cpp
+--- a/src/devices/bus/olivetti_l1/go363.cpp
++++ b/src/devices/bus/olivetti_l1/go363.cpp
+@@ -201,6 +201,10 @@ u8 olivetti_l1_go363_device::io_r(offs_t offset)
+ 			data |= 0x01;
+ 		break;
++	case 0xf9:
++	case 0xfb:
++		data = 0x00; // PROVISIONAL healthy-state approximation; see project evidence.
++		break;
+ 	case 0xff: data = 0x65; break;
+ 	}
+ 

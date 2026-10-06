@@ -1,0 +1,5 @@
+t=2.295536500 PC=001c76 port=3ffa original=ffff mask=00ff return=ff00
+t=25.184880750 PC=001c76 port=3ffa original=ffff mask=00ff return=ff00
+t=26.828982250 PC=001c82 port=3ff8 original=ffff mask=00ff return=ff00
+t=26.860538250 PC=001c82 port=3ff8 original=ffff mask=00ff return=ff00
+t=26.860576000 PC=001c76 port=3ffa original=ffff mask=00ff return=ff00

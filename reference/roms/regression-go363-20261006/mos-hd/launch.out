@@ -1,0 +1,5 @@
+m40rom-6.0.bin WRONG CHECKSUMS:
+    EXPECTED: CRC(8114ebec) SHA1(4e2c65b95718c77a87dbee0288f323bd1c8837a3)
+       FOUND: CRC(cc864f3a) SHA1(c61387fcc28b862f2e2d5a8045848df0338c2d5d)
+WARNING: the machine might not run correctly.
+Average speed: 364.93% (479 seconds)

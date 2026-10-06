@@ -1,0 +1,74 @@
+A.5 / M44 B.1 / experimental 6.0-hd65 comparison
+=================================================
+2026-10-06
+
+Sources
+-------
+A.5: m40-rom-A.5, SHA256 f28bef7a01597e8aef1a724f3188cae771b272532a578473407cab0197b399bc
+M44: ORIGINAL m44.zip, PD30 even + PD29 odd; combined SHA256
+6a2cde3631b7a4dfa005564f8e21174badad44ba5886840a92470d8361be3b6c
+Do not use mos-a5-boot-test/roms/m44 for the original BIOS comparison: its
+PD29/PD30 staging files contain A.5 from an earlier test. The original ZIP
+has B.1, 14 MAR.86 and is unchanged.
+6.0-hd65: m40rom-6.0-hd65.bin; source re/disassembly/m40-rom/m40rom-6.0-hd65.s;
+generator tools/mkrom_hd65.py.
+
+Critical correction to the transplant description
+------------------------------------------------
+mkrom_hd65.py's documented changes are M44-style service entries at 90/94/98/9C,
+relocated VI dispatcher, replacement IPL type E4 with65, and a NEW polled
+GO363 reader based on OSLEM7 H65R's observed register sequence. It is not a
+byte transplant of the entire native B.1 driver. It explicitly omits the M44
+geometry-query handshake and supplies fixed 1024 cylinders,9 heads,32 sectors.
+It uses the existing 6.0 startup and handoff routines.
+
+Native driver similarity
+------------------------
+A.5 HDC5 banner: 2094, 11 mar.85; entry20a8, read2142, other entry24d4.
+B.1 HDC5 banner: 2444, 02 Dic.85; entry2458, read24f2, other entry2884.
+B.1 type65 dispatch entry1640: 650f2458288424f2.
+A.5 type65 dispatch entry143a: 650f20a824d42142.
+The 154-byte native initialization routines (20a8..2141 vs2458..24f1) have
+151 identical bytes. The three changed bytes belong to two relocated LDAR
+references to downstream routines (2116/24c6 and211a/24ca). Thus this whole
+initialization routine performs the same operations, not a different protocol.
+Later code and helper routines were revised, so this is not a claim that the
+entire HDC5 driver is byte-identical.
+Both native drivers install a controller interrupt handler and use a completion
+flag wait; the custom hd65 reader polls completion instead. The hd65 generator
+omits board VI enable from the OSLEM register sequence.
+
+Common board checks causing today's failures
+--------------------------------------------
+A.5 helper1c4c, B.1 helper1e42:
+- operation1 reads FB at1c74 /1e6a
+- operation2 reads F9 at1c80 /1e76
+- operation3 writes configuration command86 to F9 for IDs60..7E.
+These helper sequences are equivalent, including their controller-ID ranges.
+A.5 enumeration1d62..1dc2 /B.1 enumeration1f58..1fb8 retain bad FB status.
+A.5 boot search09ba tests board status; B.1 boot search0b7e tests same table.
+A.5 post-SYS0 configuration1f0c..2014 and B.1 22bc..23c4 both read F9;
+bit7 sets error02xx and stores it in board-status word1:0232(index).
+Thus original B.1 expects the same currently missing common FB/F9 behavior.
+The working modified6.0 BIOS does not incorporate these native A.5/B.1 common
+startup/configuration routines. Its6.0 enumeration05b8..05be initializes
+non-display board status to zero. Successful modified6.0 boot therefore does
+not verify that native A.5/B.1 board status/configuration is emulated.
+
+UC timer initialization
+-----------------------
+A.5 enables VI at0738,VIENO073a, then vector2 at0740 and ISR074c.
+B.1 enables VI at0774,VIENO0776, then vector2 at077c and ISR0788.
+Both expose the stale pending timer request already diagnosed.
+6.0 installs vector2 at0574 and ISR0580 before VIENO0650.
+
+Current test result and scope
+-----------------------------
+A.5 with the diagnostic timer cancellation + FB=0 successfully reads and
+validates SYS0 from the MOS HD. It then receives FF from unimplemented F9,
+stores02ff at1:023e and halts1282 with screen1 3 1.
+We have not tested a faithful UC048/two-MMU M44 machine here. MAME's m44
+configuration currently reuses M40 as a bring-up approximation (doc/MAME_DRIVER.md).
+This report is a static original-BIOS comparison plus the existing A.5/6.0 runs,
+not an assertion that original B.1 currently boots MOS in MAME.
+No external source changes were made for this comparison.

@@ -1,0 +1,1 @@
+t=0.122325000 pc=00021a clear #1 while OUT1=0 VIENO=0

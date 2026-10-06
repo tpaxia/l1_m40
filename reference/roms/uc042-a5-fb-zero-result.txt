@@ -1,0 +1,28 @@
+A.5 diagnostic FB=0 boot experiment, 2026-10-06
+================================================
+Result: does not boot MOS, but successfully reads and validates its SYS0 boot
+block from the hard disk. Next failure is common configuration register F9.
+No external source or ROM edits. Disposable copy of MOS CHD. Existing core
+MMU fix plus the Lua stale-timer workaround and an FB read override only.
+
+Runs: mos-a5-boot-test/a5-fb-zero (180 seconds), a5-fb-zero-next (27 seconds).
+Scripts: fb-zero-probe.lua, fb-zero-next.lua. FB at 3ffb is overridden only on
+the low-byte read; other registers untouched. Original value FF, override 00.
+Timer intervention remains diagnostic, not a proven external UC correction.
+
+At 25.187764: enters HDC5 initialization 20a8.
+At 25.189432: initialization returns R7=0 at 0f48.
+At 25.192055: hard disk transfer returns R7=0 at 0fd0.
+At 25.202291: SYS0 boot-block check returns R0=5359,R1=5330,R7=0.
+At 25.202308: enters SYS0 handoff routine 121a.
+At 25.202620500: common operation 2 INB from GO363 3ff9 returns FF, PC=1c82.
+At 25.202623: 1f30 sees R2=00ff; bit 7 takes 1f46.
+At 25.202646: 200e stores 02ff into segment1:023e, marking board unavailable.
+At 25.218168: 126e sees nonzero boot-board status and reports error 1.
+At 25.218798: executes HALT at 1282 (visible PC1284 thereafter).
+Screen 1 3 1 REL A.5: error1/logicalslot3/unit1, now actual GO363 selector.
+180-second run remains halted at PC1284 through the final state sample175s.
+
+Thus FB=0 removes the earlier scanner rejection. F9 is also unimplemented
+in current go363.cpp and defaults FF. Its correct configuration/reset response
+must be recovered; success reading SYS0 does not establish a complete MOS boot.

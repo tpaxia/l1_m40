@@ -1,0 +1,42 @@
+t=20.00 shot
+t=40.02 shot
+t=60.01 shot
+t=70.01 type 
+
+t=73.01 shot k01___
+t=73.01 type 1
+
+t=76.02 shot k02__1_
+t=77.02 type 006
+
+t=80.00 shot
+t=80.00 shot k03__006_
+t=100.02 shot
+t=115.00 type 4
+
+t=118.01 shot k04__4_
+t=120.01 shot
+t=127.00 type 
+
+t=130.01 type 
+
+t=130.01 shot k05___
+t=133.01 type 
+
+t=133.01 shot k06___
+t=136.01 shot k07___
+t=140.00 shot
+t=141.00 type 
+
+t=144.01 shot k08___
+t=146.01 type 1
+
+t=149.02 shot k09__1_
+t=152.00 type 
+
+t=155.01 shot k10___
+t=160.01 shot
+t=180.01 shot
+t=200.00 shot
+t=220.01 shot
+t=240.01 shot

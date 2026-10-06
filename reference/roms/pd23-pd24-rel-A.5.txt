@@ -1,0 +1,56 @@
+PD23 / PD24 ROM identification
+
+Combined image: m40-rom-A.5 (32768 bytes)
+PD24 supplies the even-address/high bytes; PD23 supplies the odd-address/low bytes.
+Both source dumps are 16384 bytes, retained unchanged. Deinterleaving the output
+reproduces both source files exactly.
+
+Banner at 0x0008: " 16 APR. 85     REL A.5 "
+Reset vector: FCW 0xc000, segment 0, PC 0x0340 (Z8001).
+The binary establishes L1/Z8001 firmware. The banner alone does not identify
+the CPU board. The output filename m40-rom-A.5 was chosen by the user.
+
+ST506 support: YES, native GO363/HDC5 (controller type 0x65).
+Driver banner at 0x2094: "  hdc5 11 mar. 85   "
+Controller dispatch table at 0x142a has eight-byte entries. Entry at 0x143a:
+  65 0f 20a8 24d4 2142
+This selects type 0x65 with driver entry points 0x20a8, 0x24d4, 0x2142.
+The lookup at 0x11a6 compares controller types and advances eight bytes at 0x11be.
+ROM read services at 0x0090/0x0098 point to 0x10d2; 0x0094/0x009c to 0x1046.
+The latter uses the selected driver's table entry at 0x1090.
+This is executable disk-driver support, not merely an unused banner.
+GO363/type-65 identification is corroborated by this project's
+reference/manual-digests/M34-M44_hardware_notes.md and
+re/hardware/go363/GO363_HDC5_diagnostics.md.
+
+Checksum: PASS, without changing any bytes. The ROM's own algorithm at
+0x17c4-0x17f2 reads its word count (0x3ffe) from 0x0024, computes separate
+16-bit end-around-carry sums of even/odd bytes XORed with their address low
+byte over 0x0000-0x7ffb, then swaps checksum bytes as at 0x17ea.
+Computed and stored checksum at 0x7ffc: 1d b7 d5 b7.
+
+Inspection used tools/z8kdisrom in Z8001 mode. No boot test was performed;
+driver presence does not establish compatibility with a particular emulator setup.
+
+SHA-256:
+68215da844873a0155ce8a9f7453eb3fe76ad9837694e7af937637788d75f712  PD23
+8233f1238260a93407eb9c4a82c79e908be97d0ce40434d6c39e89544e96b3df  PD24
+f28bef7a01597e8aef1a724f3188cae771b272532a578473407cab0197b399bc  m40-rom-A.5
+
+CPU board identification (2026-10-06): UC042.
+Primary visual evidence: reference/Pictures (M40 + spares)/IMG_20251217_115338.jpg.
+The same photograph shows the PCB silkscreen "S3000 UC042 P001 A COD.339136"
+and two 27128 EPROMs with blue handwritten labels PD23 and PD24, beside the
+EF68B50P and P8253-5. It also shows one Z8001 and one Z8010.
+Thus the PD23/PD24 pair is physically documented on UC042; its 32 KiB combined
+capacity does not identify it as UC048 firmware. The photo cannot independently
+prove the contents of the newly supplied dumps, but their labels and sizes match.
+The previous tentative M44 association was unsupported and is withdrawn.
+
+Emulator limitation: src/devices/bus/olivetti_l1/uc.cpp memory_claims currently
+claims ROM addresses only below 0x4000, and the m40 ROM definition allocates
+0x4000 bytes. These implementation limits do not establish the real UC042 ROM
+capacity. No external MAME source was changed.
+The interrupted MOS test used the m44 ROM container (same current emulated
+hardware); its observation script failed before collecting results. It is not
+a valid MOS boot result. Boot investigation is paused at the user's request.

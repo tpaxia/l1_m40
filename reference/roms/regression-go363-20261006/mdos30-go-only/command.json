@@ -1,0 +1,41 @@
+{
+  "argv": [
+    "/Users/paxia/Projects/mame_latest/mame/m40",
+    "m40",
+    "-bios",
+    "m40-60",
+    "-rompath",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/roms/stock",
+    "-ram",
+    "2m",
+    "-slot5",
+    "go363",
+    "-hard1",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mdos30-go-only/hd.chd",
+    "-nvram_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mdos30-go-only/nvram",
+    "-cfg_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mdos30-go-only/cfg",
+    "-snapshot_directory",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mdos30-go-only/snap",
+    "-autoboot_script",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/probe.lua",
+    "-nomouse",
+    "-video",
+    "none",
+    "-sound",
+    "none",
+    "-nothrottle",
+    "-seconds_to_run",
+    "200",
+    "-flop1",
+    "/Users/paxia/Projects/L1_M30_M40/reference/roms/regression-go363-20261006/mdos30-go-only/boot.imd"
+  ],
+  "environment": {
+    "STEPS": "",
+    "ISL": "floppy",
+    "PROVISIONAL": "1",
+    "RUN_SECONDS": "200",
+    "CLEAR_TIMER": "0"
+  }
+}

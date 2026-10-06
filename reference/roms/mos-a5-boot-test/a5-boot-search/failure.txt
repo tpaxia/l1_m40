@@ -1,0 +1,143 @@
+t=2.119790 fetch=1878 PC=001878 FCW=c040 IRQV=ffff NSP=8000 r0=ff80 r1=ff6c r2=8000 r3=0100 r4=0001 r5=d501 r6=0083 r7=fffd r8=8000 r9=03ee r10=8000 r11=0508 r12=8000 r13=0890 r14=00fe r15=00fe :cpu:uc042:0/m_timer_vector=0 :cpu:uc042:0/m_arb_vieno=0 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=2.293835 fetch=18f8 PC=0018f8 FCW=c040 IRQV=ffff NSP=8000 r0=3f03 r1=7f01 r2=8000 r3=0100 r4=0001 r5=d501 r6=0083 r7=0000 r8=8000 r9=03ee r10=8000 r11=0540 r12=8000 r13=0890 r14=00fe r15=00fe :cpu:uc042:0/m_timer_vector=0 :cpu:uc042:0/m_arb_vieno=0 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=2.754476 io-write PC=001958 a=ff8c d=ff00 mask=ffff
+t=25.588952 fetch=0738 PC=000738 FCW=c000 IRQV=ffff NSP=01c0 r0=8400 r1=0000 r2=8000 r3=080e r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=0 :cpu:uc042:0/m_arb_vieno=0 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.588957 io-write PC=00073e a=ff8c d=0000 mask=ff00
+t=25.588961 io-write PC=000744 a=ff00 d=0202 mask=00ff
+t=25.588961 fetch=0744 PC=000744 FCW=d000 IRQV=ffff NSP=01c0 r0=8400 r1=0002 r2=8000 r3=080e r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.588976 io-write PC=000760 a=ffc2 d=0404 mask=00ff
+t=25.588979 io-write PC=000764 a=ffc2 d=0000 mask=00ff
+t=25.588982 io-write PC=000768 a=ffc0 d=0404 mask=00ff
+t=25.588985 io-write PC=00076c a=ffc0 d=0000 mask=00ff
+t=25.588985 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0004 r1=0004 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.588992 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0004 r1=0003 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.588999 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0004 r1=0002 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.589006 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0004 r1=0001 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.589016 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0003 r1=0000 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.589023 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0003 r1=ffff r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.589030 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0003 r1=fffe r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.589037 fetch=076c PC=00076c FCW=d000 IRQV=ffff NSP=01c0 r0=0003 r1=fffd r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.596471 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0002 NSP=01c0 r0=0003 r1=fbd8 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01b4 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=1 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.596483 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0002 NSP=01c0 r0=0003 r1=0002 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01a8 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=1 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.596558 fetch=0780 PC=000780 FCW=d050 IRQV=0002 NSP=01c0 r0=0003 r1=fbd7 r2=8000 r3=16d8 r4=8100 r5=0200 r6=1f00 r7=4444 r8=8100 r9=0400 r10=8000 r11=0714 r12=8000 r13=0932 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.596562 io-write PC=000786 a=ffc6 d=7070 mask=00ff
+t=25.617265 fetch=07d2 PC=0007d2 FCW=d080 IRQV=ffff NSP=01c0 r0=01c0 r1=0000 r2=8100 r3=0270 r4=ff00 r5=0000 r6=0083 r7=0001 r8=8100 r9=0400 r10=8000 r11=07b4 r12=8000 r13=1e82 r14=8100 r15=01c0 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.620936 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0258 r1=2f1f r2=d000 r3=c050 r4=8000 r5=4070 r6=8100 r7=0000 r8=8000 r9=4570 r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=019c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.620949 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0258 r1=0004 r2=d000 r3=c050 r4=8000 r5=4070 r6=8100 r7=0000 r8=8000 r9=4570 r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0190 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.628234 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=25.900661 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=2fe7 r2=0000 r3=449a r4=ffff r5=ffff r6=0000 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=015c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.900673 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=0004 r2=0000 r3=449a r4=ffff r5=ffff r6=0000 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0150 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.903412 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=25.905732 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=2fe7 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=015c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.905744 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=0004 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0150 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.908483 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=25.910795 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=2fe7 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=015c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.910807 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=0004 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0150 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.913545 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=25.915857 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=2fe7 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=015c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.915870 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=0004 r2=0000 r3=449a r4=ffff r5=ffff r6=0002 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0150 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.918608 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=25.924907 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0258 r1=2f1f r2=d000 r3=c050 r4=8000 r5=4070 r6=8100 r7=0000 r8=8000 r9=4570 r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=019c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.924920 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0258 r1=0004 r2=d000 r3=c050 r4=8000 r5=4070 r6=8100 r7=0000 r8=8000 r9=4570 r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0190 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=25.932205 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=26.204632 fetch=07e6 PC=0007e6 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=2fe7 r2=0000 r3=449a r4=ffff r5=ffff r6=0000 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=015c :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=26.204644 fetch=07f0 PC=0007f0 FCW=c000 IRQV=0004 NSP=01c0 r0=0003 r1=0004 r2=0000 r3=449a r4=ffff r5=ffff r6=0000 r7=0000 r8=8100 r9=036b r10=8100 r11=0310 r12=8000 r13=1e82 r14=8100 r15=0150 :cpu:uc042:0/m_timer_vector=2 :cpu:uc042:0/m_arb_vieno=1 :l1bus:0/m_vi_state=0 :cpu:uc042:0/m_timer_out1=0 :cpu:uc042:0/m_timer_pending=0 :cpu:uc042:0/m_acia_irq=0
+t=26.207382 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.212453 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.217516 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.222579 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.236040 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=26.511217 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.516288 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.521351 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.526414 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.539874 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=26.815304 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.820375 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.825438 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.830500 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=26.843961 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=27.119139 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.124210 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.129272 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.134335 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.147796 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=27.423223 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.428294 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.433356 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.438419 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.451880 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=27.727058 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.732129 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.737191 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.742254 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=27.755715 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=28.031142 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.036213 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.041275 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.046338 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.059799 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=28.334976 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.340047 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.345110 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.350173 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.363633 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=28.639068 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.644139 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.649202 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.654264 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.667725 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=28.942902 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.947973 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.953036 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.958099 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=28.971560 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=29.246990 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.252060 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.257123 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.262186 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.275647 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=29.550824 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.555895 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.560958 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.566021 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.579481 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=29.854908 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.859979 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.865042 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.870105 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=29.883565 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=30.158743 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.163814 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.168877 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.173939 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.187400 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=30.462827 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.467898 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.472961 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.478023 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.491484 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=30.766662 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.771733 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.776795 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.781858 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=30.795319 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=31.070753 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.075824 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.080887 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.085950 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.099411 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=31.374588 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.379659 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.384722 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.389785 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.403245 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=31.678675 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.683746 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.688809 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.693872 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.707332 io-write PC=0047d4 a=ff8c d=5858 mask=ff00
+t=31.982510 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.987581 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.992643 io-write PC=0047d4 a=ff8c d=0303 mask=ff00
+t=31.997706 io-write PC=0047d4 a=ff8c d=0303 mask=ff00

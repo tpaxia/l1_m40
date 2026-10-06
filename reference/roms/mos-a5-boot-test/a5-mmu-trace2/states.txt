@@ -1,0 +1,7 @@
+lamp t=0.0000 addr=ffe0 data=0 mask=ffff
+lamp t=0.0000 addr=ffe2 data=0 mask=ffff
+lamp t=0.0001 addr=ffe0 data=f1f1 mask=ff00
+lamp t=1.5663 addr=ffe0 data=fdfd mask=ff00
+lamp t=2.1229 addr=ffe0 data=f1f1 mask=ff00
+t=5.00 PC=00000536 FCW=c020
+R0=ffff R1=ff6c R2=feff R7=fff1 NSPOFF=8004
